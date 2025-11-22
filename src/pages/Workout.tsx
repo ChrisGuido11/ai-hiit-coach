@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, RefreshCw, Check } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 const frameworkDetails: Record<string, { fullName: string; description: string; benefits: string }> = {
   tabata: {
@@ -12,7 +11,7 @@ const frameworkDetails: Record<string, { fullName: string; description: string; 
   },
   emom: {
     fullName: "Every Minute On the Minute",
-    description: "Complete the prescribed reps at the start of each minute, then rest for the remainder of that 60-second window. When the next minute starts, you go again.",
+    description: "Complete a set number of reps at the start of each minute, then rest for the remainder. Repeat for the specified duration.",
     benefits: "Builds strength and endurance while teaching pace management and mental toughness under time pressure."
   },
   amrap: {
@@ -27,84 +26,30 @@ const frameworkDetails: Record<string, { fullName: string; description: string; 
   }
 };
 
-// Helper function to format exercise display text
-const formatExerciseDisplay = (exercise: any) => {
-  if (exercise.type === "time") {
-    return `${exercise.duration_seconds} seconds`;
-  } else if (exercise.type === "reps") {
-    return `${exercise.reps} reps`;
-  } else if (exercise.type === "tabata") {
-    return `${exercise.work_seconds}s work / ${exercise.rest_seconds}s rest`;
-  } else if (exercise.type === "emom") {
-    const reps = typeof exercise.reps === "number" ? exercise.reps : 
-                 (typeof exercise.reps === "string" ? parseInt(exercise.reps) : null);
-    if (!reps) {
-      console.warn('EMOM exercise missing reps:', exercise.name, exercise);
-      return ""; // Don't show broken subtitle
-    }
-    return `${reps} reps`;
-  }
-  return "";
+const mockWorkout = {
+  warmup: [
+    { name: "Jumping Jacks", duration: "60 seconds", instructions: "Start with feet together, jump and spread legs while raising arms" },
+    { name: "Arm Circles", duration: "30 seconds", instructions: "Extend arms and make circular motions" }
+  ],
+  main: [
+    { name: "Bodyweight Squats", duration: "20s work / 10s rest", instructions: "Stand with feet shoulder-width apart, lower into squat" },
+    { name: "Push-ups", duration: "20s work / 10s rest", instructions: "Start in plank position, lower chest to ground" },
+    { name: "Mountain Climbers", duration: "20s work / 10s rest", instructions: "Drive knees to chest alternately in plank position" },
+    { name: "Burpees", duration: "20s work / 10s rest", instructions: "Squat, jump back to plank, return and jump up" }
+  ],
+  cooldown: [
+    { name: "Quad Stretch", duration: "30 seconds each leg", instructions: "Stand on one leg, pull heel to glutes" },
+    { name: "Hamstring Stretch", duration: "30 seconds each leg", instructions: "Sit and reach towards toes" }
+  ]
 };
 
 const Workout = () => {
   const { framework } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const [isSaved, setIsSaved] = useState(false);
-  const [workoutData, setWorkoutData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
 
   const frameworkKey = framework?.toLowerCase() || "tabata";
   const details = frameworkDetails[frameworkKey] || frameworkDetails.tabata;
-
-  useEffect(() => {
-    const loadWorkout = async () => {
-      // First, try to get workout data from navigation state
-      if (location.state?.workoutData) {
-        setWorkoutData(location.state.workoutData);
-        
-        // Debug EMOM data
-        if (framework === 'emom') {
-          console.log('DEBUG EMOM workoutData.sections.main:', location.state.workoutData?.sections?.main);
-          location.state.workoutData?.sections?.main?.forEach((ex: any, i: number) => {
-            console.log(`Exercise ${i}: type="${ex.type}", reps=${ex.reps} (${typeof ex.reps})`);
-          });
-        }
-        
-        setLoading(false);
-        return;
-      }
-
-      // If no state, try to fetch from Supabase using workoutId
-      if (location.state?.workoutId) {
-        try {
-          const { data, error } = await supabase
-            .from('workouts')
-            .select('exercises')
-            .eq('id', location.state.workoutId)
-            .single();
-
-          if (error) throw error;
-          setWorkoutData(data.exercises);
-          
-          // Debug EMOM data
-          if (framework === 'emom' && data.exercises) {
-            console.log('DEBUG EMOM workoutData.sections.main:', (data.exercises as any)?.sections?.main);
-            (data.exercises as any)?.sections?.main?.forEach((ex: any, i: number) => {
-              console.log(`Exercise ${i}: type="${ex.type}", reps=${ex.reps} (${typeof ex.reps})`);
-            });
-          }
-        } catch (error) {
-          console.error('Error loading workout:', error);
-        }
-      }
-      
-      setLoading(false);
-    };
-
-    loadWorkout();
-  }, [location.state]);
 
   const handlePlayTutorial = (exerciseName: string) => {
     console.log(`Watch tutorial for ${exerciseName}`);
@@ -118,38 +63,9 @@ const Workout = () => {
     console.log("Begin workout - navigate to timer screen");
   };
 
-  const handleSaveWorkout = async () => {
-    // For now, just toggle the UI state
-    // In the future, this could update the workout in Supabase
+  const handleSaveWorkout = () => {
     setIsSaved(true);
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#0A1F2E] flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading workout...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!workoutData) {
-    return (
-      <div className="min-h-screen bg-[#0A1F2E] flex items-center justify-center p-6">
-        <div className="text-center">
-          <h2 className="text-xl font-bold text-foreground mb-2">No workout found</h2>
-          <p className="text-muted-foreground mb-6">Please generate a new workout</p>
-          <Button onClick={() => navigate('/home')} className="bg-primary hover:bg-primary/90">
-            Go to Home
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  const { sections } = workoutData;
 
   return (
     <div className="min-h-screen bg-[#0A1F2E] flex flex-col">
@@ -197,14 +113,13 @@ const Workout = () => {
           </div>
 
           {/* Warm-up Section */}
-          {sections?.warmup && sections.warmup.length > 0 && (
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <h3 className="text-lg font-bold text-foreground">Warm-up</h3>
-                <div className="flex-1 h-0.5 bg-[#FF9500]" />
-              </div>
-              <div className="space-y-3">
-                {sections.warmup.map((exercise: any, index: number) => (
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <h3 className="text-lg font-bold text-foreground">Warm-up</h3>
+              <div className="flex-1 h-0.5 bg-[#FF9500]" />
+            </div>
+            <div className="space-y-3">
+              {mockWorkout.warmup.map((exercise, index) => (
                 <div 
                   key={index}
                   className="rounded-xl p-4 border border-border/30"
@@ -220,7 +135,7 @@ const Workout = () => {
                     <div className="flex-1">
                       <h4 className="font-bold text-foreground mb-1">{exercise.name}</h4>
                       <p className="text-sm font-medium mb-2" style={{ color: '#FF9500' }}>
-                        {formatExerciseDisplay(exercise)}
+                        {exercise.duration}
                       </p>
                       <p className="text-sm text-muted-foreground">{exercise.instructions}</p>
                     </div>
@@ -237,17 +152,15 @@ const Workout = () => {
               ))}
             </div>
           </div>
-          )}
 
           {/* Main Workout Section */}
-          {sections?.main && sections.main.length > 0 && (
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <h3 className="text-lg font-bold text-foreground">Main Workout</h3>
-                <div className="flex-1 h-0.5 bg-primary" />
-              </div>
-              <div className="space-y-3">
-                {sections.main.map((exercise: any, index: number) => (
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <h3 className="text-lg font-bold text-foreground">Main Workout</h3>
+              <div className="flex-1 h-0.5 bg-primary" />
+            </div>
+            <div className="space-y-3">
+              {mockWorkout.main.map((exercise, index) => (
                 <div 
                   key={index}
                   className="rounded-xl p-4 border border-border/30"
@@ -260,7 +173,7 @@ const Workout = () => {
                     <div className="flex-1">
                       <h4 className="font-bold text-foreground mb-1">{exercise.name}</h4>
                       <p className="text-sm text-primary font-medium mb-2">
-                        {formatExerciseDisplay(exercise)}
+                        {exercise.duration}
                       </p>
                       <p className="text-sm text-muted-foreground">{exercise.instructions}</p>
                     </div>
@@ -287,17 +200,15 @@ const Workout = () => {
               ))}
             </div>
           </div>
-          )}
 
           {/* Cool-down Section */}
-          {sections?.cooldown && sections.cooldown.length > 0 && (
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <h3 className="text-lg font-bold text-foreground">Cool-down</h3>
-                <div className="flex-1 h-0.5 bg-[#8B5CF6]" />
-              </div>
-              <div className="space-y-3">
-                {sections.cooldown.map((exercise: any, index: number) => (
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <h3 className="text-lg font-bold text-foreground">Cool-down</h3>
+              <div className="flex-1 h-0.5 bg-[#8B5CF6]" />
+            </div>
+            <div className="space-y-3">
+              {mockWorkout.cooldown.map((exercise, index) => (
                 <div 
                   key={index}
                   className="rounded-xl p-4 border border-border/30"
@@ -313,7 +224,7 @@ const Workout = () => {
                     <div className="flex-1">
                       <h4 className="font-bold text-foreground mb-1">{exercise.name}</h4>
                       <p className="text-sm font-medium mb-2" style={{ color: '#8B5CF6' }}>
-                        {formatExerciseDisplay(exercise)}
+                        {exercise.duration}
                       </p>
                       <p className="text-sm text-muted-foreground">{exercise.instructions}</p>
                     </div>
@@ -330,7 +241,6 @@ const Workout = () => {
               ))}
             </div>
           </div>
-          )}
         </div>
       </div>
 

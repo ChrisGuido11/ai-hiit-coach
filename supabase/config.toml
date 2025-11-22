@@ -1,4 +1,1 @@
 project_id = "btszrtpcgvkczrszdmyj"
-
-[functions.generate-workout]
-verify_jwt = true

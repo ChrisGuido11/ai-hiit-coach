@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AIBlob } from "@/components/AIBlob";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 
 const WorkoutGeneration = () => {
   const navigate = useNavigate();
@@ -11,88 +10,36 @@ const WorkoutGeneration = () => {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    let isCancelled = false;
+    // Simulate AI workout generation with 2.5 second delay
+    const timer = setTimeout(() => {
+      // Navigate to workout details screen
+      navigate(`/workout/${framework || 'custom'}`, { 
+        state: { goal, framework },
+        replace: true 
+      });
+    }, 2500);
 
-    const generateWorkout = async () => {
-      setError(false);
-      
-      try {
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          throw new Error('User not authenticated');
-        }
-
-        // Call the edge function
-        const { data: functionData, error: functionError } = await supabase.functions.invoke('generate-workout', {
-          body: {
-            frameworkType: framework || 'Tabata',
-            sessionLengthMinutes: undefined, // Use user's preference
-            userGoalText: goal
-          }
-        });
-
-        if (functionError) {
-          console.error('Edge function error:', functionError);
-          throw functionError;
-        }
-
-        if (isCancelled) return;
-
-        // Navigate to workout details with the generated data
-        navigate(`/workout/${framework || 'custom'}`, { 
-          state: { 
-            workoutId: functionData.workoutId,
-            workoutData: functionData.workoutData,
-            framework 
-          },
-          replace: true 
-        });
-
-      } catch (err) {
-        console.error('Error generating workout:', err);
-        if (!isCancelled) {
-          setError(true);
-        }
-      }
-    };
-
-    generateWorkout();
-
-    return () => {
-      isCancelled = true;
-    };
+    return () => clearTimeout(timer);
   }, [framework, goal, navigate]);
 
   const handleRetry = () => {
-    window.location.reload();
+    setError(false);
+    // Retry logic here
   };
 
   if (error) {
     return (
       <div className="min-h-screen bg-[#0A1F2E] flex items-center justify-center p-6">
-        <div className="max-w-md mx-auto">
-          {/* Error Card */}
-          <div 
-            className="rounded-xl p-6 border text-center"
-            style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-              borderColor: 'rgba(255, 107, 107, 0.6)'
-            }}
-          >
-            <h2 className="text-lg font-bold text-foreground mb-2">
-              Something went wrong
-            </h2>
-            <p className="text-sm text-[#B0B8C1] mb-6">
-              We couldn't generate your workout. Please try again.
-            </p>
-            <Button 
-              onClick={handleRetry} 
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              Try Again
-            </Button>
-          </div>
+        <div className="text-center">
+          <h2 className="text-lg font-bold text-foreground mb-3">
+            Oops! Something went wrong
+          </h2>
+          <p className="text-sm text-[#B0B8C1] mb-6">
+            Failed to generate workout
+          </p>
+          <Button onClick={handleRetry} className="bg-primary hover:bg-primary/90">
+            Try Again
+          </Button>
         </div>
       </div>
     );
