@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { AIBlob } from "@/components/AIBlob";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Zap, Clock, Repeat, Activity, Bookmark, User, LogOut } from "lucide-react";
+import { ArrowRight, Zap, Clock, Repeat, Activity, Bookmark, User } from "lucide-react";
+import { useTypingPlaceholder } from "@/hooks/useTypingPlaceholder";
 
 const frameworks = [
   {
@@ -36,6 +37,20 @@ const frameworks = [
 const Home = () => {
   const navigate = useNavigate();
   const [goal, setGoal] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
+  
+  const suggestions = [
+    "Build upper body strength",
+    "Quick 15-minute cardio",
+    "Core and abs workout",
+    "Full body conditioning",
+    "Leg day intensity",
+    "Improve endurance",
+    "Fat burning HIIT",
+    "Beginner-friendly workout",
+  ];
+  
+  const placeholder = useTypingPlaceholder(suggestions, !isFocused && !goal);
 
   useEffect(() => {
     checkAuth();
@@ -48,10 +63,6 @@ const Home = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
 
   const handleFrameworkClick = (frameworkId: string) => {
     navigate(`/workout/${frameworkId}`);
@@ -83,9 +94,9 @@ const Home = () => {
         <p className="text-sm text-muted-foreground">AI-powered HIIT training for any level</p>
       </div>
 
-      {/* AI Blob */}
-      <div className="flex justify-center my-8">
-        <AIBlob size="medium" />
+      {/* AI Blob with Particles */}
+      <div className="flex justify-center my-6">
+        <AIBlob size="medium" withParticles />
       </div>
 
       {/* Custom Goal Input */}
@@ -94,18 +105,22 @@ const Home = () => {
           <div className="relative">
             <Input
               type="text"
-              placeholder="What's your fitness goal today?"
+              placeholder={placeholder}
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
-              className="h-14 pr-14 rounded-2xl bg-card border-border text-foreground placeholder:text-muted-foreground"
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              className="h-14 pr-14 rounded-2xl bg-background/5 border border-foreground/15 text-foreground placeholder:text-muted-foreground"
             />
-            <Button
-              type="submit"
-              size="icon"
-              className="absolute right-2 top-2 h-10 w-10 rounded-xl"
-            >
-              <ArrowRight className="w-5 h-5" />
-            </Button>
+            {goal && (
+              <Button
+                type="submit"
+                size="icon"
+                className="absolute right-2 top-2 h-10 w-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            )}
           </div>
         </form>
       </div>
@@ -118,14 +133,11 @@ const Home = () => {
         }}
       >
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-xl font-semibold text-foreground mb-3">
+          <h2 className="text-lg font-bold text-foreground mb-4">
             Or try one of these:
           </h2>
-          <p className="text-sm text-muted-foreground mb-6">
-            Pick a plan and get moving
-          </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {frameworks.map((framework) => {
               const Icon = framework.icon;
               
@@ -164,24 +176,14 @@ const Home = () => {
         }}
       >
         <div className="flex items-center justify-around h-16 max-w-2xl mx-auto">
-          <button className="flex flex-col items-center gap-1 px-4 py-2">
-            <Activity className="w-5 h-5 text-primary" />
-            <span className="text-xs font-medium text-primary">Home</span>
+          <button className="flex items-center justify-center px-4 py-2">
+            <Activity className="w-7 h-7 text-primary" />
           </button>
-          <button className="flex flex-col items-center gap-1 px-4 py-2">
-            <Bookmark className="w-5 h-5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Saved</span>
+          <button className="flex items-center justify-center px-4 py-2">
+            <Bookmark className="w-7 h-7 text-muted-foreground" />
           </button>
-          <button className="flex flex-col items-center gap-1 px-4 py-2">
-            <User className="w-5 h-5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Profile</span>
-          </button>
-          <button 
-            onClick={handleLogout}
-            className="flex flex-col items-center gap-1 px-4 py-2"
-          >
-            <LogOut className="w-5 h-5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Logout</span>
+          <button className="flex items-center justify-center px-4 py-2">
+            <User className="w-7 h-7 text-muted-foreground" />
           </button>
         </div>
       </div>
