@@ -41,14 +41,20 @@ const Duration = () => {
         const level = sessionStorage.getItem("onboarding_level") || "";
         const equipment = JSON.parse(sessionStorage.getItem("onboarding_equipment") || "[]");
 
-        // Save to database
-        const { error } = await supabase.from("user_preferences").insert({
-          user_id: session.user.id,
-          fitness_goal: goals,
-          fitness_level: level,
-          available_equipment: equipment,
-          workout_duration: selectedDuration,
-        });
+        // Save to database using upsert
+        const { error } = await supabase.from("user_preferences").upsert(
+          {
+            user_id: session.user.id,
+            fitness_goal: goals,
+            fitness_level: level,
+            available_equipment: equipment,
+            workout_duration: selectedDuration,
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: "user_id",
+          }
+        );
 
         if (error) throw error;
 
