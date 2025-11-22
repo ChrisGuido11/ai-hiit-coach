@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { AIBlob } from "@/components/AIBlob";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Zap, Clock, Repeat, Activity, Bookmark, User, LogOut } from "lucide-react";
+import { ArrowRight, Zap, Clock, Repeat, Activity, Bookmark, User } from "lucide-react";
+import { useTypingAnimation } from "@/hooks/useTypingAnimation";
 
 const frameworks = [
   {
@@ -36,6 +37,8 @@ const frameworks = [
 const Home = () => {
   const navigate = useNavigate();
   const [goal, setGoal] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
+  const animatedPlaceholder = useTypingAnimation(!isFocused && goal === "");
 
   useEffect(() => {
     checkAuth();
@@ -48,10 +51,6 @@ const Home = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
 
   const handleFrameworkClick = (frameworkId: string) => {
     navigate(`/workout/${frameworkId}`);
@@ -67,36 +66,38 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
+      {/* AI Blob */}
       <div 
-        className="p-6 text-center"
+        className="flex justify-center pt-6"
         style={{ 
           paddingTop: 'calc(1.5rem + var(--safe-area-top))'
         }}
       >
-        <h1 className="text-4xl md:text-5xl font-bold mb-1">
+        <AIBlob size="medium" />
+      </div>
+
+      {/* Header - Below AI Blob */}
+      <div className="pt-6 text-center">
+        <h1 className="text-3xl md:text-4xl font-bold mb-2">
           <span className="text-foreground">HIIT </span>
           <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             Coach
           </span>
         </h1>
-        <p className="text-sm text-muted-foreground">AI-powered HIIT training for any level</p>
-      </div>
-
-      {/* AI Blob */}
-      <div className="flex justify-center my-8">
-        <AIBlob size="medium" />
+        <p className="text-base text-muted-foreground">AI-powered HIIT training for any level</p>
       </div>
 
       {/* Custom Goal Input */}
-      <div className="px-6 mb-8">
+      <div className="px-6 mt-8 mb-6">
         <form onSubmit={handleGoalSubmit} className="max-w-2xl mx-auto">
           <div className="relative">
             <Input
               type="text"
-              placeholder="What's your fitness goal today?"
+              placeholder={animatedPlaceholder || "What's your fitness goal today?"}
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
               className="h-14 pr-14 rounded-2xl bg-card border-border text-foreground placeholder:text-muted-foreground"
             />
             <Button
@@ -118,12 +119,9 @@ const Home = () => {
         }}
       >
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-xl font-semibold text-foreground mb-3">
+          <h2 className="text-xl font-semibold text-foreground mb-6">
             Or try one of these:
           </h2>
-          <p className="text-sm text-muted-foreground mb-6">
-            Pick a plan and get moving
-          </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {frameworks.map((framework) => {
@@ -164,24 +162,14 @@ const Home = () => {
         }}
       >
         <div className="flex items-center justify-around h-16 max-w-2xl mx-auto">
-          <button className="flex flex-col items-center gap-1 px-4 py-2">
-            <Activity className="w-5 h-5 text-primary" />
-            <span className="text-xs font-medium text-primary">Home</span>
+          <button className="flex items-center justify-center p-3">
+            <Activity className="w-6 h-6 text-primary" />
           </button>
-          <button className="flex flex-col items-center gap-1 px-4 py-2">
-            <Bookmark className="w-5 h-5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Saved</span>
+          <button className="flex items-center justify-center p-3">
+            <Bookmark className="w-6 h-6 text-muted-foreground" />
           </button>
-          <button className="flex flex-col items-center gap-1 px-4 py-2">
-            <User className="w-5 h-5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Profile</span>
-          </button>
-          <button 
-            onClick={handleLogout}
-            className="flex flex-col items-center gap-1 px-4 py-2"
-          >
-            <LogOut className="w-5 h-5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Logout</span>
+          <button className="flex items-center justify-center p-3">
+            <User className="w-6 h-6 text-muted-foreground" />
           </button>
         </div>
       </div>
