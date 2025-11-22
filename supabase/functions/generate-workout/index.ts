@@ -90,6 +90,8 @@ EXERCISE SELECTION:
 JSON REQUIREMENTS:
 - framework_meta MUST include: rounds, exercise_count
 - Each main exercise MUST have: type="emom", reps=[number], name, instructions
+- The "reps" field MUST be a numeric value (e.g., "reps": 10)
+- DO NOT omit the "reps" field, and DO NOT rename it to "repetitions" or "rep_count"
 - DO NOT include duration_seconds or minute_block_count for EMOM main work
 - Instructions = 1 SHORT sentence about form/technique only (NOT protocol explanation)
 - Examples: "Keep elbows close to ribs, body in straight line", "Sit hips back, chest proud, drive through heels"
@@ -209,6 +211,28 @@ Rules:
     
     console.log('Raw AI response:', generatedText);
 
+    // Helper function to normalize EMOM exercises
+    function normalizeEmomExercise(ex: any) {
+      if (ex.type === "emom") {
+        // Ensure reps field exists
+        if (typeof ex.reps !== "number") {
+          // Try common variations
+          if (typeof ex.rep_count === "number") {
+            ex.reps = ex.rep_count;
+            delete ex.rep_count;
+          } else if (typeof ex.repetitions === "number") {
+            ex.reps = ex.repetitions;
+            delete ex.repetitions;
+          } else {
+            // Fallback: assign a default based on fitness level
+            console.warn(`EMOM exercise "${ex.name}" missing reps, using fallback`);
+            ex.reps = 10; // Safe default
+          }
+        }
+      }
+      return ex;
+    }
+
     // Parse JSON from response
     let workoutData;
     try {
@@ -219,6 +243,12 @@ Rules:
       console.error('JSON parse error:', parseError);
       console.error('Attempted to parse:', generatedText);
       throw new Error('Failed to parse AI response as JSON');
+    }
+
+    // Apply normalization to EMOM workouts
+    if (frameworkType === 'EMOM' && workoutData.sections?.main) {
+      workoutData.sections.main = workoutData.sections.main.map(normalizeEmomExercise);
+      console.log('Normalized EMOM exercises:', workoutData.sections.main);
     }
 
     // Save workout to database
