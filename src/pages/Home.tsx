@@ -94,9 +94,9 @@ const Home = () => {
         <p className="text-sm text-muted-foreground">AI-powered HIIT training for any level</p>
       </div>
 
-      {/* AI Blob with Particles */}
+      {/* AI Blob */}
       <div className="flex justify-center my-6">
-        <AIBlob size="medium" withParticles />
+        <AIBlob size="medium" />
       </div>
 
       {/* Custom Goal Input */}
@@ -145,17 +145,17 @@ const Home = () => {
                 <button
                   key={framework.id}
                   onClick={() => handleFrameworkClick(framework.id)}
-                  className="p-6 rounded-2xl border-2 border-border bg-card hover:border-primary/50 hover:bg-primary/5 transition-all text-left group"
+                  className="p-4 rounded-2xl border-2 border-border bg-card hover:border-primary/50 hover:bg-primary/5 transition-all text-left group"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                      <Icon className="w-6 h-6 text-primary" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors flex-shrink-0">
+                      <Icon className="w-5 h-5 text-primary" />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg text-foreground mb-1">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-base text-foreground leading-tight">
                         {framework.name}
                       </h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs text-muted-foreground leading-tight mt-0.5">
                         {framework.description}
                       </p>
                     </div>
