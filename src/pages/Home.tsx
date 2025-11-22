@@ -53,14 +53,14 @@ const Home = () => {
 
 
   const handleFrameworkClick = (frameworkId: string) => {
-    navigate(`/workout/${frameworkId}`);
+    navigate('/workout/generate', { state: { framework: frameworkId } });
   };
 
   const handleGoalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (goal.trim()) {
-      // TODO: Process custom goal
-      console.log("Custom goal:", goal);
+      navigate('/workout/generate', { state: { goal } });
+      setGoal('');
     }
   };
 
