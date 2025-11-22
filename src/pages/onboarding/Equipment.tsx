@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Dumbbell, Package, Home } from "lucide-react";
 
@@ -14,6 +15,14 @@ const Equipment = () => {
   const navigate = useNavigate();
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate("/auth");
+      }
+    });
+  }, [navigate]);
+
   const toggleEquipment = (equipmentId: string) => {
     setSelectedEquipment((prev) =>
       prev.includes(equipmentId)
@@ -24,6 +33,7 @@ const Equipment = () => {
 
   const handleNext = () => {
     if (selectedEquipment.length > 0) {
+      sessionStorage.setItem("onboarding_equipment", JSON.stringify(selectedEquipment));
       navigate("/onboarding/duration");
     }
   };

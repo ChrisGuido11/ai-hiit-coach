@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
@@ -25,8 +26,17 @@ const Level = () => {
   const navigate = useNavigate();
   const [selectedLevel, setSelectedLevel] = useState<string>("");
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate("/auth");
+      }
+    });
+  }, [navigate]);
+
   const handleNext = () => {
     if (selectedLevel) {
+      sessionStorage.setItem("onboarding_level", selectedLevel);
       navigate("/onboarding/equipment");
     }
   };

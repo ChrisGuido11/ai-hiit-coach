@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Target, Flame, TrendingUp, Heart, Zap } from "lucide-react";
 
@@ -15,6 +16,15 @@ const Goal = () => {
   const navigate = useNavigate();
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
 
+  useEffect(() => {
+    // Check if user is authenticated
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate("/auth");
+      }
+    });
+  }, [navigate]);
+
   const toggleGoal = (goalId: string) => {
     setSelectedGoals((prev) =>
       prev.includes(goalId)
@@ -25,6 +35,8 @@ const Goal = () => {
 
   const handleNext = () => {
     if (selectedGoals.length > 0) {
+      // Store in sessionStorage to pass to next screens
+      sessionStorage.setItem("onboarding_goals", JSON.stringify(selectedGoals));
       navigate("/onboarding/level");
     }
   };
