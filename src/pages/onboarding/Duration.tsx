@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Clock } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import SuccessScreen from "@/components/SuccessScreen";
 
 const durations = [
   { id: "15", label: "15 minutes", description: "Quick workout" },
@@ -14,9 +14,9 @@ const durations = [
 
 const Duration = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [selectedDuration, setSelectedDuration] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -63,23 +63,20 @@ const Duration = () => {
         sessionStorage.removeItem("onboarding_level");
         sessionStorage.removeItem("onboarding_equipment");
 
-        toast({
-          title: "Profile setup complete!",
-          description: "Let's start your fitness journey.",
-        });
-
-        navigate("/home");
+        // Show success screen
+        setShowSuccess(true);
       } catch (error: any) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
+        console.error("Error saving preferences:", error);
       } finally {
         setLoading(false);
       }
     }
   };
+
+
+  if (showSuccess) {
+    return <SuccessScreen onComplete={() => navigate("/home")} />;
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col p-6 md:p-8">
