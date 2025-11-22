@@ -2,13 +2,32 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Dumbbell, Package, Home } from "lucide-react";
+import { 
+  ArrowRight, 
+  Dumbbell, 
+  User, 
+  Activity, 
+  Minus, 
+  Zap,
+  Circle,
+  Box,
+  Link2,
+  Square
+} from "lucide-react";
 
 const equipment = [
-  { id: "bodyweight", label: "Bodyweight Only", icon: Home },
+  { id: "bodyweight", label: "Bodyweight Only", icon: User },
   { id: "dumbbells", label: "Dumbbells", icon: Dumbbell },
-  { id: "resistance", label: "Resistance Bands", icon: Package },
-  { id: "gym", label: "Full Gym Access", icon: Dumbbell },
+  { id: "kettlebell", label: "Kettlebell", icon: Dumbbell },
+  { id: "resistance", label: "Resistance Bands", icon: Activity },
+  { id: "pullup", label: "Pull-up Bar", icon: Minus },
+  { id: "jumprope", label: "Jump Rope", icon: Zap },
+  { id: "medicineball", label: "Medicine Ball", icon: Circle },
+  { id: "barbell", label: "Barbell", icon: Dumbbell },
+  { id: "bench", label: "Bench", icon: Box },
+  { id: "trx", label: "TRX / Suspension Trainer", icon: Link2 },
+  { id: "foamroller", label: "Foam Roller", icon: Circle },
+  { id: "mat", label: "Exercise Mat", icon: Square },
 ];
 
 const Equipment = () => {
@@ -52,12 +71,13 @@ const Equipment = () => {
           ))}
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-          What equipment do you have?
+          Your Equipment
         </h1>
-        <p className="text-muted-foreground">Select all that apply</p>
+        <p className="text-muted-foreground mb-1">What equipment do you have access to?</p>
+        <p className="text-muted-foreground text-sm italic">Select all that apply</p>
       </div>
 
-      <div className="flex-1 flex flex-col gap-3 max-w-2xl mx-auto w-full">
+      <div className="flex-1 grid grid-cols-2 gap-3 max-w-2xl mx-auto w-full mt-6">
         {equipment.map((item) => {
           const Icon = item.icon;
           const isSelected = selectedEquipment.includes(item.id);
@@ -66,16 +86,14 @@ const Equipment = () => {
             <button
               key={item.id}
               onClick={() => toggleEquipment(item.id)}
-              className={`p-6 rounded-2xl border-2 transition-all text-left flex items-center gap-4 ${
+              className={`p-4 rounded-xl transition-all flex flex-col items-center justify-center gap-2 ${
                 isSelected
-                  ? "border-primary bg-primary/10 shadow-[0_0_20px_rgba(0,217,192,0.3)]"
-                  : "border-border bg-card hover:border-primary/50"
+                  ? "border-2 border-primary bg-primary/5"
+                  : "border border-border/20 bg-card/5 hover:border-primary/30"
               }`}
             >
-              <div className={`p-3 rounded-xl ${isSelected ? "bg-primary/20" : "bg-muted"}`}>
-                <Icon className={`w-6 h-6 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
-              </div>
-              <span className={`text-lg font-medium ${isSelected ? "text-foreground" : "text-card-foreground"}`}>
+              <Icon className={`w-8 h-8 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+              <span className={`text-sm text-center ${isSelected ? "text-foreground" : "text-muted-foreground"}`}>
                 {item.label}
               </span>
             </button>
