@@ -36,9 +36,10 @@ const formatExerciseDisplay = (exercise: any) => {
   } else if (exercise.type === "tabata") {
     return `${exercise.work_seconds}s work / ${exercise.rest_seconds}s rest`;
   } else if (exercise.type === "emom") {
-    const reps = typeof exercise.reps === "number" ? exercise.reps : null;
+    const reps = typeof exercise.reps === "number" ? exercise.reps : 
+                 (typeof exercise.reps === "string" ? parseInt(exercise.reps) : null);
     if (!reps) {
-      console.warn('EMOM exercise missing reps:', exercise.name);
+      console.warn('EMOM exercise missing reps:', exercise.name, exercise);
       return ""; // Don't show broken subtitle
     }
     return `${reps} reps`;
@@ -66,6 +67,9 @@ const Workout = () => {
         // Debug EMOM data
         if (framework === 'emom') {
           console.log('DEBUG EMOM workoutData.sections.main:', location.state.workoutData?.sections?.main);
+          location.state.workoutData?.sections?.main?.forEach((ex: any, i: number) => {
+            console.log(`Exercise ${i}: type="${ex.type}", reps=${ex.reps} (${typeof ex.reps})`);
+          });
         }
         
         setLoading(false);
@@ -87,6 +91,9 @@ const Workout = () => {
           // Debug EMOM data
           if (framework === 'emom' && data.exercises) {
             console.log('DEBUG EMOM workoutData.sections.main:', (data.exercises as any)?.sections?.main);
+            (data.exercises as any)?.sections?.main?.forEach((ex: any, i: number) => {
+              console.log(`Exercise ${i}: type="${ex.type}", reps=${ex.reps} (${typeof ex.reps})`);
+            });
           }
         } catch (error) {
           console.error('Error loading workout:', error);

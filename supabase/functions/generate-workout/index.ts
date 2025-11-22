@@ -214,18 +214,28 @@ Rules:
     // Helper function to normalize EMOM exercises
     function normalizeEmomExercise(ex: any) {
       if (ex.type === "emom") {
-        // Ensure reps field exists
+        // Ensure reps field exists and is a number
         if (typeof ex.reps !== "number") {
+          // Try parsing as number if it's a string
+          if (typeof ex.reps === "string" && !isNaN(parseInt(ex.reps))) {
+            ex.reps = parseInt(ex.reps);
+          }
           // Try common variations
-          if (typeof ex.rep_count === "number") {
+          else if (typeof ex.rep_count === "number") {
             ex.reps = ex.rep_count;
+            delete ex.rep_count;
+          } else if (typeof ex.rep_count === "string" && !isNaN(parseInt(ex.rep_count))) {
+            ex.reps = parseInt(ex.rep_count);
             delete ex.rep_count;
           } else if (typeof ex.repetitions === "number") {
             ex.reps = ex.repetitions;
             delete ex.repetitions;
+          } else if (typeof ex.repetitions === "string" && !isNaN(parseInt(ex.repetitions))) {
+            ex.reps = parseInt(ex.repetitions);
+            delete ex.repetitions;
           } else {
             // Fallback: assign a default based on fitness level
-            console.warn(`EMOM exercise "${ex.name}" missing reps, using fallback`);
+            console.warn(`EMOM exercise "${ex.name}" missing valid reps, using fallback`);
             ex.reps = 10; // Safe default
           }
         }
