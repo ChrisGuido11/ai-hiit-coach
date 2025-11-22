@@ -4,8 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AIBlob } from "@/components/AIBlob";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Zap, Clock, Repeat, Activity, Bookmark, User } from "lucide-react";
-import { useTypingPlaceholder } from "@/hooks/useTypingPlaceholder";
+import { ArrowRight, Zap, Clock, Repeat, Activity, Bookmark, User, LogOut } from "lucide-react";
 
 const frameworks = [
   {
@@ -37,20 +36,6 @@ const frameworks = [
 const Home = () => {
   const navigate = useNavigate();
   const [goal, setGoal] = useState("");
-  const [isFocused, setIsFocused] = useState(false);
-  
-  const suggestions = [
-    "Build upper body strength",
-    "Quick 15-minute cardio",
-    "Core and abs workout",
-    "Full body conditioning",
-    "Leg day intensity",
-    "Improve endurance",
-    "Fat burning HIIT",
-    "Beginner-friendly workout",
-  ];
-  
-  const placeholder = useTypingPlaceholder(suggestions, !isFocused && !goal);
 
   useEffect(() => {
     checkAuth();
@@ -63,6 +48,10 @@ const Home = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
 
   const handleFrameworkClick = (frameworkId: string) => {
     navigate(`/workout/${frameworkId}`);
@@ -95,7 +84,7 @@ const Home = () => {
       </div>
 
       {/* AI Blob */}
-      <div className="flex justify-center my-6">
+      <div className="flex justify-center my-8">
         <AIBlob size="medium" />
       </div>
 
@@ -105,22 +94,18 @@ const Home = () => {
           <div className="relative">
             <Input
               type="text"
-              placeholder={placeholder}
+              placeholder="What's your fitness goal today?"
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              className="h-14 pr-14 rounded-2xl bg-background/5 border border-foreground/15 text-foreground placeholder:text-muted-foreground"
+              className="h-14 pr-14 rounded-2xl bg-card border-border text-foreground placeholder:text-muted-foreground"
             />
-            {goal && (
-              <Button
-                type="submit"
-                size="icon"
-                className="absolute right-2 top-2 h-10 w-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                <ArrowRight className="w-5 h-5" />
-              </Button>
-            )}
+            <Button
+              type="submit"
+              size="icon"
+              className="absolute right-2 top-2 h-10 w-10 rounded-xl"
+            >
+              <ArrowRight className="w-5 h-5" />
+            </Button>
           </div>
         </form>
       </div>
@@ -133,11 +118,14 @@ const Home = () => {
         }}
       >
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-lg font-bold text-foreground mb-4">
+          <h2 className="text-xl font-semibold text-foreground mb-3">
             Or try one of these:
           </h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Pick a plan and get moving
+          </p>
           
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {frameworks.map((framework) => {
               const Icon = framework.icon;
               
@@ -145,17 +133,17 @@ const Home = () => {
                 <button
                   key={framework.id}
                   onClick={() => handleFrameworkClick(framework.id)}
-                  className="p-4 rounded-2xl border-2 border-border bg-card hover:border-primary/50 hover:bg-primary/5 transition-all text-left group"
+                  className="p-6 rounded-2xl border-2 border-border bg-card hover:border-primary/50 hover:bg-primary/5 transition-all text-left group"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors flex-shrink-0">
-                      <Icon className="w-5 h-5 text-primary" />
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      <Icon className="w-6 h-6 text-primary" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-base text-foreground leading-tight">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg text-foreground mb-1">
                         {framework.name}
                       </h3>
-                      <p className="text-xs text-muted-foreground leading-tight mt-0.5">
+                      <p className="text-sm text-muted-foreground">
                         {framework.description}
                       </p>
                     </div>
@@ -176,14 +164,24 @@ const Home = () => {
         }}
       >
         <div className="flex items-center justify-around h-16 max-w-2xl mx-auto">
-          <button className="flex items-center justify-center px-4 py-2">
-            <Activity className="w-7 h-7 text-primary" />
+          <button className="flex flex-col items-center gap-1 px-4 py-2">
+            <Activity className="w-5 h-5 text-primary" />
+            <span className="text-xs font-medium text-primary">Home</span>
           </button>
-          <button className="flex items-center justify-center px-4 py-2">
-            <Bookmark className="w-7 h-7 text-muted-foreground" />
+          <button className="flex flex-col items-center gap-1 px-4 py-2">
+            <Bookmark className="w-5 h-5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Saved</span>
           </button>
-          <button className="flex items-center justify-center px-4 py-2">
-            <User className="w-7 h-7 text-muted-foreground" />
+          <button className="flex flex-col items-center gap-1 px-4 py-2">
+            <User className="w-5 h-5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Profile</span>
+          </button>
+          <button 
+            onClick={handleLogout}
+            className="flex flex-col items-center gap-1 px-4 py-2"
+          >
+            <LogOut className="w-5 h-5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Logout</span>
           </button>
         </div>
       </div>
