@@ -68,6 +68,12 @@ EMOM (Every Minute On the Minute) Rules:
 - Advanced: 15-20 minutes total, 18-25 reps per minute
 - Each exercise in main section MUST have: type="emom", reps=[number], minute_block_count=[minutes for this exercise]
 - Total session length target: ${workoutDuration} minutes
+
+IMPORTANT - Exercise Instructions Format:
+- DO NOT explain the EMOM protocol in individual exercise instructions
+- Each exercise's "instructions" field should be 1 SHORT sentence about form, technique, or breathing
+- Examples: "Keep elbows close to ribs, body in straight line", "Sit hips back, chest proud, drive through heels"
+- The EMOM timing/structure is shown in the framework description card, not in exercise cards
 `;
     } else if (frameworkType === 'AMRAP') {
       frameworkRules = `
@@ -137,7 +143,8 @@ Rules:
 - Cooldown: 2-3 stretches, type="time", 30-45 seconds each
 - Main: Follow framework rules EXACTLY
 - Only use available equipment
-- Instructions must be clear and safe for the fitness level
+- For EMOM exercises: instructions should be concise form/technique cues only (1 short sentence)
+- For all other exercises: instructions must be clear and safe for the fitness level
 - Return ONLY the JSON object, no markdown, no explanations`;
 
     const userPrompt = `Generate a ${workoutDuration}-minute ${frameworkType} workout for a ${fitnessLevel} user focusing on: ${goalText}`;

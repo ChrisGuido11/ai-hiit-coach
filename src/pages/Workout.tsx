@@ -12,7 +12,7 @@ const frameworkDetails: Record<string, { fullName: string; description: string; 
   },
   emom: {
     fullName: "Every Minute On the Minute",
-    description: "Complete a set number of reps at the start of each minute, then rest for the remainder. Repeat for the specified duration.",
+    description: "Complete the prescribed reps at the start of each minute, then rest for the remainder of that 60-second window. When the next minute starts, you go again.",
     benefits: "Builds strength and endurance while teaching pace management and mental toughness under time pressure."
   },
   amrap: {
