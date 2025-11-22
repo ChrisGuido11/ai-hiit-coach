@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Clock } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const durations = [
   { id: "15", label: "15 minutes", description: "Quick workout" },
@@ -12,11 +14,64 @@ const durations = [
 
 const Duration = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [selectedDuration, setSelectedDuration] = useState<string>("");
+  const [loading, setLoading] = useState(false);
 
-  const handleNext = () => {
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate("/auth");
+      }
+    });
+  }, [navigate]);
+
+  const handleNext = async () => {
     if (selectedDuration) {
-      navigate("/home");
+      setLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          navigate("/auth");
+          return;
+        }
+
+        // Get all onboarding data from sessionStorage
+        const goals = JSON.parse(sessionStorage.getItem("onboarding_goals") || "[]");
+        const level = sessionStorage.getItem("onboarding_level") || "";
+        const equipment = JSON.parse(sessionStorage.getItem("onboarding_equipment") || "[]");
+
+        // Save to database
+        const { error } = await supabase.from("user_preferences").insert({
+          user_id: session.user.id,
+          fitness_goal: goals,
+          fitness_level: level,
+          available_equipment: equipment,
+          workout_duration: selectedDuration,
+        });
+
+        if (error) throw error;
+
+        // Clear sessionStorage
+        sessionStorage.removeItem("onboarding_goals");
+        sessionStorage.removeItem("onboarding_level");
+        sessionStorage.removeItem("onboarding_equipment");
+
+        toast({
+          title: "Profile setup complete!",
+          description: "Let's start your fitness journey.",
+        });
+
+        navigate("/home");
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -69,11 +124,11 @@ const Duration = () => {
 
       <Button
         onClick={handleNext}
-        disabled={!selectedDuration}
+        disabled={!selectedDuration || loading}
         className="mt-8 w-full max-w-2xl mx-auto h-14 text-lg font-semibold rounded-2xl"
         size="lg"
       >
-        Get Started
+        {loading ? "Saving..." : "Get Started"}
         <ArrowRight className="ml-2 w-5 h-5" />
       </Button>
     </div>

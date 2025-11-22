@@ -1,17 +1,50 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { AIBlob } from "@/components/AIBlob";
 
 const Splash = () => {
   const navigate = useNavigate();
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      navigate("/onboarding/goal");
-    }, 2500);
+    checkAuthAndNavigate();
+  }, []);
 
-    return () => clearTimeout(timer);
-  }, [navigate]);
+  const checkAuthAndNavigate = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        // Check if user has completed onboarding
+        const { data: preferences } = await supabase
+          .from("user_preferences")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+
+        setTimeout(() => {
+          if (preferences) {
+            navigate("/home");
+          } else {
+            navigate("/onboarding/goal");
+          }
+        }, 2500);
+      } else {
+        // No session, go to auth
+        setTimeout(() => {
+          navigate("/auth");
+        }, 2500);
+      }
+    } catch (error) {
+      console.error("Error checking auth:", error);
+      setTimeout(() => {
+        navigate("/auth");
+      }, 2500);
+    } finally {
+      setIsChecking(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8">

@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { AIBlob } from "@/components/AIBlob";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Zap, Clock, Repeat, Activity, Bookmark, User } from "lucide-react";
+import { ArrowRight, Zap, Clock, Repeat, Activity, Bookmark, User, LogOut } from "lucide-react";
 
 const frameworks = [
   {
@@ -35,6 +36,22 @@ const frameworks = [
 const Home = () => {
   const navigate = useNavigate();
   const [goal, setGoal] = useState("");
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      navigate("/auth");
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
 
   const handleFrameworkClick = (frameworkId: string) => {
     navigate(`/workout/${frameworkId}`);
@@ -158,6 +175,13 @@ const Home = () => {
           <button className="flex flex-col items-center gap-1 px-4 py-2">
             <User className="w-5 h-5 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Profile</span>
+          </button>
+          <button 
+            onClick={handleLogout}
+            className="flex flex-col items-center gap-1 px-4 py-2"
+          >
+            <LogOut className="w-5 h-5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Logout</span>
           </button>
         </div>
       </div>
