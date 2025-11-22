@@ -51,7 +51,12 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="p-6 text-center">
+      <div 
+        className="p-6 text-center"
+        style={{ 
+          paddingTop: 'calc(1.5rem + var(--safe-area-top))'
+        }}
+      >
         <h1 className="text-4xl md:text-5xl font-bold mb-1">
           <span className="text-foreground">HIIT </span>
           <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
@@ -89,7 +94,12 @@ const Home = () => {
       </div>
 
       {/* Framework Cards */}
-      <div className="flex-1 px-6 pb-24">
+      <div 
+        className="flex-1 px-6"
+        style={{ 
+          paddingBottom: 'calc(6rem + var(--safe-area-bottom))'
+        }}
+      >
         <div className="max-w-2xl mx-auto">
           <h2 className="text-xl font-semibold text-foreground mb-3">
             Or try one of these:
@@ -129,7 +139,13 @@ const Home = () => {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border">
+      <div 
+        className="fixed bottom-0 left-0 right-0 bg-card border-t border-border"
+        style={{ 
+          paddingBottom: 'var(--safe-area-bottom)',
+          minHeight: 'calc(4rem + var(--safe-area-bottom))'
+        }}
+      >
         <div className="flex items-center justify-around h-16 max-w-2xl mx-auto">
           <button className="flex flex-col items-center gap-1 px-4 py-2">
             <Activity className="w-5 h-5 text-primary" />
