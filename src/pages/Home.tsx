@@ -93,7 +93,7 @@ const Home = () => {
           <div className="relative">
             <Input
               type="text"
-              placeholder={animatedPlaceholder || "What's your fitness goal today?"}
+              placeholder={animatedPlaceholder}
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
               onFocus={() => setIsFocused(true)}
