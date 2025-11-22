@@ -36,7 +36,12 @@ const formatExerciseDisplay = (exercise: any) => {
   } else if (exercise.type === "tabata") {
     return `${exercise.work_seconds}s work / ${exercise.rest_seconds}s rest`;
   } else if (exercise.type === "emom") {
-    return `${exercise.reps} reps`;
+    const reps = typeof exercise.reps === "number" ? exercise.reps : null;
+    if (!reps) {
+      console.warn('EMOM exercise missing reps:', exercise.name);
+      return ""; // Don't show broken subtitle
+    }
+    return `${reps} reps`;
   }
   return "";
 };
@@ -57,6 +62,12 @@ const Workout = () => {
       // First, try to get workout data from navigation state
       if (location.state?.workoutData) {
         setWorkoutData(location.state.workoutData);
+        
+        // Debug EMOM data
+        if (framework === 'emom') {
+          console.log('DEBUG EMOM workoutData.sections.main:', location.state.workoutData?.sections?.main);
+        }
+        
         setLoading(false);
         return;
       }
@@ -72,6 +83,11 @@ const Workout = () => {
 
           if (error) throw error;
           setWorkoutData(data.exercises);
+          
+          // Debug EMOM data
+          if (framework === 'emom' && data.exercises) {
+            console.log('DEBUG EMOM workoutData.sections.main:', (data.exercises as any)?.sections?.main);
+          }
         } catch (error) {
           console.error('Error loading workout:', error);
         }
