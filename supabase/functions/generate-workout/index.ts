@@ -62,18 +62,43 @@ Tabata Protocol Rules:
     } else if (frameworkType === 'EMOM') {
       frameworkRules = `
 EMOM (Every Minute On the Minute) Rules:
-- User completes X reps at the start of each minute, rests for remainder
-- Beginner: 10-12 minutes total, 8-12 reps per minute
-- Intermediate: 12-15 minutes total, 12-18 reps per minute
-- Advanced: 15-20 minutes total, 18-25 reps per minute
-- Each exercise in main section MUST have: type="emom", reps=[number], minute_block_count=[minutes for this exercise]
-- Total session length target: ${workoutDuration} minutes
 
-IMPORTANT - Exercise Instructions Format:
-- DO NOT explain the EMOM protocol in individual exercise instructions
-- Each exercise's "instructions" field should be 1 SHORT sentence about form, technique, or breathing
+CORE CONCEPT:
+- Each minute is always 60 seconds
+- At the start of each minute, user does fixed reps, then rests for remainder
+- Station-based structure: multiple exercises cycling through rounds
+
+STRUCTURE (Stations + Rounds):
+- Beginner: 2-3 exercises (stations), 8-15 minutes total
+- Intermediate: 3-4 exercises, 12-18 minutes total  
+- Advanced: 3-5 exercises, 15-25 minutes total (max 25 minutes)
+- Calculate rounds: rounds = session_length_minutes / exercise_count (round to nearest whole, min 2)
+- Execution: Minute 1 → exercise 1, Minute 2 → exercise 2, etc., then repeat
+
+REPS INTENSITY (assume 30-45s work time):
+- Beginner: 6-10 reps (demanding moves), 10-15 reps (easier moves)
+- Intermediate: 8-12 reps (demanding), 12-18 reps (easier)
+- Advanced: 10-15+ reps (demanding), 15-25 reps (easier)
+
+EXERCISE SELECTION:
+- Mix movement patterns: at least 1 lower-body, 1 upper-body, 1 core/cardio
+- Avoid repeating same muscle group across all stations
+- Match available equipment: ${availableEquipment.join(', ')}
+- Respect goal: ${goalText}
+- Respect constraints (no jumping, bad knees, etc. if mentioned)
+
+JSON REQUIREMENTS:
+- framework_meta MUST include: rounds, exercise_count
+- Each main exercise MUST have: type="emom", reps=[number], name, instructions
+- DO NOT include duration_seconds or minute_block_count for EMOM main work
+- Instructions = 1 SHORT sentence about form/technique only (NOT protocol explanation)
 - Examples: "Keep elbows close to ribs, body in straight line", "Sit hips back, chest proud, drive through heels"
-- The EMOM timing/structure is shown in the framework description card, not in exercise cards
+
+SAFETY:
+- Always include 3+ warm-up exercises (type="time", 30-60s each)
+- Always include 3+ cool-down stretches (type="time", 30-60s each)
+- For beginners: simpler bodyweight movements, 2-3 stations, 8-15 min
+- Don't use only high-impact plyometrics across all stations
 `;
     } else if (frameworkType === 'AMRAP') {
       frameworkRules = `
@@ -139,8 +164,8 @@ CRITICAL JSON STRUCTURE - Return ONLY valid JSON, no other text:
 }
 
 Rules:
-- Warmup: 2-3 exercises, type="time", 30-60 seconds each
-- Cooldown: 2-3 stretches, type="time", 30-45 seconds each
+- Warmup: 3+ exercises, type="time", 30-60 seconds each
+- Cooldown: 3+ stretches, type="time", 30-45 seconds each
 - Main: Follow framework rules EXACTLY
 - Only use available equipment
 - For EMOM exercises: instructions should be concise form/technique cues only (1 short sentence)
