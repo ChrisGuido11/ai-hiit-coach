@@ -31,8 +31,12 @@ interface WorkoutStats {
 
 const WORK_DURATION = 20;
 const REST_DURATION = 10;
-const ROUNDS_PER_EXERCISE = 8;
 const TRANSITION_DURATION = 10;
+
+// Phase-specific round counts (each round cycles through ALL exercises)
+const WARMUP_ROUNDS = 2;
+const MAIN_ROUNDS = 8;
+const COOLDOWN_ROUNDS = 1; // Cooldown just goes through once
 
 // Phase colors
 const phaseColors = {
@@ -216,7 +220,42 @@ const TabataTimer = () => {
 
   const currentExercises = getCurrentExercises();
   const currentExercise = currentExercises[timerState.exerciseIndex];
-  const nextExercise = currentExercises[timerState.exerciseIndex + 1];
+
+  // Get max rounds for current phase
+  const getMaxRounds = useCallback((): number => {
+    switch (timerState.phase) {
+      case "warmup":
+        return WARMUP_ROUNDS;
+      case "main":
+        return MAIN_ROUNDS;
+      case "cooldown":
+        return COOLDOWN_ROUNDS;
+      default:
+        return MAIN_ROUNDS;
+    }
+  }, [timerState.phase]);
+
+  const maxRounds = getMaxRounds();
+
+  // Get next exercise in the rotation (cycles within the round)
+  const getNextExerciseInRotation = useCallback((): { exercise: Exercise | null; isNextRound: boolean; isNextPhase: boolean } => {
+    const exercises = getCurrentExercises();
+    const nextIndex = timerState.exerciseIndex + 1;
+
+    if (nextIndex < exercises.length) {
+      // Next exercise in current round
+      return { exercise: exercises[nextIndex], isNextRound: false, isNextPhase: false };
+    } else {
+      // Finished all exercises in this round
+      if (timerState.round < maxRounds) {
+        // Start next round with first exercise
+        return { exercise: exercises[0], isNextRound: true, isNextPhase: false };
+      } else {
+        // Move to next phase
+        return { exercise: null, isNextRound: false, isNextPhase: true };
+      }
+    }
+  }, [getCurrentExercises, timerState.exerciseIndex, timerState.round, maxRounds]);
 
   // Get next phase's first exercise name
   const getNextPhaseExercise = useCallback((): string | undefined => {
@@ -268,22 +307,17 @@ const TabataTimer = () => {
     vibrate([100, 50, 100]);
   }, [typedWorkout, speak, vibrate]);
 
-  // Start exercise transition
-  const startExerciseTransition = useCallback((nextExerciseName: string) => {
-    setTransition({
-      type: "exercise",
-      countdown: TRANSITION_DURATION,
-      nextExerciseName,
-    });
-    speak(`Next exercise: ${nextExerciseName}`, true);
-    vibrate([50, 25, 50]);
-  }, [speak, vibrate]);
-
-  // Move to next state
+  // Move to next state - cycles through exercises within each round
   const advanceTimer = useCallback(() => {
     setTimerState((prev) => {
-      // Main phase logic (Tabata intervals)
+      const phaseMaxRounds = prev.phase === "warmup" ? WARMUP_ROUNDS
+        : prev.phase === "main" ? MAIN_ROUNDS
+        : COOLDOWN_ROUNDS;
+
+      // Main phase logic (Tabata intervals with exercise cycling)
       if (prev.phase === "main") {
+        const mainExercises = typedWorkout?.main || [];
+
         if (prev.intervalType === "work") {
           // Work -> Rest
           speak("Rest", true);
@@ -294,41 +328,44 @@ const TabataTimer = () => {
             timeRemaining: REST_DURATION,
           };
         } else {
-          // Rest -> Next round or next exercise
-          if (prev.round < ROUNDS_PER_EXERCISE) {
-            const isLastRound = prev.round === ROUNDS_PER_EXERCISE - 1;
-            if (isLastRound) {
-              speak("Last round!", true);
-            } else {
-              speak("Work!", true);
-            }
+          // Rest -> Next exercise in rotation or next round
+          const nextExerciseIndex = prev.exerciseIndex + 1;
+
+          setStats(s => ({ ...s, exercisesCompleted: s.exercisesCompleted + 1 }));
+
+          if (nextExerciseIndex < mainExercises.length) {
+            // Move to next exercise in the current round
+            speak(`${mainExercises[nextExerciseIndex].name}!`, true);
             vibrate([100]);
-
-            setStats(s => ({ ...s, roundsCompleted: s.roundsCompleted + 1 }));
-
             return {
               ...prev,
-              round: prev.round + 1,
+              exerciseIndex: nextExerciseIndex,
               intervalType: "work",
               timeRemaining: WORK_DURATION,
             };
           } else {
-            // Finished all rounds for this exercise
-            const nextIndex = prev.exerciseIndex + 1;
-            const mainExercises = typedWorkout?.main || [];
+            // Finished all exercises in this round
+            setStats(s => ({ ...s, roundsCompleted: s.roundsCompleted + 1 }));
 
-            setStats(s => ({
-              ...s,
-              exercisesCompleted: s.exercisesCompleted + 1,
-              roundsCompleted: s.roundsCompleted + 1
-            }));
-
-            if (nextIndex < mainExercises.length) {
-              // Start transition to next exercise
-              startExerciseTransition(mainExercises[nextIndex].name);
-              return prev; // Keep current state during transition
+            if (prev.round < phaseMaxRounds) {
+              // Start next round, back to first exercise
+              const nextRound = prev.round + 1;
+              const isLastRound = nextRound === phaseMaxRounds;
+              if (isLastRound) {
+                speak(`Last round! ${mainExercises[0].name}!`, true);
+              } else {
+                speak(`Round ${nextRound}! ${mainExercises[0].name}!`, true);
+              }
+              vibrate([100, 50, 100]);
+              return {
+                ...prev,
+                round: nextRound,
+                exerciseIndex: 0,
+                intervalType: "work",
+                timeRemaining: WORK_DURATION,
+              };
             } else {
-              // Move to cooldown
+              // Finished all rounds - move to cooldown
               const cooldownExercises = typedWorkout?.cooldown || [];
               if (cooldownExercises.length > 0) {
                 startPhaseTransition("cooldown");
@@ -341,38 +378,56 @@ const TabataTimer = () => {
         }
       }
 
-      // Warmup/Cooldown logic (simple exercise timer)
+      // Warmup/Cooldown logic (cycling through exercises with rounds)
       const exercises = prev.phase === "warmup"
         ? typedWorkout?.warmup || []
         : typedWorkout?.cooldown || [];
-      const nextIndex = prev.exerciseIndex + 1;
+      const nextExerciseIndex = prev.exerciseIndex + 1;
 
       setStats(s => ({ ...s, exercisesCompleted: s.exercisesCompleted + 1 }));
 
-      if (nextIndex < exercises.length) {
-        // Next exercise in same phase - start immediately with actual duration
-        const nextExercise = exercises[nextIndex];
+      if (nextExerciseIndex < exercises.length) {
+        // Next exercise in current round
+        const nextExercise = exercises[nextExerciseIndex];
         const nextDuration = parseDuration(nextExercise.duration);
-        speak(`Next: ${nextExercise.name}`, true);
+        speak(`${nextExercise.name}`, true);
         vibrate([50]);
         return {
           ...prev,
-          exerciseIndex: nextIndex,
+          exerciseIndex: nextExerciseIndex,
           timeRemaining: nextDuration,
         };
       } else {
-        // Move to next phase
-        if (prev.phase === "warmup") {
-          const mainExercises = typedWorkout?.main || [];
-          if (mainExercises.length > 0) {
-            startPhaseTransition("main");
-            return prev; // Keep current state during transition
+        // Finished all exercises in this round
+        setStats(s => ({ ...s, roundsCompleted: s.roundsCompleted + 1 }));
+
+        if (prev.round < phaseMaxRounds) {
+          // Start next round, back to first exercise
+          const nextRound = prev.round + 1;
+          const firstExercise = exercises[0];
+          const duration = parseDuration(firstExercise.duration);
+          speak(`Round ${nextRound}! ${firstExercise.name}`, true);
+          vibrate([100, 50, 100]);
+          return {
+            ...prev,
+            round: nextRound,
+            exerciseIndex: 0,
+            timeRemaining: duration,
+          };
+        } else {
+          // Move to next phase
+          if (prev.phase === "warmup") {
+            const mainExercises = typedWorkout?.main || [];
+            if (mainExercises.length > 0) {
+              startPhaseTransition("main");
+              return prev; // Keep current state during transition
+            }
           }
+          return { ...prev, phase: "complete" };
         }
-        return { ...prev, phase: "complete" };
       }
     });
-  }, [typedWorkout, speak, vibrate, startPhaseTransition, startExerciseTransition]);
+  }, [typedWorkout, speak, vibrate, startPhaseTransition]);
 
   // Handle transition countdown
   useEffect(() => {
@@ -1174,14 +1229,20 @@ const TabataTimer = () => {
             <span className="text-8xl font-bold text-white tabular-nums leading-none">
               {timerState.timeRemaining}
             </span>
-            {timerState.phase === "main" && (
+            {/* Show round and exercise info */}
+            <div className="flex flex-col items-center mt-3">
               <span
-                className="text-sm mt-3 font-medium transition-colors duration-300"
-                style={{ color: timerState.intervalType === "work" ? "#00D9C0" : "#64748B" }}
+                className="text-sm font-medium transition-colors duration-300"
+                style={{ color: timerState.phase === "main" && timerState.intervalType === "work" ? "#00D9C0" : "#64748B" }}
               >
-                Round {timerState.round} of {ROUNDS_PER_EXERCISE}
+                Round {timerState.round} of {maxRounds}
               </span>
-            )}
+              {currentExercises.length > 1 && (
+                <span className="text-xs mt-1 text-[#64748B]">
+                  Exercise {timerState.exerciseIndex + 1} of {currentExercises.length}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -1208,34 +1269,60 @@ const TabataTimer = () => {
           </div>
         )}
 
-        {/* Next Exercise Preview */}
-        {nextExercise && !transition && (
-          <div
-            className="flex items-center gap-2 text-sm fade-in"
-            style={{ color: '#64748B' }}
-          >
-            <span>Next:</span>
-            <span className="text-[#B0B8C1] font-medium">{nextExercise.name}</span>
-            <ChevronRight className="w-4 h-4" />
-          </div>
-        )}
+        {/* Next Exercise Preview - shows rotation within rounds */}
+        {!transition && (() => {
+          const nextInfo = getNextExerciseInRotation();
 
-        {/* Show next phase exercise on last exercise */}
-        {!nextExercise && !transition && timerState.phase !== "cooldown" && (
-          <div
-            className="flex items-center gap-2 text-sm fade-in"
-            style={{ color: '#64748B' }}
-          >
-            <span>Up next:</span>
-            <span
-              className="font-medium"
-              style={{ color: timerState.phase === "warmup" ? "#00D9C0" : "#8B5CF6" }}
-            >
-              {timerState.phase === "warmup" ? "Main Workout" : "Cool Down"}
-            </span>
-            <ChevronRight className="w-4 h-4" />
-          </div>
-        )}
+          if (nextInfo.isNextPhase) {
+            // Show next phase (or workout complete)
+            if (timerState.phase === "cooldown" || (timerState.phase === "main" && !typedWorkout?.cooldown?.length)) {
+              return (
+                <div className="flex items-center gap-2 text-sm fade-in" style={{ color: '#64748B' }}>
+                  <span>Almost done!</span>
+                  <span className="text-[#00D9C0] font-medium">Finish strong!</span>
+                </div>
+              );
+            }
+            return (
+              <div className="flex items-center gap-2 text-sm fade-in" style={{ color: '#64748B' }}>
+                <span>Up next:</span>
+                <span
+                  className="font-medium"
+                  style={{ color: timerState.phase === "warmup" ? "#00D9C0" : "#8B5CF6" }}
+                >
+                  {timerState.phase === "warmup" ? "Main Workout" : "Cool Down"}
+                </span>
+                <ChevronRight className="w-4 h-4" />
+              </div>
+            );
+          }
+
+          if (nextInfo.isNextRound) {
+            // Show next round info
+            return (
+              <div className="flex items-center gap-2 text-sm fade-in" style={{ color: '#64748B' }}>
+                <span>Next:</span>
+                <span className="text-[#B0B8C1] font-medium">
+                  Round {timerState.round + 1} → {nextInfo.exercise?.name}
+                </span>
+                <ChevronRight className="w-4 h-4" />
+              </div>
+            );
+          }
+
+          if (nextInfo.exercise) {
+            // Show next exercise in current round
+            return (
+              <div className="flex items-center gap-2 text-sm fade-in" style={{ color: '#64748B' }}>
+                <span>Next:</span>
+                <span className="text-[#B0B8C1] font-medium">{nextInfo.exercise.name}</span>
+                <ChevronRight className="w-4 h-4" />
+              </div>
+            );
+          }
+
+          return null;
+        })()}
       </div>
 
       {/* Bottom Controls */}
