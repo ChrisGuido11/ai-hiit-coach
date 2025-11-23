@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Pause, Play, X, ChevronRight, Volume2, VolumeX } from "lucide-react";
+import { Pause, Play, X, ChevronRight, Volume2, VolumeX, RefreshCw } from "lucide-react";
 import { GeneratedWorkout, Exercise } from "@/lib/generateWorkout";
 
 type TimerPhase = "warmup" | "main" | "cooldown" | "complete";
@@ -78,6 +78,9 @@ const TabataTimer = () => {
 
   const [transition, setTransition] = useState<TransitionState | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showLessonModal, setShowLessonModal] = useState(false);
+  const [showRefreshModal, setShowRefreshModal] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [stats, setStats] = useState<WorkoutStats>({
     totalTime: 0,
@@ -518,6 +521,80 @@ const TabataTimer = () => {
     setShowExitConfirm(false);
   };
 
+  // Lesson modal handlers
+  const handleLessonClick = () => {
+    setTimerState((prev) => ({ ...prev, isPaused: true }));
+    setShowLessonModal(true);
+  };
+
+  const handleLessonClose = () => {
+    setShowLessonModal(false);
+  };
+
+  // Refresh/replace exercise handlers
+  const handleRefreshClick = () => {
+    setTimerState((prev) => ({ ...prev, isPaused: true }));
+    setShowRefreshModal(true);
+  };
+
+  const handleRefreshCancel = () => {
+    setShowRefreshModal(false);
+  };
+
+  const handleRefreshConfirm = async () => {
+    if (!currentExercise || !typedWorkout) return;
+
+    setIsRefreshing(true);
+
+    // Simulate generating a new exercise (in a real app, this would call an AI API)
+    // For now, we'll create a variation of the current exercise
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Alternative exercises based on category/type
+    const alternativeExercises: Record<string, Exercise[]> = {
+      warmup: [
+        { name: "Arm Circles", duration: "45 seconds", instructions: "Make large circles with your arms, forward then backward" },
+        { name: "Hip Rotations", duration: "45 seconds", instructions: "Hands on hips, rotate hips in circles both directions" },
+        { name: "Leg Swings", duration: "45 seconds", instructions: "Hold a wall for balance, swing each leg forward and back" },
+        { name: "Torso Twists", duration: "45 seconds", instructions: "Feet shoulder-width apart, rotate upper body side to side" },
+        { name: "Neck Rolls", duration: "30 seconds", instructions: "Slowly roll your head in circles, then reverse direction" },
+      ],
+      main: [
+        { name: "Burpees", duration: "20 seconds", instructions: "Jump up, drop to plank, do a push-up, jump back up with arms overhead" },
+        { name: "Mountain Climbers", duration: "20 seconds", instructions: "In plank position, drive knees to chest alternately at high speed" },
+        { name: "Jump Squats", duration: "20 seconds", instructions: "Squat down, then explode up jumping as high as you can" },
+        { name: "High Knees", duration: "20 seconds", instructions: "Run in place, bringing knees up to hip level with each step" },
+        { name: "Plank Jacks", duration: "20 seconds", instructions: "In plank position, jump feet wide then back together" },
+        { name: "Speed Skaters", duration: "20 seconds", instructions: "Leap side to side, landing on one foot and reaching across" },
+        { name: "Tuck Jumps", duration: "20 seconds", instructions: "Jump up and tuck knees to chest at the peak" },
+      ],
+      cooldown: [
+        { name: "Standing Quad Stretch", duration: "30 seconds each side", instructions: "Stand on one leg, pull opposite foot to glute, hold for stretch" },
+        { name: "Seated Forward Fold", duration: "45 seconds", instructions: "Sit with legs extended, reach for toes while keeping back straight" },
+        { name: "Cat-Cow Stretch", duration: "45 seconds", instructions: "On all fours, alternate between arching and rounding your spine" },
+        { name: "Child's Pose", duration: "45 seconds", instructions: "Kneel, sit back on heels, extend arms forward on floor" },
+        { name: "Pigeon Pose", duration: "30 seconds each side", instructions: "One leg bent in front, other extended back, fold forward" },
+      ],
+    };
+
+    const phaseExercises = alternativeExercises[timerState.phase] || alternativeExercises.main;
+    // Pick a random exercise that's different from current
+    const availableExercises = phaseExercises.filter(e => e.name !== currentExercise.name);
+    const newExercise = availableExercises[Math.floor(Math.random() * availableExercises.length)];
+
+    // Update the workout with the new exercise
+    if (typedWorkout) {
+      const phaseKey = timerState.phase as 'warmup' | 'main' | 'cooldown';
+      if (typedWorkout[phaseKey]) {
+        typedWorkout[phaseKey][timerState.exerciseIndex] = newExercise;
+      }
+    }
+
+    speak(`New exercise: ${newExercise.name}`, true);
+    setIsRefreshing(false);
+    setShowRefreshModal(false);
+  };
+
   const handleComplete = () => {
     if (wakeLockRef.current) {
       wakeLockRef.current.release();
@@ -746,6 +823,174 @@ const TabataTimer = () => {
                 }}
               >
                 Exit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lesson Modal */}
+      {showLessonModal && currentExercise && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-6 fade-in"
+          style={{ background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(8px)' }}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl overflow-hidden slide-up"
+            style={{
+              background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+              border: '1px solid rgba(148, 163, 184, 0.2)',
+              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              className="p-4 flex items-center justify-between"
+              style={{
+                background: 'linear-gradient(180deg, rgba(0, 217, 192, 0.15) 0%, rgba(0, 217, 192, 0.05) 100%)',
+                borderBottom: '1px solid rgba(148, 163, 184, 0.1)',
+              }}
+            >
+              <h3 className="text-lg font-bold text-white">Exercise Guide</h3>
+              <button
+                onClick={handleLessonClose}
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-95"
+                style={{
+                  background: 'rgba(148, 163, 184, 0.15)',
+                  border: '1px solid rgba(148, 163, 184, 0.2)',
+                }}
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              {/* Exercise Name */}
+              <h2
+                className="text-2xl font-bold mb-4"
+                style={{ color: currentPhaseColors.primary }}
+              >
+                {currentExercise.name}
+              </h2>
+
+              {/* Duration Badge */}
+              <div
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg mb-4"
+                style={{
+                  background: 'rgba(148, 163, 184, 0.1)',
+                  border: '1px solid rgba(148, 163, 184, 0.2)',
+                }}
+              >
+                <span className="text-sm text-[#B0B8C1]">Duration:</span>
+                <span className="text-sm font-semibold text-white">{currentExercise.duration}</span>
+              </div>
+
+              {/* Instructions */}
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-[#64748B] uppercase tracking-wider mb-2">
+                  Instructions
+                </h4>
+                <p className="text-[#E2E8F0] leading-relaxed">
+                  {currentExercise.instructions}
+                </p>
+              </div>
+
+              {/* Tips Section */}
+              <div
+                className="rounded-xl p-4 mb-6"
+                style={{
+                  background: 'rgba(255, 149, 0, 0.1)',
+                  border: '1px solid rgba(255, 149, 0, 0.2)',
+                }}
+              >
+                <h4 className="text-sm font-semibold text-[#FF9500] mb-2">💡 Tips</h4>
+                <ul className="text-sm text-[#B0B8C1] space-y-1">
+                  <li>• Focus on proper form over speed</li>
+                  <li>• Breathe steadily throughout</li>
+                  <li>• Modify if needed for your fitness level</li>
+                </ul>
+              </div>
+
+              {/* Close Button */}
+              <button
+                onClick={handleLessonClose}
+                className="w-full py-3 rounded-xl font-semibold transition-all active:scale-95"
+                style={{
+                  background: 'linear-gradient(135deg, #00D9C0 0%, #00B4A0 100%)',
+                  boxShadow: '0 8px 32px rgba(0, 217, 192, 0.3)',
+                  color: '#0A1F2E',
+                }}
+              >
+                Got it!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Refresh/Replace Exercise Modal */}
+      {showRefreshModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-6 fade-in"
+          style={{ background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(8px)' }}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl p-6 slide-up"
+            style={{
+              background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+              border: '1px solid rgba(148, 163, 184, 0.2)',
+              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            {/* Icon */}
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+              }}
+            >
+              <RefreshCw className={`w-7 h-7 text-[#8B5CF6] ${isRefreshing ? 'animate-spin' : ''}`} />
+            </div>
+
+            <h3 className="text-xl font-bold text-white text-center mb-2">
+              Replace this exercise?
+            </h3>
+            <p className="text-[#B0B8C1] text-center mb-6">
+              We'll swap <span className="text-white font-medium">{currentExercise?.name}</span> with a similar alternative exercise.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleRefreshCancel}
+                disabled={isRefreshing}
+                className="flex-1 py-3 rounded-xl font-semibold transition-all active:scale-95 disabled:opacity-50"
+                style={{
+                  background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
+                  border: '1px solid rgba(148, 163, 184, 0.25)',
+                  color: '#FFFFFF',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRefreshConfirm}
+                disabled={isRefreshing}
+                className="flex-1 py-3 rounded-xl font-semibold transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{
+                  background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+                  color: '#FFFFFF',
+                }}
+              >
+                {isRefreshing ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Finding...
+                  </>
+                ) : (
+                  'Replace'
+                )}
               </button>
             </div>
           </div>
@@ -995,35 +1240,77 @@ const TabataTimer = () => {
 
       {/* Bottom Controls */}
       <div
-        className="p-6 pb-8"
-        style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))' }}
+        className="relative"
+        style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
       >
-        <button
-          onClick={togglePause}
-          className="w-full py-5 rounded-2xl font-semibold text-lg flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-200"
+        {/* Gradient fade background for better button visibility */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-32 pointer-events-none"
           style={{
-            background: timerState.isPaused
-              ? 'linear-gradient(135deg, #00D9C0 0%, #00B4A0 100%)'
-              : 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
-            border: timerState.isPaused ? 'none' : '1px solid rgba(148, 163, 184, 0.25)',
-            boxShadow: timerState.isPaused
-              ? '0 8px 32px rgba(0, 217, 192, 0.4)'
-              : '0 4px 16px rgba(0, 0, 0, 0.3)',
-            color: timerState.isPaused ? '#0A1F2E' : '#FFFFFF',
+            background: 'linear-gradient(to top, rgba(10, 31, 46, 0.95) 0%, rgba(10, 31, 46, 0.7) 50%, transparent 100%)',
           }}
-        >
-          {timerState.isPaused ? (
-            <>
-              <Play className="w-6 h-6" />
-              Resume
-            </>
-          ) : (
-            <>
-              <Pause className="w-6 h-6" />
-              Pause
-            </>
-          )}
-        </button>
+        />
+
+        {/* Button container */}
+        <div className="relative z-10 flex items-center justify-center gap-4 px-6 pt-4">
+          {/* Lesson Button (Left) */}
+          <button
+            onClick={handleLessonClick}
+            className="w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-200 active:scale-95 active:opacity-80"
+            style={{
+              background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(148, 163, 184, 0.3)',
+              boxShadow: '0 8px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+            }}
+            aria-label="View exercise tutorial"
+          >
+            <Play className="w-7 h-7 text-[#E2E8F0]" />
+          </button>
+
+          {/* Pause/Resume Button (Center) */}
+          <button
+            onClick={togglePause}
+            className="w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-200 active:scale-95 active:opacity-80"
+            style={{
+              background: timerState.isPaused
+                ? 'linear-gradient(180deg, rgba(0, 217, 192, 0.7) 0%, rgba(0, 180, 160, 0.8) 100%)'
+                : 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: timerState.isPaused
+                ? '1px solid rgba(0, 217, 192, 0.5)'
+                : '1px solid rgba(148, 163, 184, 0.3)',
+              boxShadow: timerState.isPaused
+                ? '0 8px 16px rgba(0, 217, 192, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                : '0 8px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+            }}
+            aria-label={timerState.isPaused ? "Resume timer" : "Pause timer"}
+          >
+            {timerState.isPaused ? (
+              <Play className="w-7 h-7 text-[#0A1F2E]" />
+            ) : (
+              <Pause className="w-7 h-7 text-[#E2E8F0]" />
+            )}
+          </button>
+
+          {/* Refresh/Replace Button (Right) */}
+          <button
+            onClick={handleRefreshClick}
+            className="w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-200 active:scale-95 active:opacity-80"
+            style={{
+              background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(148, 163, 184, 0.3)',
+              boxShadow: '0 8px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+            }}
+            aria-label="Replace exercise"
+          >
+            <RefreshCw className="w-7 h-7 text-[#E2E8F0]" />
+          </button>
+        </div>
       </div>
     </div>
   );
