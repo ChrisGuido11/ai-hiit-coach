@@ -7,111 +7,125 @@ const corsHeaders = {
 };
 
 const frameworkRules: Record<string, string> = {
-  tabata: `TABATA Format:
-- Work: 20 seconds high intensity
-- Rest: 10 seconds
-- Total: 8 rounds per exercise (4 minutes per exercise)
-Structure: warmup (3-5 min) → main exercises (3-4 exercises) → cooldown (3-5 min)`,
-  
-  emom: `EMOM Format:
-- Every Minute On the Minute
-- Complete exercise within 60 seconds
-- Rest remaining time in that minute
-Structure: warmup (3-5 min) → main exercises (12-20 minutes) → cooldown (3-5 min)`,
-  
-  amrap: `AMRAP Format:
-- As Many Rounds As Possible
-- Complete rounds of exercises in time limit
-- Track total rounds completed
-Structure: warmup (3-5 min) → main circuit (15-20 minutes) → cooldown (3-5 min)`,
-  
+  tabata: `Tabata Protocol:
+- 20 seconds work, 10 seconds rest
+- 8 rounds per exercise (4 minutes total)
+- DURATION FORMAT: Must be exactly "20s work / 10s rest"
+- Choose explosive, high-intensity exercises`,
+
+  emom: `EMOM (Every Minute On the Minute):
+- Complete reps at start of each minute
+- Rest for remainder of minute
+- DURATION FORMAT: Must be "X reps" (e.g., "10 reps", "12 reps")
+- Reps achievable in 30-40 seconds`,
+
+  amrap: `AMRAP (As Many Rounds As Possible):
+- Complete as many rounds as possible
+- Minimal rest between exercises
+- DURATION FORMAT: Must be "X reps" (e.g., "10 reps", "15 reps")
+- Mix upper/lower body and cardio`,
+
   hiit: `HIIT Format:
 - High intensity intervals
-- Work: 30-45 seconds
-- Rest: 15-30 seconds between exercises
-Structure: warmup (3-5 min) → circuits (20-30 min) → cooldown (3-5 min)`,
-  
-  circuit: `CIRCUIT Format:
+- Work 30-45 seconds, rest 15-30 seconds
+- DURATION FORMAT: Must be "Xs work / Xs rest" (e.g., "40s work / 20s rest")`,
+
+  circuit: `Circuit Training:
 - Move through exercises with minimal rest
-- Complete 3-4 rounds
-- Rest 1-2 minutes between rounds
-Structure: warmup (3-5 min) → circuit rounds (20-30 min) → cooldown (3-5 min)`
+- Complete multiple rounds
+- DURATION FORMAT: Must be "X seconds" (e.g., "45 seconds", "30 seconds")
+- Balance push/pull and upper/lower movements`
 };
 
 const fallbackWorkouts: Record<string, any> = {
   tabata: {
     warmup: [
-      { name: "Jumping Jacks", duration: "2 minutes", instructions: "Start with feet together, jump while spreading legs and raising arms overhead." },
-      { name: "Arm Circles", duration: "1 minute", instructions: "Extend arms to sides and make circular motions, 30 seconds forward, 30 seconds backward." },
-      { name: "High Knees", duration: "2 minutes", instructions: "Run in place while bringing knees up to hip level." }
+      { name: "Jumping Jacks", duration: "60 seconds", instructions: "Jump feet wide while raising arms overhead, return to start" },
+      { name: "Arm Circles", duration: "30 seconds each direction", instructions: "Extend arms and rotate in controlled circular motions" },
+      { name: "High Knees", duration: "45 seconds", instructions: "Drive knees to hip height while pumping arms" }
     ],
     main: [
-      { name: "Burpees", duration: "8 rounds (20s work, 10s rest)", instructions: "Start standing, drop to plank, do a push-up, jump feet to hands, jump up with arms overhead." },
-      { name: "Mountain Climbers", duration: "8 rounds (20s work, 10s rest)", instructions: "In plank position, alternate bringing knees to chest in a running motion." },
-      { name: "Jump Squats", duration: "8 rounds (20s work, 10s rest)", instructions: "Perform a squat, then explode up into a jump. Land softly and repeat." }
+      { name: "Burpees", duration: "20s work / 10s rest", instructions: "Drop to plank, perform push-up, jump feet forward, explode up" },
+      { name: "Mountain Climbers", duration: "20s work / 10s rest", instructions: "Hold plank position, rapidly alternate driving knees to chest" },
+      { name: "Jump Squats", duration: "20s work / 10s rest", instructions: "Lower into squat, explode upward, land softly with bent knees" },
+      { name: "High Knees", duration: "20s work / 10s rest", instructions: "Run in place bringing knees to hip height, pump arms vigorously" }
     ],
     cooldown: [
-      { name: "Standing Quad Stretch", duration: "1 minute each leg", instructions: "Stand on one leg, pull other foot to glutes, hold." },
-      { name: "Seated Forward Fold", duration: "2 minutes", instructions: "Sit with legs extended, reach forward toward toes." },
-      { name: "Child's Pose", duration: "2 minutes", instructions: "Kneel and sit back on heels, extend arms forward on the ground." }
+      { name: "Standing Forward Fold", duration: "45 seconds", instructions: "Hinge at hips, let head hang, relax into the stretch" },
+      { name: "Quad Stretch", duration: "30 seconds each leg", instructions: "Stand on one leg, pull heel to glutes, keep knees together" },
+      { name: "Child's Pose", duration: "60 seconds", instructions: "Kneel and sit back on heels, extend arms forward on floor" }
     ]
   },
   emom: {
     warmup: [
-      { name: "Light Jog", duration: "3 minutes", instructions: "Jog at an easy pace to warm up your body." },
-      { name: "Dynamic Stretching", duration: "2 minutes", instructions: "Leg swings, arm swings, and torso twists." }
+      { name: "Light Jog in Place", duration: "60 seconds", instructions: "Easy pace jog to gradually elevate heart rate" },
+      { name: "Leg Swings", duration: "30 seconds each leg", instructions: "Swing leg forward and back, hold wall for balance" },
+      { name: "Arm Swings", duration: "30 seconds", instructions: "Swing arms across body dynamically to loosen shoulders" }
     ],
     main: [
-      { name: "Push-ups", duration: "Minute 1: 15 reps", instructions: "Complete 15 push-ups within the minute, rest the remainder." },
-      { name: "Air Squats", duration: "Minute 2: 20 reps", instructions: "Complete 20 air squats within the minute, rest the remainder." },
-      { name: "Sit-ups", duration: "Minute 3: 15 reps", instructions: "Complete 15 sit-ups within the minute, rest the remainder." },
-      { name: "Burpees", duration: "Minute 4: 10 reps", instructions: "Complete 10 burpees within the minute, rest the remainder." }
+      { name: "Push-ups", duration: "10 reps", instructions: "Lower chest to floor, push up with full arm extension" },
+      { name: "Air Squats", duration: "15 reps", instructions: "Sit back and down past parallel, weight in heels, chest up" },
+      { name: "Sit-ups", duration: "12 reps", instructions: "Lie flat, engage core, curl up to touch toes" },
+      { name: "Lunges", duration: "10 reps", instructions: "Step forward into lunge, both knees at 90 degrees, alternate legs" }
     ],
     cooldown: [
-      { name: "Walking", duration: "3 minutes", instructions: "Walk slowly to bring heart rate down." },
-      { name: "Full Body Stretch", duration: "2 minutes", instructions: "Stretch all major muscle groups." }
+      { name: "Pigeon Pose", duration: "45 seconds each side", instructions: "Bring knee forward, extend back leg, fold forward over front leg" },
+      { name: "Seated Spinal Twist", duration: "30 seconds each side", instructions: "Sit tall, cross one leg over, rotate torso toward bent knee" },
+      { name: "Lying Hamstring Stretch", duration: "45 seconds each leg", instructions: "On back, extend leg up, gently pull toward chest" }
     ]
   },
   amrap: {
     warmup: [
-      { name: "Jump Rope", duration: "3 minutes", instructions: "Jump rope or simulate the movement." },
-      { name: "Arm and Leg Swings", duration: "2 minutes", instructions: "Dynamic stretching for arms and legs." }
+      { name: "Jumping Jacks", duration: "45 seconds", instructions: "Jump feet wide while swinging arms overhead" },
+      { name: "Bodyweight Good Mornings", duration: "30 seconds", instructions: "Hands behind head, hinge at hips keeping back flat" },
+      { name: "Inchworms", duration: "45 seconds", instructions: "Fold forward, walk hands to plank, walk feet back to hands" }
     ],
     main: [
-      { name: "AMRAP Circuit", duration: "15 minutes", instructions: "Complete as many rounds as possible of: 10 push-ups, 15 squats, 20 mountain climbers, 10 burpees." }
+      { name: "Burpees", duration: "5 reps", instructions: "Drop to plank with push-up, jump feet forward, explode up" },
+      { name: "Air Squats", duration: "10 reps", instructions: "Sit back past parallel, drive through heels to stand" },
+      { name: "Push-ups", duration: "10 reps", instructions: "Lower chest to floor, maintain rigid plank throughout" },
+      { name: "Sit-ups", duration: "15 reps", instructions: "Engage core, curl up fully, control the descent" },
+      { name: "Jumping Lunges", duration: "10 reps", instructions: "Lunge position, jump and switch legs mid-air, land softly" }
     ],
     cooldown: [
-      { name: "Slow Walk", duration: "3 minutes", instructions: "Walk slowly to recover." },
-      { name: "Stretching", duration: "2 minutes", instructions: "Focus on stretching worked muscles." }
+      { name: "Cat-Cow Stretch", duration: "60 seconds", instructions: "On all fours, alternate between arching and rounding spine" },
+      { name: "Figure Four Stretch", duration: "45 seconds each side", instructions: "On back, cross ankle over knee, pull thigh toward chest" },
+      { name: "Chest Opener", duration: "45 seconds", instructions: "Clasp hands behind back, lift chest, squeeze shoulder blades" }
     ]
   },
   hiit: {
     warmup: [
-      { name: "Light Cardio", duration: "3 minutes", instructions: "Jog in place or march with high knees." },
-      { name: "Dynamic Stretches", duration: "2 minutes", instructions: "Leg swings, arm circles, torso twists." }
+      { name: "March in Place", duration: "60 seconds", instructions: "Lift knees high while pumping arms naturally" },
+      { name: "Hip Circles", duration: "30 seconds each direction", instructions: "Hands on hips, rotate hips in large controlled circles" },
+      { name: "Shoulder Rolls", duration: "30 seconds", instructions: "Roll shoulders forward then backward in smooth motions" }
     ],
     main: [
-      { name: "High Knees", duration: "45s work, 15s rest", instructions: "Run in place with knees up high." },
-      { name: "Push-ups", duration: "45s work, 15s rest", instructions: "Perform as many push-ups as possible." },
-      { name: "Jump Squats", duration: "45s work, 15s rest", instructions: "Squat and explode into a jump." },
-      { name: "Plank", duration: "45s work, 15s rest", instructions: "Hold a plank position." }
+      { name: "High Knees", duration: "40s work / 20s rest", instructions: "Run in place bringing knees to hip height" },
+      { name: "Push-ups", duration: "40s work / 20s rest", instructions: "Lower chest to floor, maintain plank position" },
+      { name: "Jump Squats", duration: "40s work / 20s rest", instructions: "Squat down, explode up, land softly" },
+      { name: "Plank Hold", duration: "40s work / 20s rest", instructions: "Hold rigid plank, engage core throughout" }
     ],
     cooldown: [
-      { name: "Walking", duration: "3 minutes", instructions: "Walk to lower heart rate." },
-      { name: "Full Body Stretch", duration: "2 minutes", instructions: "Stretch all muscle groups." }
+      { name: "Standing Side Stretch", duration: "30 seconds each side", instructions: "Reach arm overhead and lean to opposite side" },
+      { name: "Downward Dog", duration: "60 seconds", instructions: "Press hips high, push heels toward ground, relax neck" },
+      { name: "Neck Stretches", duration: "30 seconds each side", instructions: "Gently tilt ear toward shoulder, hold the stretch" }
     ]
   },
   circuit: {
     warmup: [
-      { name: "Jumping Jacks", duration: "3 minutes", instructions: "Jump while spreading legs and raising arms." },
-      { name: "Arm Circles", duration: "2 minutes", instructions: "Make circles with arms extended." }
+      { name: "Jumping Jacks", duration: "60 seconds", instructions: "Jump feet wide while raising arms overhead, return to start" },
+      { name: "Arm Circles", duration: "30 seconds each direction", instructions: "Extend arms and rotate in controlled circular motions" }
     ],
     main: [
-      { name: "Circuit Round 1", duration: "Complete 3-4 rounds", instructions: "10 Push-ups, 15 Squats, 20 Sit-ups, 10 Burpees. Rest 90 seconds between rounds." }
+      { name: "Squats", duration: "45 seconds", instructions: "Feet shoulder-width, sit back and down, keep chest up" },
+      { name: "Push-ups", duration: "45 seconds", instructions: "Maintain plank position, lower chest to floor with control" },
+      { name: "Reverse Lunges", duration: "45 seconds", instructions: "Step back into lunge, keep front knee over ankle" },
+      { name: "Plank Hold", duration: "45 seconds", instructions: "Forearms on ground, maintain straight line from head to heels" },
+      { name: "Jumping Jacks", duration: "45 seconds", instructions: "Jump feet wide while raising arms overhead, return to start" }
     ],
     cooldown: [
-      { name: "Slow Walk", duration: "3 minutes", instructions: "Walk slowly to recover." },
-      { name: "Stretching", duration: "2 minutes", instructions: "Stretch all major muscle groups." }
+      { name: "Standing Side Stretch", duration: "30 seconds each side", instructions: "Reach arm overhead and lean to opposite side" },
+      { name: "Downward Dog", duration: "60 seconds", instructions: "Press hips high, push heels toward ground, relax neck" }
     ]
   }
 };
@@ -123,42 +137,60 @@ serve(async (req) => {
 
   try {
     const { framework, goal, fitnessLevel, equipment, duration } = await req.json();
-    
+
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
       console.error('OPENAI_API_KEY not configured, using fallback');
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           workout: fallbackWorkouts[framework] || fallbackWorkouts.tabata,
-          usedFallback: true 
+          usedFallback: true
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const systemPrompt = `You are a fitness AI that generates ${framework.toUpperCase()} workouts.
+    const systemPrompt = `You are a fitness AI generating ${framework.toUpperCase()} workouts.
 
 ${frameworkRules[framework] || ''}
 
-CRITICAL RULES:
-1. Return ONLY valid JSON, no markdown, no code blocks
-2. Use this exact structure:
+CRITICAL FORMATTING RULES:
+
+1. DURATION FIELD - Use ONLY the interval pattern, NOT total time:
+   - Tabata: "20s work / 10s rest"
+   - EMOM: "10 reps" or "12 reps"
+   - AMRAP: "10 reps" or "15 reps"
+   - HIIT: "40s work / 20s rest"
+   - Circuit: "45 seconds" or "30 seconds"
+   - Warm-up/Cool-down: "60 seconds" or "30 seconds each side"
+
+   WRONG: "4 minutes", "8 rounds (20s work, 10s rest)", "2 minutes"
+   CORRECT: "20s work / 10s rest", "45 seconds", "10 reps"
+
+2. INSTRUCTIONS - Must be ONE short sentence about form only:
+   - Describe body positioning and movement technique
+   - NO timing info (don't mention seconds, rounds, rest)
+   - NO rep counts
+   - NO workout structure
+
+   WRONG: "Perform high knees for 20 seconds, followed by 10 seconds rest. Repeat for 8 rounds."
+   CORRECT: "Drive knees to hip height while pumping arms vigorously"
+
+Return ONLY valid JSON (no markdown):
 {
-  "warmup": [{"name": "Exercise", "duration": "X minutes", "instructions": "..."}],
-  "main": [{"name": "Exercise", "duration": "X rounds/minutes", "instructions": "..."}],
-  "cooldown": [{"name": "Exercise", "duration": "X minutes", "instructions": "..."}]
-}
-3. Keep instructions clear and concise
-4. Match the ${framework} format exactly
-5. Total workout should be approximately ${duration} minutes`;
+  "warmup": [{"name": "Exercise", "duration": "60 seconds", "instructions": "One sentence form cue"}],
+  "main": [{"name": "Exercise", "duration": "format per framework", "instructions": "One sentence form cue"}],
+  "cooldown": [{"name": "Exercise", "duration": "30 seconds", "instructions": "One sentence form cue"}]
+}`;
 
-    const userPrompt = `Generate a ${framework} workout:
-- Goal: ${goal}
+    const userPrompt = `Generate a ${framework.toUpperCase()} workout:
 - Fitness Level: ${fitnessLevel}
-- Equipment: ${equipment.join(', ')}
-- Duration: ${duration} minutes
+- Equipment: ${equipment?.join(', ') || 'bodyweight only'}
+- Duration: ${duration} minutes total
+${goal ? `- Goal: ${goal}` : ''}
 
-Remember: Return ONLY the JSON object, no other text.`;
+Create 2-3 warmup exercises, 4-6 main exercises, 2-3 cooldown stretches.
+Return ONLY the JSON object.`;
 
     console.log('Calling OpenAI API...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -173,7 +205,7 @@ Remember: Return ONLY the JSON object, no other text.`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.7,
+        temperature: 0.8,
         max_tokens: 1500,
       }),
     });
@@ -182,9 +214,9 @@ Remember: Return ONLY the JSON object, no other text.`;
       const errorText = await response.text();
       console.error('OpenAI API error:', response.status, errorText);
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           workout: fallbackWorkouts[framework] || fallbackWorkouts.tabata,
-          usedFallback: true 
+          usedFallback: true
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -192,10 +224,10 @@ Remember: Return ONLY the JSON object, no other text.`;
 
     const data = await response.json();
     let generatedText = data.choices[0].message.content;
-    
+
     // Clean the response
     generatedText = generatedText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    
+
     try {
       const workout = JSON.parse(generatedText);
       console.log('Successfully generated workout');
@@ -206,9 +238,9 @@ Remember: Return ONLY the JSON object, no other text.`;
     } catch (parseError) {
       console.error('Failed to parse OpenAI response:', parseError);
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           workout: fallbackWorkouts[framework] || fallbackWorkouts.tabata,
-          usedFallback: true 
+          usedFallback: true
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -217,14 +249,14 @@ Remember: Return ONLY the JSON object, no other text.`;
   } catch (error) {
     console.error('Error in generate-workout function:', error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: error instanceof Error ? error.message : 'Unknown error',
         workout: fallbackWorkouts.tabata,
-        usedFallback: true 
+        usedFallback: true
       }),
-      { 
+      {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
