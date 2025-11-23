@@ -140,13 +140,23 @@ const Workout = () => {
     setLoadingExerciseIndex({ category, index });
 
     try {
-      // Generate replacement exercise
+      // Build complete list of ALL exercises in the workout to avoid duplicates
+      const allExercisesInWorkout: string[] = [
+        ...currentWorkout.warmup.map(e => e.name),
+        ...currentWorkout.main.map(e => e.name),
+        ...currentWorkout.cooldown.map(e => e.name)
+      ];
+
+      console.log('All exercises in workout:', allExercisesInWorkout);
+
+      // Generate replacement exercise with complete workout context
       const { exercise: newExercise } = await generateReplacementExercise({
         exerciseName: exercise.name,
         category,
         framework: frameworkKey,
         fitnessLevel: 'intermediate', // Default, could be fetched from user preferences
-        equipment: ['bodyweight'] // Default, could be fetched from user preferences
+        equipment: ['bodyweight'], // Default, could be fetched from user preferences
+        allExercisesInWorkout
       });
 
       // Update the workout with the new exercise
