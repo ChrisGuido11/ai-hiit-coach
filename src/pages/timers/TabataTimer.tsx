@@ -932,10 +932,12 @@ const TabataTimer = () => {
   const currentPhaseColors = phaseColors[timerState.phase as keyof typeof phaseColors] || phaseColors.main;
 
   // SVG circle calculations - responsive sizing for mobile
-  // Use smaller size on mobile (screen height < 750px typical for iPhone SE/smaller phones)
-  const size = typeof window !== 'undefined' && window.innerHeight < 750 ? 240 :
-               typeof window !== 'undefined' && window.innerHeight < 850 ? 260 : 280;
-  const strokeWidth = 10;
+  // Use smaller size on mobile to ensure all content fits
+  // iPhone SE: 667px, iPhone 16 Pro Max: 844px
+  const size = typeof window !== 'undefined' && window.innerHeight < 700 ? 200 :
+               typeof window !== 'undefined' && window.innerHeight < 800 ? 220 :
+               typeof window !== 'undefined' && window.innerHeight < 900 ? 240 : 260;
+  const strokeWidth = size < 220 ? 8 : 10;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - progress);
@@ -1058,7 +1060,7 @@ const TabataTimer = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A1F2E] flex flex-col overflow-hidden">
+    <div className="h-screen bg-[#0A1F2E] flex flex-col justify-between overflow-hidden">
       <style>{`
         @keyframes pulse {
           0%, 100% { transform: scale(1); opacity: 1; }
@@ -1567,11 +1569,11 @@ const TabataTimer = () => {
 
       {/* Header - Minimal with only centered phase badge */}
       <div
-        className="flex items-center justify-center px-4 pt-3 pb-2"
-        style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}
+        className="flex-shrink-0 flex items-center justify-center px-4 pt-2 pb-1"
+        style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
       >
         <span
-          className="text-xs font-semibold px-4 py-1.5 rounded-full tracking-wider"
+          className="text-xs font-semibold px-3 py-1 rounded-full tracking-wider"
           style={{
             background: currentPhaseColors.gradient || `linear-gradient(135deg, ${currentPhaseColors.primary}26 0%, ${currentPhaseColors.primary}0D 100%)`,
             color: currentPhaseColors.primary,
@@ -1585,18 +1587,18 @@ const TabataTimer = () => {
       </div>
 
       {/* Main Timer Area - Optimized for mobile fit */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 min-h-0 gap-2">
         {/* Circular Progress Ring */}
-        <div className={`relative mb-4 ${timerState.phase === "main" && timerState.intervalType === "work" ? 'work-pulse' : ''}`}>
+        <div className={`relative flex-shrink-0 ${timerState.phase === "main" && timerState.intervalType === "work" ? 'work-pulse' : ''}`}>
           {/* Glow effect */}
           <div
-            className="absolute inset-[-16px] rounded-full blur-2xl opacity-40 transition-colors duration-500"
+            className="absolute inset-[-10px] rounded-full blur-xl opacity-30 transition-colors duration-500"
             style={{ background: colors.glow }}
           />
 
           {/* Glass background */}
           <div
-            className="absolute inset-[16px] rounded-full"
+            className="absolute inset-[12px] rounded-full"
             style={{
               background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%)',
               backdropFilter: 'blur(16px)',
@@ -1640,17 +1642,17 @@ const TabataTimer = () => {
           {/* Center content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
             <span
-              className="text-xs font-bold tracking-widest mb-0.5 transition-colors duration-300"
+              className="text-[10px] font-bold tracking-widest mb-0.5 transition-colors duration-300"
               style={{ color: colors.primary }}
             >
               {colors.text}
             </span>
-            <span className="text-7xl font-bold text-white tabular-nums leading-none">
+            <span className="text-6xl font-bold text-white tabular-nums leading-none">
               {timerState.timeRemaining}
             </span>
             {/* Show round info */}
             <span
-              className="text-xs font-medium transition-colors duration-300 mt-2"
+              className="text-[10px] font-medium transition-colors duration-300 mt-1"
               style={{ color: timerState.phase === "main" && timerState.intervalType === "work" ? "#00D9C0" : "#64748B" }}
             >
               Round {timerState.round} of {maxRounds}
@@ -1661,7 +1663,7 @@ const TabataTimer = () => {
         {/* Current Exercise Card - Compact for mobile */}
         {currentExercise && (
           <div
-            className="w-full max-w-sm rounded-xl p-3 mb-2 slide-up"
+            className="w-full max-w-xs rounded-xl p-2.5 slide-up flex-shrink-0"
             style={{
               background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
               backdropFilter: 'blur(16px)',
@@ -1672,16 +1674,16 @@ const TabataTimer = () => {
               }, 0.1)`,
             }}
           >
-            <h2 className="text-xl font-bold text-white text-center mb-1">
+            <h2 className="text-lg font-bold text-white text-center leading-tight">
               {currentExercise.name}
             </h2>
             {/* Side indicator for side-switching exercises */}
             {isSideSwitchingExercise(currentExercise, timerState.phase) && currentSide && (
               <div
-                className="flex items-center justify-center gap-2 mb-1 transition-all duration-300"
+                className="flex items-center justify-center gap-2 mt-1 transition-all duration-300"
               >
                 <span
-                  className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                  className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
                   style={{
                     background: currentSide === "right"
                       ? 'linear-gradient(135deg, rgba(0, 217, 192, 0.2) 0%, rgba(0, 217, 192, 0.1) 100%)'
@@ -1694,7 +1696,7 @@ const TabataTimer = () => {
                 </span>
               </div>
             )}
-            <p className="text-[#B0B8C1] text-xs text-center leading-relaxed line-clamp-2">
+            <p className="text-[#B0B8C1] text-[11px] text-center leading-snug line-clamp-2 mt-1">
               {currentExercise.instructions}
             </p>
           </div>
@@ -1708,14 +1710,14 @@ const TabataTimer = () => {
             // Show next phase (or workout complete)
             if (timerState.phase === "cooldown" || (timerState.phase === "main" && !typedWorkout?.cooldown?.length)) {
               return (
-                <div className="flex items-center gap-2 text-sm fade-in" style={{ color: '#64748B' }}>
+                <div className="flex items-center gap-1.5 text-xs fade-in flex-shrink-0" style={{ color: '#64748B' }}>
                   <span>Almost done!</span>
                   <span className="text-[#00D9C0] font-medium">Finish strong!</span>
                 </div>
               );
             }
             return (
-              <div className="flex items-center gap-2 text-sm fade-in" style={{ color: '#64748B' }}>
+              <div className="flex items-center gap-1.5 text-xs fade-in flex-shrink-0" style={{ color: '#64748B' }}>
                 <span>Up next:</span>
                 <span
                   className="font-medium"
@@ -1723,7 +1725,7 @@ const TabataTimer = () => {
                 >
                   {timerState.phase === "warmup" ? "Main Workout" : "Cool Down"}
                 </span>
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3 h-3" />
               </div>
             );
           }
@@ -1731,12 +1733,12 @@ const TabataTimer = () => {
           if (nextInfo.isNextRound) {
             // Show next round info
             return (
-              <div className="flex items-center gap-2 text-sm fade-in" style={{ color: '#64748B' }}>
+              <div className="flex items-center gap-1.5 text-xs fade-in flex-shrink-0" style={{ color: '#64748B' }}>
                 <span>Next:</span>
-                <span className="text-[#B0B8C1] font-medium">
+                <span className="text-[#B0B8C1] font-medium truncate max-w-[180px]">
                   Round {timerState.round + 1} → {nextInfo.exercise?.name}
                 </span>
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3 h-3" />
               </div>
             );
           }
@@ -1744,10 +1746,10 @@ const TabataTimer = () => {
           if (nextInfo.exercise) {
             // Show next exercise in current round
             return (
-              <div className="flex items-center gap-2 text-sm fade-in" style={{ color: '#64748B' }}>
+              <div className="flex items-center gap-1.5 text-xs fade-in flex-shrink-0" style={{ color: '#64748B' }}>
                 <span>Next:</span>
-                <span className="text-[#B0B8C1] font-medium">{nextInfo.exercise.name}</span>
-                <ChevronRight className="w-4 h-4" />
+                <span className="text-[#B0B8C1] font-medium truncate max-w-[180px]">{nextInfo.exercise.name}</span>
+                <ChevronRight className="w-3 h-3" />
               </div>
             );
           }
@@ -1758,74 +1760,66 @@ const TabataTimer = () => {
 
       {/* Bottom Controls - Compact for mobile */}
       <div
-        className="relative"
-        style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+        className="flex-shrink-0 relative px-4 pt-2"
+        style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
       >
-        {/* Gradient fade background for better button visibility */}
-        <div
-          className="absolute inset-x-0 bottom-0 h-28 pointer-events-none"
-          style={{
-            background: 'linear-gradient(to top, rgba(10, 31, 46, 0.95) 0%, rgba(10, 31, 46, 0.7) 50%, transparent 100%)',
-          }}
-        />
-
         {/* Button container */}
-        <div className="relative z-10 flex items-center justify-center gap-3 px-6 pt-2">
+        <div className="relative z-10 flex items-center justify-center gap-3">
           {/* Lesson Button (Left) */}
           <button
             onClick={handleLessonClick}
-            className="w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95 active:opacity-80"
+            className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95 active:opacity-80"
             style={{
               background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(148, 163, 184, 0.3)',
-              boxShadow: '0 6px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
             }}
             aria-label="View exercise tutorial"
           >
-            <Play className="w-6 h-6 text-[#E2E8F0]" />
+            <Play className="w-5 h-5 text-[#E2E8F0]" />
           </button>
 
           {/* Pause/Menu Button (Center) - Opens pause menu */}
           <button
             onClick={handlePauseMenuOpen}
-            className="w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95 active:opacity-80"
+            className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95 active:opacity-80"
             style={{
               background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(148, 163, 184, 0.3)',
-              boxShadow: '0 6px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
             }}
             aria-label="Open pause menu"
           >
-            <Pause className="w-6 h-6 text-[#E2E8F0]" />
+            <Pause className="w-5 h-5 text-[#E2E8F0]" />
           </button>
 
           {/* Refresh/Replace Button (Right) */}
           <button
             onClick={handleRefreshClick}
-            className="w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95 active:opacity-80"
+            className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95 active:opacity-80"
             style={{
               background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(148, 163, 184, 0.3)',
-              boxShadow: '0 6px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
             }}
             aria-label="Replace exercise"
           >
-            <RefreshCw className="w-6 h-6 text-[#E2E8F0]" />
+            <RefreshCw className="w-5 h-5 text-[#E2E8F0]" />
           </button>
         </div>
 
         {/* Skip Warm-up Button - Only visible during warm-up phase */}
         {timerState.phase === "warmup" && (
-          <div className="relative z-10 px-6 pt-2">
+          <div className="relative z-10 pt-2">
             <button
               onClick={handleSkipWarmupClick}
-              className="w-full py-2.5 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] active:opacity-80"
+              className="w-full py-2 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] active:opacity-80"
               style={{
                 background: 'rgba(30, 41, 59, 0.4)',
                 backdropFilter: 'blur(12px)',
@@ -1834,8 +1828,8 @@ const TabataTimer = () => {
               }}
               aria-label="Skip warm-up and start main workout"
             >
-              <SkipForward className="w-4 h-4 text-[#94A3B8]" />
-              <span className="text-xs font-medium text-[#94A3B8]">Skip to Main Workout</span>
+              <SkipForward className="w-3.5 h-3.5 text-[#94A3B8]" />
+              <span className="text-[11px] font-medium text-[#94A3B8]">Skip to Main Workout</span>
             </button>
           </div>
         )}
