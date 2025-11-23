@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, RefreshCw, Check } from "lucide-react";
+import { GeneratedWorkout } from "@/lib/generateWorkout";
 
 const frameworkDetails: Record<string, { fullName: string; description: string; benefits: string }> = {
   tabata: {
@@ -43,10 +44,23 @@ const mockWorkout = {
   ]
 };
 
+interface LocationState {
+  workout?: GeneratedWorkout;
+  workoutId?: string | null;
+  goal?: string;
+  framework?: string;
+}
+
 const Workout = () => {
   const { framework } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isSaved, setIsSaved] = useState(false);
+
+  // Get workout from navigation state, fallback to mock
+  const locationState = location.state as LocationState | null;
+  const currentWorkout: GeneratedWorkout = locationState?.workout || mockWorkout;
+  const workoutId = locationState?.workoutId;
 
   const frameworkKey = framework?.toLowerCase() || "tabata";
   const details = frameworkDetails[frameworkKey] || frameworkDetails.tabata;
@@ -64,6 +78,10 @@ const Workout = () => {
   };
 
   const handleSaveWorkout = () => {
+    // If workout was already saved during generation, just update UI
+    if (workoutId) {
+      console.log("Workout already saved with ID:", workoutId);
+    }
     setIsSaved(true);
   };
 
@@ -125,7 +143,7 @@ const Workout = () => {
               />
             </div>
             <div className="space-y-3">
-              {mockWorkout.warmup.map((exercise, index) => (
+              {currentWorkout.warmup.map((exercise, index) => (
                 <div
                   key={index}
                   className="rounded-xl p-4 border backdrop-blur-lg"
@@ -178,7 +196,7 @@ const Workout = () => {
               />
             </div>
             <div className="space-y-3">
-              {mockWorkout.main.map((exercise, index) => (
+              {currentWorkout.main.map((exercise, index) => (
                 <div
                   key={index}
                   className="rounded-xl p-4 border backdrop-blur-lg"
@@ -241,7 +259,7 @@ const Workout = () => {
               />
             </div>
             <div className="space-y-3">
-              {mockWorkout.cooldown.map((exercise, index) => (
+              {currentWorkout.cooldown.map((exercise, index) => (
                 <div
                   key={index}
                   className="rounded-xl p-4 border backdrop-blur-lg"

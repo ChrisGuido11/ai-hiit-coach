@@ -1,45 +1,178 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { AIBlob } from "@/components/AIBlob";
 import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { generateWorkout, GeneratedWorkout } from "@/lib/generateWorkout";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface UserPreferences {
+  fitness_level: string;
+  available_equipment: string[];
+  workout_duration: string;
+}
+
+const defaultPreferences: UserPreferences = {
+  fitness_level: "intermediate",
+  available_equipment: ["bodyweight"],
+  workout_duration: "20"
+};
 
 const WorkoutGeneration = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   const { framework, goal } = location.state || {};
   const [error, setError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    // Simulate AI workout generation with 2.5 second delay
-    const timer = setTimeout(() => {
-      // Navigate to workout details screen
-      navigate(`/workout/${framework || 'custom'}`, { 
-        state: { goal, framework },
-        replace: true 
-      });
-    }, 2500);
+    let isMounted = true;
 
-    return () => clearTimeout(timer);
-  }, [framework, goal, navigate]);
+    const generate = async () => {
+      try {
+        // Step 1: Get current user (optional - we can still generate without auth)
+        const { data: { user } } = await supabase.auth.getUser();
+
+        // Step 2: Fetch user preferences from Supabase
+        let preferences = defaultPreferences;
+
+        if (user) {
+          const { data: prefData, error: prefError } = await supabase
+            .from("user_preferences")
+            .select("fitness_level, available_equipment, workout_duration")
+            .eq("user_id", user.id)
+            .single();
+
+          if (prefError) {
+            console.log("No preferences found, using defaults:", prefError.message);
+          } else if (prefData) {
+            preferences = {
+              fitness_level: prefData.fitness_level || defaultPreferences.fitness_level,
+              available_equipment: prefData.available_equipment || defaultPreferences.available_equipment,
+              workout_duration: prefData.workout_duration || defaultPreferences.workout_duration
+            };
+          }
+        }
+
+        console.log("Using preferences:", preferences);
+
+        // Step 3: Generate workout using AI
+        const { workout, usedFallback } = await generateWorkout({
+          framework: framework || "custom",
+          goal,
+          fitnessLevel: preferences.fitness_level,
+          equipment: preferences.available_equipment,
+          duration: preferences.workout_duration
+        });
+
+        if (!isMounted) return;
+
+        // Show toast if using fallback
+        if (usedFallback) {
+          toast({
+            title: "Using default workout",
+            description: "AI generation unavailable. Here's a great workout for you!",
+            variant: "default"
+          });
+        }
+
+        // Step 4: Save workout to Supabase (only if user is logged in)
+        let savedWorkoutId: string | null = null;
+
+        if (user) {
+          const { data: savedWorkout, error: saveError } = await supabase
+            .from("workouts")
+            .insert({
+              user_id: user.id,
+              framework_type: framework || "custom",
+              exercises: workout as unknown as Record<string, unknown>,
+              completed: false
+            })
+            .select("id")
+            .single();
+
+          if (saveError) {
+            console.error("Failed to save workout to database:", saveError);
+            // Continue anyway - user can still see the workout
+          } else {
+            savedWorkoutId = savedWorkout?.id || null;
+            console.log("Workout saved with ID:", savedWorkoutId);
+          }
+        }
+
+        // Step 5: Navigate to workout details screen
+        navigate(`/workout/${framework || 'custom'}`, {
+          state: {
+            workout,
+            workoutId: savedWorkoutId,
+            goal,
+            framework
+          },
+          replace: true
+        });
+
+      } catch (err) {
+        console.error("Error in workout generation:", err);
+        if (isMounted) {
+          setError(true);
+          setErrorMessage(err instanceof Error ? err.message : "Failed to generate workout");
+        }
+      }
+    };
+
+    generate();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [framework, goal, navigate, toast]);
 
   const handleRetry = () => {
     setError(false);
-    // Retry logic here
+    setErrorMessage("");
+    // Re-trigger the generation by remounting the effect
+    window.location.reload();
+  };
+
+  const handleGoBack = () => {
+    navigate("/home");
   };
 
   if (error) {
     return (
       <div className="min-h-screen bg-[#0A1F2E] flex items-center justify-center p-6">
-        <div className="text-center">
-          <h2 className="text-lg font-bold text-foreground mb-3">
+        <div className="text-center max-w-md">
+          <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+            <span className="text-3xl">!</span>
+          </div>
+          <h2 className="text-xl font-bold text-foreground mb-3">
             Oops! Something went wrong
           </h2>
-          <p className="text-sm text-[#B0B8C1] mb-6">
+          <p className="text-sm text-[#B0B8C1] mb-2">
             Failed to generate workout
           </p>
-          <Button onClick={handleRetry} className="bg-primary hover:bg-primary/90">
-            Try Again
-          </Button>
+          {errorMessage && (
+            <p className="text-xs text-red-400/80 mb-6">
+              {errorMessage}
+            </p>
+          )}
+          <div className="flex flex-col gap-3">
+            <Button
+              onClick={handleRetry}
+              className="w-full bg-primary active:bg-primary/80 active:scale-[0.98] transition-transform"
+            >
+              Try Again
+            </Button>
+            <Button
+              onClick={handleGoBack}
+              variant="outline"
+              className="w-full"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Go Back
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -82,9 +215,9 @@ const WorkoutGeneration = () => {
         <h1 className="text-xl font-bold text-foreground mb-3">
           Creating your personalized workout...
         </h1>
-        
+
         <p className="text-sm text-[#B0B8C1] mb-6">
-          {goal 
+          {goal
             ? `Our AI is designing a workout for: ${goal}`
             : `Our AI is designing the perfect ${framework?.toUpperCase()} workout for you`
           }
@@ -92,15 +225,15 @@ const WorkoutGeneration = () => {
 
         {/* Loading dots */}
         <div className="flex gap-2">
-          <div 
+          <div
             className="w-2 h-2 rounded-full bg-primary"
             style={{ animation: "dotPulse 1.4s infinite 0s" }}
           />
-          <div 
+          <div
             className="w-2 h-2 rounded-full bg-primary"
             style={{ animation: "dotPulse 1.4s infinite 0.2s" }}
           />
-          <div 
+          <div
             className="w-2 h-2 rounded-full bg-primary"
             style={{ animation: "dotPulse 1.4s infinite 0.4s" }}
           />
@@ -117,7 +250,7 @@ const WorkoutGeneration = () => {
               box-shadow: 0 0 80px rgba(0, 217, 192, 0.9);
             }
           }
-          
+
           @keyframes spin {
             from {
               transform: rotate(0deg);
