@@ -14,7 +14,6 @@ interface TimerState {
   intervalType: IntervalType;
   timeRemaining: number;
   isPaused: boolean;
-  isCountdown: boolean;
 }
 
 interface TransitionState {
@@ -33,7 +32,6 @@ interface WorkoutStats {
 const WORK_DURATION = 20;
 const REST_DURATION = 10;
 const ROUNDS_PER_EXERCISE = 8;
-const COUNTDOWN_DURATION = 3;
 const TRANSITION_DURATION = 10;
 
 // Phase colors
@@ -61,10 +59,6 @@ const phaseColors = {
     primary: "#64748B",
     glow: "rgba(100, 116, 139, 0.4)",
   },
-  countdown: {
-    primary: "#F59E0B",
-    glow: "rgba(245, 158, 11, 0.5)",
-  },
 };
 
 const TabataTimer = () => {
@@ -77,10 +71,10 @@ const TabataTimer = () => {
     exerciseIndex: 0,
     round: 1,
     intervalType: "exercise",
-    timeRemaining: COUNTDOWN_DURATION,
-    isPaused: false,
-    isCountdown: true,
+    timeRemaining: 0, // Will be initialized by useEffect
+    isPaused: true, // Start paused until initialized
   });
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const [transition, setTransition] = useState<TransitionState | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -134,6 +128,42 @@ const TabataTimer = () => {
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
+
+  // Initialize timer with first exercise duration
+  useEffect(() => {
+    if (!typedWorkout || isInitialized) return;
+
+    const warmupExercises = typedWorkout.warmup || [];
+    if (warmupExercises.length > 0) {
+      const firstExercise = warmupExercises[0];
+      const match = firstExercise.duration.match(/(\d+)/);
+      const duration = match ? parseInt(match[1], 10) : 45;
+
+      setTimerState({
+        phase: "warmup",
+        exerciseIndex: 0,
+        round: 1,
+        intervalType: "exercise",
+        timeRemaining: duration,
+        isPaused: false,
+      });
+      setIsInitialized(true);
+    } else {
+      // No warmup, start with main
+      const mainExercises = typedWorkout.main || [];
+      if (mainExercises.length > 0) {
+        setTimerState({
+          phase: "main",
+          exerciseIndex: 0,
+          round: 1,
+          intervalType: "work",
+          timeRemaining: WORK_DURATION,
+          isPaused: false,
+        });
+        setIsInitialized(true);
+      }
+    }
+  }, [typedWorkout, isInitialized]);
 
   // Voice announcement function
   const speak = useCallback((text: string, priority: boolean = false) => {
@@ -205,7 +235,6 @@ const TabataTimer = () => {
 
   // Get total duration for current interval
   const getTotalDuration = useCallback((): number => {
-    if (timerState.isCountdown) return COUNTDOWN_DURATION;
     if (timerState.phase === "main") {
       return timerState.intervalType === "work" ? WORK_DURATION : REST_DURATION;
     }
@@ -213,7 +242,7 @@ const TabataTimer = () => {
       return parseDuration(currentExercise.duration);
     }
     return 45;
-  }, [timerState.isCountdown, timerState.phase, timerState.intervalType, currentExercise]);
+  }, [timerState.phase, timerState.intervalType, currentExercise]);
 
   // Calculate progress (0 to 1)
   const progress = timerState.timeRemaining / getTotalDuration();
@@ -250,25 +279,6 @@ const TabataTimer = () => {
   // Move to next state
   const advanceTimer = useCallback(() => {
     setTimerState((prev) => {
-      // Handle countdown completion
-      if (prev.isCountdown) {
-        const duration = prev.phase === "main" ? WORK_DURATION :
-          (currentExercise ? parseDuration(currentExercise.duration) : 45);
-
-        // Announce work start for main phase
-        if (prev.phase === "main") {
-          speak("Work!", true);
-          vibrate([100]);
-        }
-
-        return {
-          ...prev,
-          isCountdown: false,
-          intervalType: prev.phase === "main" ? "work" : "exercise",
-          timeRemaining: duration,
-        };
-      }
-
       // Main phase logic (Tabata intervals)
       if (prev.phase === "main") {
         if (prev.intervalType === "work") {
@@ -337,14 +347,15 @@ const TabataTimer = () => {
       setStats(s => ({ ...s, exercisesCompleted: s.exercisesCompleted + 1 }));
 
       if (nextIndex < exercises.length) {
-        // Next exercise in same phase
-        speak(`Next: ${exercises[nextIndex].name}`, true);
+        // Next exercise in same phase - start immediately with actual duration
+        const nextExercise = exercises[nextIndex];
+        const nextDuration = parseDuration(nextExercise.duration);
+        speak(`Next: ${nextExercise.name}`, true);
         vibrate([50]);
         return {
           ...prev,
           exerciseIndex: nextIndex,
-          timeRemaining: COUNTDOWN_DURATION,
-          isCountdown: true,
+          timeRemaining: nextDuration,
         };
       } else {
         // Move to next phase
@@ -358,7 +369,7 @@ const TabataTimer = () => {
         return { ...prev, phase: "complete" };
       }
     });
-  }, [typedWorkout, currentExercise, speak, vibrate, startPhaseTransition, startExerciseTransition]);
+  }, [typedWorkout, speak, vibrate, startPhaseTransition, startExerciseTransition]);
 
   // Handle transition countdown
   useEffect(() => {
@@ -380,24 +391,41 @@ const TabataTimer = () => {
           transitionRef.current = null;
 
           if (prev.type === "phase" && prev.nextPhase) {
+            // Calculate duration for first exercise of new phase
+            let duration = WORK_DURATION;
+            if (prev.nextPhase === "cooldown") {
+              const cooldownExercise = typedWorkout?.cooldown?.[0];
+              if (cooldownExercise) {
+                const match = cooldownExercise.duration.match(/(\d+)/);
+                duration = match ? parseInt(match[1], 10) : 45;
+              }
+            }
+
             setTimerState((ts) => ({
               ...ts,
               phase: prev.nextPhase!,
               exerciseIndex: 0,
               round: 1,
               intervalType: prev.nextPhase === "main" ? "work" : "exercise",
-              timeRemaining: COUNTDOWN_DURATION,
-              isCountdown: true,
+              timeRemaining: duration,
             }));
+
+            // Announce work start for main phase
+            if (prev.nextPhase === "main") {
+              speak("Work!", true);
+              vibrate([100]);
+            }
           } else if (prev.type === "exercise") {
+            // Start next exercise in main phase
             setTimerState((ts) => ({
               ...ts,
               exerciseIndex: ts.exerciseIndex + 1,
               round: 1,
               intervalType: "work",
-              timeRemaining: COUNTDOWN_DURATION,
-              isCountdown: true,
+              timeRemaining: WORK_DURATION,
             }));
+            speak("Work!", true);
+            vibrate([100]);
           }
 
           return null;
@@ -499,13 +527,6 @@ const TabataTimer = () => {
 
   // Get colors based on current state
   const getColors = () => {
-    if (timerState.isCountdown) {
-      return {
-        primary: phaseColors.countdown.primary,
-        glow: phaseColors.countdown.glow,
-        text: "GET READY",
-      };
-    }
     if (timerState.phase === "main" && timerState.intervalType === "work") {
       return {
         primary: phaseColors.work.primary,
@@ -847,7 +868,7 @@ const TabataTimer = () => {
       {/* Main Timer Area */}
       <div className="flex-1 flex flex-col items-center justify-center px-6">
         {/* Circular Progress Ring */}
-        <div className={`relative mb-8 ${timerState.phase === "main" && timerState.intervalType === "work" && !timerState.isCountdown ? 'work-pulse' : ''}`}>
+        <div className={`relative mb-8 ${timerState.phase === "main" && timerState.intervalType === "work" ? 'work-pulse' : ''}`}>
           {/* Glow effect */}
           <div
             className="absolute inset-[-20px] rounded-full blur-3xl opacity-50 transition-colors duration-500"
@@ -868,7 +889,7 @@ const TabataTimer = () => {
           <svg
             width={size}
             height={size}
-            className={`relative z-10 transform -rotate-90 ${timerState.phase === "main" && timerState.intervalType === "work" && !timerState.isCountdown ? 'glow-pulse' : ''}`}
+            className={`relative z-10 transform -rotate-90 ${timerState.phase === "main" && timerState.intervalType === "work" ? 'glow-pulse' : ''}`}
           >
             {/* Background ring */}
             <circle
@@ -908,7 +929,7 @@ const TabataTimer = () => {
             <span className="text-8xl font-bold text-white tabular-nums leading-none">
               {timerState.timeRemaining}
             </span>
-            {timerState.phase === "main" && !timerState.isCountdown && (
+            {timerState.phase === "main" && (
               <span
                 className="text-sm mt-3 font-medium transition-colors duration-300"
                 style={{ color: timerState.intervalType === "work" ? "#00D9C0" : "#64748B" }}
