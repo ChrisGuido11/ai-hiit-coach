@@ -1,8 +1,19 @@
 import { useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play, RefreshCw, Check } from "lucide-react";
-import { GeneratedWorkout } from "@/lib/generateWorkout";
+import { ArrowLeft, Play, RefreshCw, Check, Loader2 } from "lucide-react";
+import { GeneratedWorkout, Exercise, generateReplacementExercise } from "@/lib/generateWorkout";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const frameworkDetails: Record<string, { fullName: string; description: string; benefits: string }> = {
   tabata: {
@@ -59,8 +70,27 @@ const Workout = () => {
 
   // Get workout from navigation state, fallback to mock
   const locationState = location.state as LocationState | null;
-  const currentWorkout: GeneratedWorkout = locationState?.workout || mockWorkout;
+  const [currentWorkout, setCurrentWorkout] = useState<GeneratedWorkout>(
+    locationState?.workout || mockWorkout
+  );
   const workoutId = locationState?.workoutId;
+
+  // State for exercise replacement
+  const [loadingExerciseIndex, setLoadingExerciseIndex] = useState<{
+    category: 'warmup' | 'main' | 'cooldown';
+    index: number;
+  } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    exercise: Exercise | null;
+    index: number;
+    category: 'warmup' | 'main' | 'cooldown';
+  }>({
+    isOpen: false,
+    exercise: null,
+    index: 0,
+    category: 'warmup'
+  });
 
   const frameworkKey = framework?.toLowerCase() || "tabata";
   const details = frameworkDetails[frameworkKey] || frameworkDetails.tabata;
@@ -84,8 +114,88 @@ const Workout = () => {
     }, 500);
   };
 
-  const handleReplaceExercise = (exerciseName: string) => {
-    console.log(`Replace ${exerciseName}`);
+  // Show confirmation dialog before replacing exercise
+  const handleReplaceExercise = (
+    exercise: Exercise,
+    index: number,
+    category: 'warmup' | 'main' | 'cooldown'
+  ) => {
+    setConfirmDialog({
+      isOpen: true,
+      exercise,
+      index,
+      category
+    });
+  };
+
+  // Actually replace the exercise after confirmation
+  const confirmReplaceExercise = async () => {
+    const { exercise, index, category } = confirmDialog;
+    if (!exercise) return;
+
+    // Close dialog
+    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+
+    // Set loading state
+    setLoadingExerciseIndex({ category, index });
+
+    try {
+      // Generate replacement exercise
+      const { exercise: newExercise } = await generateReplacementExercise({
+        exerciseName: exercise.name,
+        category,
+        framework: frameworkKey,
+        fitnessLevel: 'intermediate', // Default, could be fetched from user preferences
+        equipment: ['bodyweight'] // Default, could be fetched from user preferences
+      });
+
+      // Update the workout with the new exercise
+      const updatedWorkout = { ...currentWorkout };
+      if (category === 'warmup') {
+        updatedWorkout.warmup = [...currentWorkout.warmup];
+        updatedWorkout.warmup[index] = newExercise;
+      } else if (category === 'main') {
+        updatedWorkout.main = [...currentWorkout.main];
+        updatedWorkout.main[index] = newExercise;
+      } else if (category === 'cooldown') {
+        updatedWorkout.cooldown = [...currentWorkout.cooldown];
+        updatedWorkout.cooldown[index] = newExercise;
+      }
+
+      // Update state
+      setCurrentWorkout(updatedWorkout);
+
+      // Update database if workout is saved
+      if (workoutId) {
+        const { error } = await supabase
+          .from('workouts')
+          .update({
+            exercises: updatedWorkout as unknown as Record<string, unknown>
+          })
+          .eq('id', workoutId);
+
+        if (error) {
+          console.error('Failed to update workout in database:', error);
+        }
+      }
+
+      console.log(`Successfully replaced ${exercise.name} with ${newExercise.name}`);
+
+    } catch (error) {
+      console.error('Failed to replace exercise:', error);
+    } finally {
+      setLoadingExerciseIndex(null);
+    }
+  };
+
+  // Cancel the replacement
+  const cancelReplaceExercise = () => {
+    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+  };
+
+  // Check if a specific exercise is loading
+  const isExerciseLoading = (category: 'warmup' | 'main' | 'cooldown', index: number) => {
+    return loadingExerciseIndex?.category === category && loadingExerciseIndex?.index === index;
   };
 
   const handleBeginWorkout = () => {
@@ -197,17 +307,35 @@ const Workout = () => {
                       </p>
                       <p className="text-sm text-muted-foreground">{exercise.instructions}</p>
                     </div>
-                    <button
-                      onClick={() => handlePlayTutorial(exercise.name)}
-                      className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 backdrop-blur-md active:scale-95 transition-transform"
-                      style={{
-                        background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
-                        border: '1px solid rgba(148, 163, 184, 0.25)',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                      }}
-                    >
-                      <Play className="w-5 h-5" style={{ color: '#B8C4CE' }} />
-                    </button>
+                    <div className="flex gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => handlePlayTutorial(exercise.name)}
+                        className="w-11 h-11 rounded-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-transform"
+                        style={{
+                          background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
+                          border: '1px solid rgba(148, 163, 184, 0.25)',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                        }}
+                      >
+                        <Play className="w-5 h-5" style={{ color: '#B8C4CE' }} />
+                      </button>
+                      <button
+                        onClick={() => handleReplaceExercise(exercise, index, 'warmup')}
+                        disabled={isExerciseLoading('warmup', index)}
+                        className="w-11 h-11 rounded-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{
+                          background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
+                          border: '1px solid rgba(148, 163, 184, 0.25)',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                        }}
+                      >
+                        {isExerciseLoading('warmup', index) ? (
+                          <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#B8C4CE' }} />
+                        ) : (
+                          <RefreshCw className="w-5 h-5" style={{ color: '#B8C4CE' }} />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -266,15 +394,20 @@ const Workout = () => {
                         <Play className="w-5 h-5" style={{ color: '#B8C4CE' }} />
                       </button>
                       <button
-                        onClick={() => handleReplaceExercise(exercise.name)}
-                        className="w-11 h-11 rounded-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-transform"
+                        onClick={() => handleReplaceExercise(exercise, index, 'main')}
+                        disabled={isExerciseLoading('main', index)}
+                        className="w-11 h-11 rounded-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
                           background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
                           border: '1px solid rgba(148, 163, 184, 0.25)',
                           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
                         }}
                       >
-                        <RefreshCw className="w-5 h-5" style={{ color: '#B8C4CE' }} />
+                        {isExerciseLoading('main', index) ? (
+                          <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#B8C4CE' }} />
+                        ) : (
+                          <RefreshCw className="w-5 h-5" style={{ color: '#B8C4CE' }} />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -322,17 +455,35 @@ const Workout = () => {
                       </p>
                       <p className="text-sm text-muted-foreground">{exercise.instructions}</p>
                     </div>
-                    <button
-                      onClick={() => handlePlayTutorial(exercise.name)}
-                      className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 backdrop-blur-md active:scale-95 transition-transform"
-                      style={{
-                        background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
-                        border: '1px solid rgba(148, 163, 184, 0.25)',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                      }}
-                    >
-                      <Play className="w-5 h-5" style={{ color: '#B8C4CE' }} />
-                    </button>
+                    <div className="flex gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => handlePlayTutorial(exercise.name)}
+                        className="w-11 h-11 rounded-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-transform"
+                        style={{
+                          background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
+                          border: '1px solid rgba(148, 163, 184, 0.25)',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                        }}
+                      >
+                        <Play className="w-5 h-5" style={{ color: '#B8C4CE' }} />
+                      </button>
+                      <button
+                        onClick={() => handleReplaceExercise(exercise, index, 'cooldown')}
+                        disabled={isExerciseLoading('cooldown', index)}
+                        className="w-11 h-11 rounded-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{
+                          background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
+                          border: '1px solid rgba(148, 163, 184, 0.25)',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                        }}
+                      >
+                        {isExerciseLoading('cooldown', index) ? (
+                          <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#B8C4CE' }} />
+                        ) : (
+                          <RefreshCw className="w-5 h-5" style={{ color: '#B8C4CE' }} />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -396,6 +547,41 @@ const Workout = () => {
           scrollbar-width: none;
         }
       `}</style>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={confirmDialog.isOpen} onOpenChange={(open) => !open && cancelReplaceExercise()}>
+        <AlertDialogContent
+          className="rounded-2xl border backdrop-blur-xl max-w-sm mx-4"
+          style={{
+            background: 'linear-gradient(135deg, rgba(10, 31, 46, 0.98) 0%, rgba(15, 45, 65, 0.95) 100%)',
+            borderColor: 'rgba(0, 217, 192, 0.2)',
+            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground text-lg font-bold">
+              Replace Exercise?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Generate a new exercise to replace "{confirmDialog.exercise?.name}"?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row gap-3 sm:gap-3">
+            <AlertDialogCancel
+              onClick={cancelReplaceExercise}
+              className="flex-1 h-11 rounded-xl border-slate-600 bg-transparent text-foreground hover:bg-slate-800/50"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmReplaceExercise}
+              className="flex-1 h-11 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+            >
+              Replace
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

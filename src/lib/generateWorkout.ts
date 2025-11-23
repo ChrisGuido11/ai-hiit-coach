@@ -167,3 +167,87 @@ export async function generateWorkout(params: GenerateWorkoutParams): Promise<{
 
 // Export fallback workouts for direct access if needed
 export { fallbackWorkouts };
+
+// Fallback exercises for replacement (when AI fails)
+const fallbackReplacementExercises: Record<string, Exercise[]> = {
+  warmup: [
+    { name: "Arm Circles", duration: "30 seconds each direction", instructions: "Extend arms and rotate in controlled circular motions" },
+    { name: "Leg Swings", duration: "30 seconds each leg", instructions: "Swing leg forward and back, hold wall for balance" },
+    { name: "Torso Twists", duration: "30 seconds", instructions: "Rotate upper body side to side with arms extended" },
+    { name: "Hip Circles", duration: "30 seconds each direction", instructions: "Hands on hips, rotate hips in large controlled circles" },
+  ],
+  main: [
+    { name: "High Knees", duration: "20s work / 10s rest", instructions: "Run in place bringing knees to hip height, pump arms vigorously" },
+    { name: "Burpees", duration: "20s work / 10s rest", instructions: "Drop to plank, perform push-up, jump feet forward, explode up" },
+    { name: "Mountain Climbers", duration: "20s work / 10s rest", instructions: "Hold plank position, rapidly alternate driving knees to chest" },
+    { name: "Jump Squats", duration: "20s work / 10s rest", instructions: "Lower into squat, explode upward, land softly with bent knees" },
+  ],
+  cooldown: [
+    { name: "Quad Stretch", duration: "30 seconds each leg", instructions: "Stand on one leg, pull heel to glutes, keep knees together" },
+    { name: "Hamstring Stretch", duration: "30 seconds each leg", instructions: "Sit with legs extended, reach forward toward toes" },
+    { name: "Shoulder Stretch", duration: "30 seconds each arm", instructions: "Pull arm across chest, hold at elbow with opposite hand" },
+    { name: "Child's Pose", duration: "45 seconds", instructions: "Kneel and sit back on heels, extend arms forward on floor" },
+  ]
+};
+
+// Parameters for replacing a single exercise
+export interface ReplaceExerciseParams {
+  exerciseName: string;
+  category: 'warmup' | 'main' | 'cooldown';
+  framework: string;
+  fitnessLevel: string;
+  equipment: string[];
+}
+
+// Function to generate a replacement exercise using AI
+export async function generateReplacementExercise(params: ReplaceExerciseParams): Promise<{
+  exercise: Exercise;
+  usedFallback: boolean;
+}> {
+  const { exerciseName, category, framework, fitnessLevel, equipment } = params;
+
+  try {
+    console.log("Calling edge function to replace exercise...");
+
+    const { data, error } = await supabase.functions.invoke('replace-exercise', {
+      body: {
+        exerciseName,
+        category,
+        framework: framework.toLowerCase(),
+        fitnessLevel,
+        equipment
+      }
+    });
+
+    if (error) {
+      console.error("Edge function error:", error);
+      throw error;
+    }
+
+    if (!data || !data.exercise) {
+      throw new Error("No exercise data returned from edge function");
+    }
+
+    console.log("Successfully generated replacement exercise:", data.exercise.name);
+
+    return {
+      exercise: data.exercise,
+      usedFallback: data.usedFallback || false
+    };
+
+  } catch (error) {
+    console.error("Error generating replacement exercise:", error);
+
+    // Get a random fallback exercise that's different from the current one
+    const fallbackList = fallbackReplacementExercises[category] || fallbackReplacementExercises.main;
+    const available = fallbackList.filter(e => e.name.toLowerCase() !== exerciseName.toLowerCase());
+    const fallback = available.length > 0
+      ? available[Math.floor(Math.random() * available.length)]
+      : fallbackList[0];
+
+    return {
+      exercise: fallback,
+      usedFallback: true
+    };
+  }
+}
