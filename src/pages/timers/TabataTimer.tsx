@@ -431,19 +431,22 @@ const TabataTimer = () => {
 
     intervalRef.current = setInterval(() => {
       setTimerState((prev) => {
-        if (prev.timeRemaining <= 1) {
-          return prev; // Will be handled by advanceTimer
+        // Don't decrement if already at 0 (advanceTimer will handle)
+        if (prev.timeRemaining <= 0) {
+          return prev;
         }
 
+        const newTime = prev.timeRemaining - 1;
+
         // Count down voice for last 3 seconds
-        if (prev.timeRemaining <= 4 && prev.timeRemaining > 1) {
-          speak((prev.timeRemaining - 1).toString());
+        if (newTime <= 3 && newTime > 0) {
+          speak(newTime.toString());
         }
 
         // Track total time
         setStats(s => ({ ...s, totalTime: s.totalTime + 1 }));
 
-        return { ...prev, timeRemaining: prev.timeRemaining - 1 };
+        return { ...prev, timeRemaining: newTime };
       });
     }, 1000);
 
