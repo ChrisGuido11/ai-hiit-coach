@@ -82,7 +82,6 @@ const TabataTimer = () => {
 
   const [transition, setTransition] = useState<TransitionState | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-  const [showLessonModal, setShowLessonModal] = useState(false);
   const [showRefreshModal, setShowRefreshModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
@@ -576,14 +575,24 @@ const TabataTimer = () => {
     setShowExitConfirm(false);
   };
 
-  // Lesson modal handlers
+  // Lesson button handler - opens YouTube search for exercise tutorial
   const handleLessonClick = () => {
+    // Pause the timer
     setTimerState((prev) => ({ ...prev, isPaused: true }));
-    setShowLessonModal(true);
-  };
 
-  const handleLessonClose = () => {
-    setShowLessonModal(false);
+    // Get current exercise name, with fallback
+    const exerciseName = currentExercise?.name?.trim() || "HIIT exercise tutorial";
+
+    // Format for YouTube search: "how to [exercise name]"
+    // Convert to lowercase, replace spaces with +
+    const searchQuery = `how to ${exerciseName}`.toLowerCase().replace(/ /g, '+');
+    const youtubeUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
+
+    // Open YouTube in a new tab
+    window.open(youtubeUrl, '_blank');
+
+    // Voice announcement
+    speak("Timer paused. Resume when ready.", true);
   };
 
   // Refresh/replace exercise handlers
@@ -878,106 +887,6 @@ const TabataTimer = () => {
                 }}
               >
                 Exit
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Lesson Modal */}
-      {showLessonModal && currentExercise && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-6 fade-in"
-          style={{ background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(8px)' }}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl overflow-hidden slide-up"
-            style={{
-              background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
-              border: '1px solid rgba(148, 163, 184, 0.2)',
-              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.5)',
-            }}
-          >
-            {/* Modal Header */}
-            <div
-              className="p-4 flex items-center justify-between"
-              style={{
-                background: 'linear-gradient(180deg, rgba(0, 217, 192, 0.15) 0%, rgba(0, 217, 192, 0.05) 100%)',
-                borderBottom: '1px solid rgba(148, 163, 184, 0.1)',
-              }}
-            >
-              <h3 className="text-lg font-bold text-white">Exercise Guide</h3>
-              <button
-                onClick={handleLessonClose}
-                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-95"
-                style={{
-                  background: 'rgba(148, 163, 184, 0.15)',
-                  border: '1px solid rgba(148, 163, 184, 0.2)',
-                }}
-              >
-                <X className="w-4 h-4 text-white" />
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6">
-              {/* Exercise Name */}
-              <h2
-                className="text-2xl font-bold mb-4"
-                style={{ color: currentPhaseColors.primary }}
-              >
-                {currentExercise.name}
-              </h2>
-
-              {/* Duration Badge */}
-              <div
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg mb-4"
-                style={{
-                  background: 'rgba(148, 163, 184, 0.1)',
-                  border: '1px solid rgba(148, 163, 184, 0.2)',
-                }}
-              >
-                <span className="text-sm text-[#B0B8C1]">Duration:</span>
-                <span className="text-sm font-semibold text-white">{currentExercise.duration}</span>
-              </div>
-
-              {/* Instructions */}
-              <div className="mb-6">
-                <h4 className="text-sm font-semibold text-[#64748B] uppercase tracking-wider mb-2">
-                  Instructions
-                </h4>
-                <p className="text-[#E2E8F0] leading-relaxed">
-                  {currentExercise.instructions}
-                </p>
-              </div>
-
-              {/* Tips Section */}
-              <div
-                className="rounded-xl p-4 mb-6"
-                style={{
-                  background: 'rgba(255, 149, 0, 0.1)',
-                  border: '1px solid rgba(255, 149, 0, 0.2)',
-                }}
-              >
-                <h4 className="text-sm font-semibold text-[#FF9500] mb-2">💡 Tips</h4>
-                <ul className="text-sm text-[#B0B8C1] space-y-1">
-                  <li>• Focus on proper form over speed</li>
-                  <li>• Breathe steadily throughout</li>
-                  <li>• Modify if needed for your fitness level</li>
-                </ul>
-              </div>
-
-              {/* Close Button */}
-              <button
-                onClick={handleLessonClose}
-                className="w-full py-3 rounded-xl font-semibold transition-all active:scale-95"
-                style={{
-                  background: 'linear-gradient(135deg, #00D9C0 0%, #00B4A0 100%)',
-                  boxShadow: '0 8px 32px rgba(0, 217, 192, 0.3)',
-                  color: '#0A1F2E',
-                }}
-              >
-                Got it!
               </button>
             </div>
           </div>
