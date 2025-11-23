@@ -75,7 +75,7 @@ const Workout = () => {
           variant="ghost"
           size="icon"
           onClick={() => navigate("/home")}
-          className="text-foreground hover:bg-foreground/10"
+          className="text-foreground active:bg-foreground/10 active:scale-95 transition-transform"
         >
           <ArrowLeft className="w-5 h-5" />
         </Button>
@@ -89,12 +89,13 @@ const Workout = () => {
       <div className="flex-1 overflow-y-auto px-6 pb-32 scrollbar-hide">
         <div className="max-w-2xl mx-auto space-y-6">
           
-          {/* Framework Description Card */}
-          <div 
-            className="rounded-2xl p-5 border"
+          {/* Framework Description Card - Glassmorphism */}
+          <div
+            className="rounded-2xl p-5 border backdrop-blur-xl"
             style={{
-              backgroundColor: 'rgba(0, 217, 192, 0.08)',
-              borderColor: 'rgba(0, 217, 192, 0.2)'
+              background: 'linear-gradient(135deg, rgba(0, 217, 192, 0.12) 0%, rgba(0, 217, 192, 0.04) 100%)',
+              borderColor: 'rgba(0, 217, 192, 0.25)',
+              boxShadow: '0 8px 32px rgba(0, 217, 192, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
             }}
           >
             <h2 className="text-xl font-bold text-primary mb-3">
@@ -116,19 +117,31 @@ const Workout = () => {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <h3 className="text-lg font-bold text-foreground">Warm-up</h3>
-              <div className="flex-1 h-0.5 bg-[#FF9500]" />
+              <div
+                className="flex-1 h-0.5 rounded-full"
+                style={{
+                  background: 'linear-gradient(90deg, #FF9500 0%, rgba(255, 149, 0, 0.1) 100%)'
+                }}
+              />
             </div>
             <div className="space-y-3">
               {mockWorkout.warmup.map((exercise, index) => (
-                <div 
+                <div
                   key={index}
-                  className="rounded-xl p-4 border border-border/30"
-                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
+                  className="rounded-xl p-4 border backdrop-blur-lg"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 149, 0, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                    borderColor: 'rgba(255, 149, 0, 0.15)',
+                    boxShadow: '0 4px 24px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03)'
+                  }}
                 >
                   <div className="flex items-start gap-3">
-                    <div 
+                    <div
                       className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-                      style={{ backgroundColor: '#FF9500' }}
+                      style={{
+                        background: 'linear-gradient(135deg, #FF9500 0%, #E68600 100%)',
+                        boxShadow: '0 2px 8px rgba(255, 149, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                      }}
                     >
                       {index + 1}
                     </div>
@@ -143,7 +156,7 @@ const Workout = () => {
                       variant="ghost"
                       size="icon"
                       onClick={() => handlePlayTutorial(exercise.name)}
-                      className="text-muted-foreground hover:text-foreground flex-shrink-0"
+                      className="text-muted-foreground active:text-foreground active:scale-95 transition-transform flex-shrink-0"
                     >
                       <Play className="w-5 h-5" />
                     </Button>
@@ -157,17 +170,32 @@ const Workout = () => {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <h3 className="text-lg font-bold text-foreground">Main Workout</h3>
-              <div className="flex-1 h-0.5 bg-primary" />
+              <div
+                className="flex-1 h-0.5 rounded-full"
+                style={{
+                  background: 'linear-gradient(90deg, #00D9C0 0%, rgba(0, 217, 192, 0.1) 100%)'
+                }}
+              />
             </div>
             <div className="space-y-3">
               {mockWorkout.main.map((exercise, index) => (
-                <div 
+                <div
                   key={index}
-                  className="rounded-xl p-4 border border-border/30"
-                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
+                  className="rounded-xl p-4 border backdrop-blur-lg"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(0, 217, 192, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                    borderColor: 'rgba(0, 217, 192, 0.15)',
+                    boxShadow: '0 4px 24px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03)'
+                  }}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                      style={{
+                        background: 'linear-gradient(135deg, #00D9C0 0%, #00B8A3 100%)',
+                        boxShadow: '0 2px 8px rgba(0, 217, 192, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                      }}
+                    >
                       {index + 1}
                     </div>
                     <div className="flex-1">
@@ -182,7 +210,7 @@ const Workout = () => {
                         variant="ghost"
                         size="icon"
                         onClick={() => handlePlayTutorial(exercise.name)}
-                        className="text-muted-foreground hover:text-foreground"
+                        className="text-muted-foreground active:text-foreground active:scale-95 transition-transform"
                       >
                         <Play className="w-5 h-5" />
                       </Button>
@@ -190,7 +218,7 @@ const Workout = () => {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleReplaceExercise(exercise.name)}
-                        className="text-muted-foreground hover:text-foreground"
+                        className="text-muted-foreground active:text-foreground active:scale-95 transition-transform"
                       >
                         <RefreshCw className="w-5 h-5" />
                       </Button>
@@ -205,19 +233,31 @@ const Workout = () => {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <h3 className="text-lg font-bold text-foreground">Cool-down</h3>
-              <div className="flex-1 h-0.5 bg-[#8B5CF6]" />
+              <div
+                className="flex-1 h-0.5 rounded-full"
+                style={{
+                  background: 'linear-gradient(90deg, #8B5CF6 0%, rgba(139, 92, 246, 0.1) 100%)'
+                }}
+              />
             </div>
             <div className="space-y-3">
               {mockWorkout.cooldown.map((exercise, index) => (
-                <div 
+                <div
                   key={index}
-                  className="rounded-xl p-4 border border-border/30"
-                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
+                  className="rounded-xl p-4 border backdrop-blur-lg"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                    borderColor: 'rgba(139, 92, 246, 0.15)',
+                    boxShadow: '0 4px 24px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03)'
+                  }}
                 >
                   <div className="flex items-start gap-3">
-                    <div 
+                    <div
                       className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-                      style={{ backgroundColor: '#8B5CF6' }}
+                      style={{
+                        background: 'linear-gradient(135deg, #8B5CF6 0%, #7C4DE8 100%)',
+                        boxShadow: '0 2px 8px rgba(139, 92, 246, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                      }}
                     >
                       {index + 1}
                     </div>
@@ -232,7 +272,7 @@ const Workout = () => {
                       variant="ghost"
                       size="icon"
                       onClick={() => handlePlayTutorial(exercise.name)}
-                      className="text-muted-foreground hover:text-foreground flex-shrink-0"
+                      className="text-muted-foreground active:text-foreground active:scale-95 transition-transform flex-shrink-0"
                     >
                       <Play className="w-5 h-5" />
                     </Button>
@@ -244,29 +284,38 @@ const Workout = () => {
         </div>
       </div>
 
-      {/* Fixed Action Buttons */}
-      <div 
-        className="fixed bottom-0 left-0 right-0 p-6 space-y-3"
-        style={{ 
-          background: 'linear-gradient(to top, #0A1F2E 80%, transparent)',
-          paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))'
+      {/* Fixed Action Buttons - Glassmorphism */}
+      <div
+        className="fixed bottom-0 left-0 right-0 p-6 pt-8 backdrop-blur-xl"
+        style={{
+          background: 'linear-gradient(to top, rgba(10, 31, 46, 0.98) 60%, rgba(10, 31, 46, 0.8) 80%, transparent)',
+          paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))',
+          borderTop: '1px solid rgba(255, 255, 255, 0.05)'
         }}
       >
         <div className="max-w-2xl mx-auto space-y-3">
           <Button
             onClick={handleBeginWorkout}
-            className="w-full h-14 text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="w-full h-14 text-base font-bold bg-primary active:bg-primary/80 active:scale-[0.98] transition-transform text-primary-foreground rounded-xl"
+            style={{
+              boxShadow: '0 4px 20px rgba(0, 217, 192, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+            }}
           >
             Begin Workout
           </Button>
           <Button
             onClick={handleSaveWorkout}
             variant="outline"
-            className="w-full h-12 text-base font-medium border-border/50 transition-all duration-300"
+            className="w-full h-12 text-base font-medium transition-all duration-300 rounded-xl backdrop-blur-md active:scale-[0.98]"
             style={{
-              backgroundColor: isSaved ? 'rgba(0, 217, 192, 0.1)' : 'rgba(255, 255, 255, 0.05)',
-              borderColor: isSaved ? 'rgba(0, 217, 192, 0.3)' : 'rgba(255, 255, 255, 0.1)',
-              color: isSaved ? '#00D9C0' : undefined
+              background: isSaved
+                ? 'linear-gradient(135deg, rgba(0, 217, 192, 0.15) 0%, rgba(0, 217, 192, 0.05) 100%)'
+                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+              borderColor: isSaved ? 'rgba(0, 217, 192, 0.35)' : 'rgba(255, 255, 255, 0.12)',
+              color: isSaved ? '#00D9C0' : undefined,
+              boxShadow: isSaved
+                ? '0 4px 16px rgba(0, 217, 192, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+                : '0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.03)'
             }}
           >
             {isSaved ? (
