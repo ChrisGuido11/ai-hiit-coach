@@ -931,16 +931,6 @@ const TabataTimer = () => {
   const colors = getColors();
   const currentPhaseColors = phaseColors[timerState.phase as keyof typeof phaseColors] || phaseColors.main;
 
-  // SVG circle calculations - responsive sizing for mobile
-  // Use smaller size on mobile to ensure all content fits
-  // iPhone SE: 667px, iPhone 16 Pro Max: 844px
-  const size = typeof window !== 'undefined' && window.innerHeight < 700 ? 200 :
-               typeof window !== 'undefined' && window.innerHeight < 800 ? 220 :
-               typeof window !== 'undefined' && window.innerHeight < 900 ? 240 : 260;
-  const strokeWidth = size < 220 ? 8 : 10;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * (1 - progress);
 
   // Format time for completion screen
   const formatTime = (seconds: number): string => {
@@ -1059,8 +1049,15 @@ const TabataTimer = () => {
     );
   }
 
+  // Fixed sizes for mobile layout
+  const ringSize = 280;
+  const ringStrokeWidth = 14;
+  const ringRadius = (ringSize - ringStrokeWidth) / 2;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringStrokeDashoffset = ringCircumference * (1 - progress);
+
   return (
-    <div className="h-screen bg-[#0A1F2E] flex flex-col justify-between overflow-hidden">
+    <div className="min-h-screen bg-[#0A1F2E] flex flex-col overflow-hidden">
       <style>{`
         @keyframes pulse {
           0%, 100% { transform: scale(1); opacity: 1; }
@@ -1567,103 +1564,111 @@ const TabataTimer = () => {
         </div>
       )}
 
-      {/* Header - Minimal with only centered phase badge */}
-      <div
-        className="flex-shrink-0 flex items-center justify-center px-4 pt-2 pb-1"
-        style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
-      >
-        <span
-          className="text-xs font-semibold px-3 py-1 rounded-full tracking-wider"
-          style={{
-            background: currentPhaseColors.gradient || `linear-gradient(135deg, ${currentPhaseColors.primary}26 0%, ${currentPhaseColors.primary}0D 100%)`,
-            color: currentPhaseColors.primary,
-            border: `1px solid ${currentPhaseColors.primary}30`,
-          }}
-        >
-          {timerState.phase === "warmup" && "WARM UP"}
-          {timerState.phase === "main" && "TABATA"}
-          {timerState.phase === "cooldown" && "COOL DOWN"}
-        </span>
-      </div>
+      {/* TOP SAFE AREA SPACER - handles notch */}
+      <div style={{ height: 'var(--safe-area-top)' }} />
 
-      {/* Main Timer Area - Optimized for mobile fit */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 min-h-0 gap-2">
-        {/* Circular Progress Ring */}
-        <div className={`relative flex-shrink-0 ${timerState.phase === "main" && timerState.intervalType === "work" ? 'work-pulse' : ''}`}>
-          {/* Glow effect */}
-          <div
-            className="absolute inset-[-10px] rounded-full blur-xl opacity-30 transition-colors duration-500"
-            style={{ background: colors.glow }}
-          />
+      {/* MAIN CONTENT AREA */}
+      <div className="flex-1 flex flex-col px-4 overflow-hidden">
 
-          {/* Glass background */}
+        {/* Phase Badge */}
+        <div className="flex justify-center pt-4 pb-6">
           <div
-            className="absolute inset-[12px] rounded-full"
+            className="px-6 py-2.5 rounded-full text-sm font-semibold tracking-wider"
             style={{
-              background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%)',
-              backdropFilter: 'blur(16px)',
-              border: '1px solid rgba(148, 163, 184, 0.08)',
+              background: currentPhaseColors.gradient || `linear-gradient(135deg, ${currentPhaseColors.primary}26 0%, ${currentPhaseColors.primary}0D 100%)`,
+              color: currentPhaseColors.primary,
+              border: `1px solid ${currentPhaseColors.primary}30`,
             }}
-          />
-
-          {/* SVG Ring */}
-          <svg
-            width={size}
-            height={size}
-            className={`relative z-10 transform -rotate-90 ${timerState.phase === "main" && timerState.intervalType === "work" ? 'glow-pulse' : ''}`}
           >
-            {/* Background ring */}
-            <circle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              fill="none"
-              stroke="rgba(100, 116, 139, 0.15)"
-              strokeWidth={strokeWidth}
-            />
-            {/* Progress ring */}
-            <circle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              fill="none"
-              stroke={colors.primary}
-              strokeWidth={strokeWidth}
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              style={{
-                transition: 'stroke-dashoffset 0.3s ease-out, stroke 0.3s ease-out',
-                filter: `drop-shadow(0 0 8px ${colors.glow})`,
-              }}
-            />
-          </svg>
-
-          {/* Center content */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-            <span
-              className="text-[10px] font-bold tracking-widest mb-0.5 transition-colors duration-300"
-              style={{ color: colors.primary }}
-            >
-              {colors.text}
-            </span>
-            <span className="text-6xl font-bold text-white tabular-nums leading-none">
-              {timerState.timeRemaining}
-            </span>
-            {/* Show round info */}
-            <span
-              className="text-[10px] font-medium transition-colors duration-300 mt-1"
-              style={{ color: timerState.phase === "main" && timerState.intervalType === "work" ? "#00D9C0" : "#64748B" }}
-            >
-              Round {timerState.round} of {maxRounds}
-            </span>
+            {timerState.phase === "warmup" && "WARM UP"}
+            {timerState.phase === "main" && "TABATA"}
+            {timerState.phase === "cooldown" && "COOL DOWN"}
           </div>
         </div>
 
-        {/* Current Exercise Card - Compact for mobile */}
+        {/* Circular Progress Ring */}
+        <div className="flex justify-center">
+          <div className={`w-[280px] h-[280px] relative ${timerState.phase === "main" && timerState.intervalType === "work" ? 'work-pulse' : ''}`}>
+            {/* Glow effect */}
+            <div
+              className="absolute inset-[-10px] rounded-full blur-xl opacity-30 transition-colors duration-500"
+              style={{ background: colors.glow }}
+            />
+
+            {/* Glass background */}
+            <div
+              className="absolute inset-[14px] rounded-full"
+              style={{
+                background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%)',
+                backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(148, 163, 184, 0.08)',
+              }}
+            />
+
+            {/* SVG Ring */}
+            <svg
+              width={ringSize}
+              height={ringSize}
+              className={`relative z-10 transform -rotate-90 ${timerState.phase === "main" && timerState.intervalType === "work" ? 'glow-pulse' : ''}`}
+            >
+              {/* Background ring */}
+              <circle
+                cx={ringSize / 2}
+                cy={ringSize / 2}
+                r={ringRadius}
+                fill="none"
+                stroke="rgba(100, 116, 139, 0.15)"
+                strokeWidth={ringStrokeWidth}
+              />
+              {/* Progress ring */}
+              <circle
+                cx={ringSize / 2}
+                cy={ringSize / 2}
+                r={ringRadius}
+                fill="none"
+                stroke={colors.primary}
+                strokeWidth={ringStrokeWidth}
+                strokeLinecap="round"
+                strokeDasharray={ringCircumference}
+                strokeDashoffset={ringStrokeDashoffset}
+                style={{
+                  transition: 'stroke-dashoffset 0.3s ease-out, stroke 0.3s ease-out',
+                  filter: `drop-shadow(0 0 8px ${colors.glow})`,
+                }}
+              />
+            </svg>
+
+            {/* Center content */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+              {/* Interval Label */}
+              <span
+                className="text-lg font-bold tracking-widest mb-1 transition-colors duration-300"
+                style={{ color: colors.primary }}
+              >
+                {colors.text}
+              </span>
+              {/* Countdown Number */}
+              <span className="text-8xl font-bold text-white tabular-nums leading-none">
+                {timerState.timeRemaining}
+              </span>
+              {/* Round Counter */}
+              <span
+                className="text-base font-medium transition-colors duration-300 mt-2"
+                style={{ color: timerState.phase === "main" && timerState.intervalType === "work" ? "#00D9C0" : "#64748B" }}
+              >
+                Round {timerState.round} of {maxRounds}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Gap */}
+        <div className="h-6" />
+
+        {/* Exercise Name Card */}
         {currentExercise && (
           <div
-            className="w-full max-w-xs rounded-xl p-2.5 slide-up flex-shrink-0"
+            className="max-w-md w-full mx-auto px-6 py-6 rounded-xl max-h-[140px] overflow-hidden"
             style={{
               background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
               backdropFilter: 'blur(16px)',
@@ -1674,16 +1679,14 @@ const TabataTimer = () => {
               }, 0.1)`,
             }}
           >
-            <h2 className="text-lg font-bold text-white text-center leading-tight">
+            <h3 className="text-2xl font-bold text-white mb-2 text-center">
               {currentExercise.name}
-            </h2>
+            </h3>
             {/* Side indicator for side-switching exercises */}
             {isSideSwitchingExercise(currentExercise, timerState.phase) && currentSide && (
-              <div
-                className="flex items-center justify-center gap-2 mt-1 transition-all duration-300"
-              >
+              <div className="flex items-center justify-center gap-2 mb-2 transition-all duration-300">
                 <span
-                  className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                  className="px-3 py-1 rounded-full text-xs font-semibold"
                   style={{
                     background: currentSide === "right"
                       ? 'linear-gradient(135deg, rgba(0, 217, 192, 0.2) 0%, rgba(0, 217, 192, 0.1) 100%)'
@@ -1696,144 +1699,120 @@ const TabataTimer = () => {
                 </span>
               </div>
             )}
-            <p className="text-[#B0B8C1] text-[11px] text-center leading-snug line-clamp-2 mt-1">
+            <p className="text-base text-slate-300 text-center leading-snug line-clamp-2">
               {currentExercise.instructions}
             </p>
           </div>
         )}
 
-        {/* Next Exercise Preview - shows rotation within rounds */}
-        {!transition && (() => {
-          const nextInfo = getNextExerciseInRotation();
+        {/* Gap */}
+        <div className="h-4" />
 
-          if (nextInfo.isNextPhase) {
-            // Show next phase (or workout complete)
-            if (timerState.phase === "cooldown" || (timerState.phase === "main" && !typedWorkout?.cooldown?.length)) {
+        {/* Next Exercise Preview */}
+        <div className="text-center h-14 flex items-center justify-center">
+          {!transition && (() => {
+            const nextInfo = getNextExerciseInRotation();
+
+            if (nextInfo.isNextPhase) {
+              // Show next phase (or workout complete)
+              if (timerState.phase === "cooldown" || (timerState.phase === "main" && !typedWorkout?.cooldown?.length)) {
+                return (
+                  <span className="text-sm text-slate-400">
+                    Almost done! <span className="text-[#00D9C0] font-medium">Finish strong!</span>
+                  </span>
+                );
+              }
               return (
-                <div className="flex items-center gap-1.5 text-xs fade-in flex-shrink-0" style={{ color: '#64748B' }}>
-                  <span>Almost done!</span>
-                  <span className="text-[#00D9C0] font-medium">Finish strong!</span>
-                </div>
+                <span className="text-sm text-slate-400">
+                  Next:{' '}
+                  <span
+                    className="font-medium"
+                    style={{ color: timerState.phase === "warmup" ? "#00D9C0" : "#8B5CF6" }}
+                  >
+                    {timerState.phase === "warmup" ? "Main Workout" : "Cool Down"}
+                  </span>
+                  {' →'}
+                </span>
               );
             }
-            return (
-              <div className="flex items-center gap-1.5 text-xs fade-in flex-shrink-0" style={{ color: '#64748B' }}>
-                <span>Up next:</span>
-                <span
-                  className="font-medium"
-                  style={{ color: timerState.phase === "warmup" ? "#00D9C0" : "#8B5CF6" }}
-                >
-                  {timerState.phase === "warmup" ? "Main Workout" : "Cool Down"}
+
+            if (nextInfo.isNextRound) {
+              // Show next round info
+              return (
+                <span className="text-sm text-slate-400">
+                  Next: Round {timerState.round + 1} → {nextInfo.exercise?.name}
                 </span>
-                <ChevronRight className="w-3 h-3" />
-              </div>
-            );
-          }
+              );
+            }
 
-          if (nextInfo.isNextRound) {
-            // Show next round info
-            return (
-              <div className="flex items-center gap-1.5 text-xs fade-in flex-shrink-0" style={{ color: '#64748B' }}>
-                <span>Next:</span>
-                <span className="text-[#B0B8C1] font-medium truncate max-w-[180px]">
-                  Round {timerState.round + 1} → {nextInfo.exercise?.name}
+            if (nextInfo.exercise) {
+              // Show next exercise in current round
+              return (
+                <span className="text-sm text-slate-400">
+                  Next: {nextInfo.exercise.name} →
                 </span>
-                <ChevronRight className="w-3 h-3" />
-              </div>
-            );
-          }
+              );
+            }
 
-          if (nextInfo.exercise) {
-            // Show next exercise in current round
-            return (
-              <div className="flex items-center gap-1.5 text-xs fade-in flex-shrink-0" style={{ color: '#64748B' }}>
-                <span>Next:</span>
-                <span className="text-[#B0B8C1] font-medium truncate max-w-[180px]">{nextInfo.exercise.name}</span>
-                <ChevronRight className="w-3 h-3" />
-              </div>
-            );
-          }
+            return null;
+          })()}
+        </div>
 
-          return null;
-        })()}
-      </div>
+        {/* Gap */}
+        <div className="h-6" />
 
-      {/* Bottom Controls - Compact for mobile */}
-      <div
-        className="flex-shrink-0 relative px-4 pt-2"
-        style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
-      >
-        {/* Button container */}
-        <div className="relative z-10 flex items-center justify-center gap-3">
-          {/* Lesson Button (Left) */}
+        {/* Action Buttons Row */}
+        <div className="flex justify-center items-center gap-6">
+          {/* Lesson Button */}
           <button
             onClick={handleLessonClick}
-            className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95 active:opacity-80"
-            style={{
-              background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              border: '1px solid rgba(148, 163, 184, 0.3)',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-            }}
+            className="w-[60px] h-[60px] bg-slate-800/40 backdrop-blur-md border border-slate-400/40 rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-transform"
             aria-label="View exercise tutorial"
           >
-            <Play className="w-5 h-5 text-[#E2E8F0]" />
+            <Play className="w-[26px] h-[26px] text-slate-300" />
           </button>
 
-          {/* Pause/Menu Button (Center) - Opens pause menu */}
+          {/* Pause Button */}
           <button
             onClick={handlePauseMenuOpen}
-            className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95 active:opacity-80"
-            style={{
-              background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              border: '1px solid rgba(148, 163, 184, 0.3)',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-            }}
+            className="w-[60px] h-[60px] bg-slate-800/40 backdrop-blur-md border border-slate-400/40 rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-transform"
             aria-label="Open pause menu"
           >
-            <Pause className="w-5 h-5 text-[#E2E8F0]" />
+            <Pause className="w-[26px] h-[26px] text-slate-300" />
           </button>
 
-          {/* Refresh/Replace Button (Right) */}
+          {/* Refresh Button */}
           <button
             onClick={handleRefreshClick}
-            className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95 active:opacity-80"
-            style={{
-              background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              border: '1px solid rgba(148, 163, 184, 0.3)',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-            }}
+            className="w-[60px] h-[60px] bg-slate-800/40 backdrop-blur-md border border-slate-400/40 rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-transform"
             aria-label="Replace exercise"
           >
-            <RefreshCw className="w-5 h-5 text-[#E2E8F0]" />
+            <RefreshCw className="w-[26px] h-[26px] text-slate-300" />
           </button>
         </div>
 
-        {/* Skip Warm-up Button - Only visible during warm-up phase */}
+        {/* Skip Warm-up Button (conditional) */}
         {timerState.phase === "warmup" && (
-          <div className="relative z-10 pt-2">
+          <div className="mt-4">
             <button
               onClick={handleSkipWarmupClick}
-              className="w-full py-2 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] active:opacity-80"
-              style={{
-                background: 'rgba(30, 41, 59, 0.4)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                border: '1px solid rgba(148, 163, 184, 0.2)',
-              }}
+              className="w-full max-w-md mx-auto h-12 bg-slate-800/40 backdrop-blur-md border border-slate-400/40 rounded-xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform"
               aria-label="Skip warm-up and start main workout"
             >
-              <SkipForward className="w-3.5 h-3.5 text-[#94A3B8]" />
-              <span className="text-[11px] font-medium text-[#94A3B8]">Skip to Main Workout</span>
+              <SkipForward className="w-4 h-4 text-slate-400" />
+              <span className="text-base text-slate-400">Skip Warm-up</span>
             </button>
           </div>
         )}
+
+        {/* Bottom padding */}
+        <div className="h-4" />
+
       </div>
+
+      {/* BOTTOM SAFE AREA SPACER - handles home indicator */}
+      <div style={{ height: 'var(--safe-area-bottom)' }} />
+
     </div>
   );
 };
