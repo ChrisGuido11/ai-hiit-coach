@@ -6,6 +6,8 @@ import { GeneratedWorkout, Exercise } from "@/lib/generateWorkout";
 type TimerPhase = "warmup" | "main" | "cooldown" | "complete";
 type IntervalType = "work" | "rest" | "exercise";
 type TransitionType = "phase" | "exercise" | null;
+type SideType = "right" | "left" | null;
+type BodyPartType = "leg" | "arm" | "side";
 
 interface TimerState {
   phase: TimerPhase;
@@ -65,6 +67,50 @@ const phaseColors = {
   },
 };
 
+// Side-switching exercise detection patterns
+const SIDE_SWITCH_PATTERNS = [
+  "each leg",
+  "each side",
+  "each arm",
+  "per leg",
+  "per side",
+  "per arm",
+  "alternating"
+];
+
+// Helper function to detect if exercise requires side switching
+const isSideSwitchingExercise = (exercise: Exercise | undefined, phase: TimerPhase): boolean => {
+  if (!exercise) return false;
+  // Only apply to warmup and cooldown phases
+  if (phase !== "warmup" && phase !== "cooldown") return false;
+
+  const durationLower = exercise.duration.toLowerCase();
+  const instructionsLower = exercise.instructions?.toLowerCase() || "";
+
+  return SIDE_SWITCH_PATTERNS.some(pattern =>
+    durationLower.includes(pattern) || instructionsLower.includes(pattern)
+  );
+};
+
+// Helper function to determine the body part term (leg, arm, side)
+const getBodyPartTerm = (exercise: Exercise): BodyPartType => {
+  const durationLower = exercise.duration.toLowerCase();
+  const instructionsLower = exercise.instructions?.toLowerCase() || "";
+  const combined = durationLower + " " + instructionsLower;
+
+  if (combined.includes("leg")) return "leg";
+  if (combined.includes("arm")) return "arm";
+  return "side";
+};
+
+// Helper function to get side announcement text
+const getSideAnnouncement = (side: SideType, bodyPart: BodyPartType): string => {
+  if (!side) return "";
+  const capitalizedSide = side.charAt(0).toUpperCase() + side.slice(1);
+  const capitalizedPart = bodyPart.charAt(0).toUpperCase() + bodyPart.slice(1);
+  return `${capitalizedSide} ${capitalizedPart}`;
+};
+
 const TabataTimer = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -92,6 +138,10 @@ const TabataTimer = () => {
     exercisesCompleted: 0,
     roundsCompleted: 0,
   });
+
+  // Side-switching state for warmup/cooldown exercises
+  const [currentSide, setCurrentSide] = useState<SideType>("right");
+  const [hasAnnouncedSwitch, setHasAnnouncedSwitch] = useState(false);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const transitionRef = useRef<NodeJS.Timeout | null>(null);
@@ -155,6 +205,11 @@ const TabataTimer = () => {
         timeRemaining: duration,
         isPaused: false,
       });
+
+      // Reset side state for new exercise
+      setCurrentSide("right");
+      setHasAnnouncedSwitch(false);
+
       setIsInitialized(true);
     } else {
       // No warmup, start with main
@@ -172,6 +227,25 @@ const TabataTimer = () => {
       }
     }
   }, [typedWorkout, isInitialized]);
+
+  // Announce first exercise with side information on initialization
+  useEffect(() => {
+    if (!isInitialized || !typedWorkout) return;
+
+    const warmupExercises = typedWorkout.warmup || [];
+    if (warmupExercises.length > 0) {
+      const firstExercise = warmupExercises[0];
+      const needsSideSwitch = isSideSwitchingExercise(firstExercise, "warmup");
+
+      if (needsSideSwitch) {
+        const bodyPart = getBodyPartTerm(firstExercise);
+        const sideText = getSideAnnouncement("right", bodyPart);
+        speak(`${firstExercise.name}, ${sideText}`, true);
+      } else {
+        speak(firstExercise.name, true);
+      }
+    }
+  }, [isInitialized, typedWorkout, speak]);
 
   // Voice announcement function
   const speak = useCallback((text: string, priority: boolean = false) => {
@@ -387,7 +461,21 @@ const TabataTimer = () => {
         // Next exercise in current round
         const nextExercise = exercises[nextExerciseIndex];
         const nextDuration = parseDuration(nextExercise.duration);
-        speak(`${nextExercise.name}`, true);
+
+        // Reset side state for new exercise
+        setCurrentSide("right");
+        setHasAnnouncedSwitch(false);
+
+        // Announce with side information if applicable
+        const needsSideSwitch = isSideSwitchingExercise(nextExercise, prev.phase);
+        if (needsSideSwitch) {
+          const bodyPart = getBodyPartTerm(nextExercise);
+          const sideText = getSideAnnouncement("right", bodyPart);
+          speak(`${nextExercise.name}, ${sideText}`, true);
+        } else {
+          speak(`${nextExercise.name}`, true);
+        }
+
         vibrate([50]);
         return {
           ...prev,
@@ -403,7 +491,21 @@ const TabataTimer = () => {
           const nextRound = prev.round + 1;
           const firstExercise = exercises[0];
           const duration = parseDuration(firstExercise.duration);
-          speak(`Round ${nextRound}! ${firstExercise.name}`, true);
+
+          // Reset side state for new exercise
+          setCurrentSide("right");
+          setHasAnnouncedSwitch(false);
+
+          // Announce with side information if applicable
+          const needsSideSwitch = isSideSwitchingExercise(firstExercise, prev.phase);
+          if (needsSideSwitch) {
+            const bodyPart = getBodyPartTerm(firstExercise);
+            const sideText = getSideAnnouncement("right", bodyPart);
+            speak(`Round ${nextRound}! ${firstExercise.name}, ${sideText}`, true);
+          } else {
+            speak(`Round ${nextRound}! ${firstExercise.name}`, true);
+          }
+
           vibrate([100, 50, 100]);
           return {
             ...prev,
@@ -465,11 +567,28 @@ const TabataTimer = () => {
               timeRemaining: duration,
             }));
 
-            // Announce exercise name for main phase start
+            // Announce exercise name for phase start
             if (prev.nextPhase === "main") {
               const firstExerciseName = typedWorkout?.main?.[0]?.name;
               speak(firstExerciseName || "Work", true);
               vibrate([100]);
+            } else if (prev.nextPhase === "cooldown") {
+              // Reset side state for cooldown first exercise
+              setCurrentSide("right");
+              setHasAnnouncedSwitch(false);
+
+              const firstCooldownExercise = typedWorkout?.cooldown?.[0];
+              if (firstCooldownExercise) {
+                const needsSideSwitch = isSideSwitchingExercise(firstCooldownExercise, "cooldown");
+                if (needsSideSwitch) {
+                  const bodyPart = getBodyPartTerm(firstCooldownExercise);
+                  const sideText = getSideAnnouncement("right", bodyPart);
+                  speak(`${firstCooldownExercise.name}, ${sideText}`, true);
+                } else {
+                  speak(firstCooldownExercise.name, true);
+                }
+                vibrate([100]);
+              }
             }
           } else if (prev.type === "exercise") {
             // Start next exercise in main phase
@@ -547,6 +666,33 @@ const TabataTimer = () => {
       advanceTimer();
     }
   }, [timerState.timeRemaining, timerState.phase, transition, advanceTimer]);
+
+  // Halfway side switch announcement for warmup/cooldown exercises
+  useEffect(() => {
+    // Only apply to warmup and cooldown phases
+    if (timerState.phase !== "warmup" && timerState.phase !== "cooldown") return;
+    if (timerState.isPaused || transition) return;
+    if (hasAnnouncedSwitch) return;
+    if (!currentExercise) return;
+
+    // Check if this exercise requires side switching
+    const needsSideSwitch = isSideSwitchingExercise(currentExercise, timerState.phase);
+    if (!needsSideSwitch) return;
+
+    // Calculate halfway point
+    const totalDuration = parseDuration(currentExercise.duration);
+    const halfwayPoint = Math.floor(totalDuration / 2);
+
+    // Trigger switch announcement when we reach the halfway point
+    if (timerState.timeRemaining === halfwayPoint && halfwayPoint > 0) {
+      const bodyPart = getBodyPartTerm(currentExercise);
+      const sideText = getSideAnnouncement("left", bodyPart);
+      speak(`Switch, ${sideText}`, true);
+      vibrate([100, 50, 100]);
+      setCurrentSide("left");
+      setHasAnnouncedSwitch(true);
+    }
+  }, [timerState.timeRemaining, timerState.phase, timerState.isPaused, transition, currentExercise, hasAnnouncedSwitch, speak, vibrate]);
 
   const togglePause = () => {
     setTimerState((prev) => ({ ...prev, isPaused: !prev.isPaused }));
@@ -1454,6 +1600,25 @@ const TabataTimer = () => {
             <h2 className="text-2xl font-bold text-white text-center mb-2">
               {currentExercise.name}
             </h2>
+            {/* Side indicator for side-switching exercises */}
+            {isSideSwitchingExercise(currentExercise, timerState.phase) && currentSide && (
+              <div
+                className="flex items-center justify-center gap-2 mb-2 transition-all duration-300"
+              >
+                <span
+                  className="px-3 py-1 rounded-full text-sm font-semibold"
+                  style={{
+                    background: currentSide === "right"
+                      ? 'linear-gradient(135deg, rgba(0, 217, 192, 0.2) 0%, rgba(0, 217, 192, 0.1) 100%)'
+                      : 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                    border: `1px solid ${currentSide === "right" ? 'rgba(0, 217, 192, 0.4)' : 'rgba(139, 92, 246, 0.4)'}`,
+                    color: currentSide === "right" ? '#00D9C0' : '#8B5CF6',
+                  }}
+                >
+                  {getSideAnnouncement(currentSide, getBodyPartTerm(currentExercise))}
+                </span>
+              </div>
+            )}
             <p className="text-[#B0B8C1] text-sm text-center leading-relaxed">
               {currentExercise.instructions}
             </p>
