@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Pause, Play, X, ChevronRight, Volume2, VolumeX, RefreshCw } from "lucide-react";
+import { Pause, Play, X, ChevronRight, Volume2, VolumeX, RefreshCw, SkipForward } from "lucide-react";
 import { GeneratedWorkout, Exercise } from "@/lib/generateWorkout";
 
 type TimerPhase = "warmup" | "main" | "cooldown" | "complete";
@@ -84,6 +84,7 @@ const TabataTimer = () => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showRefreshModal, setShowRefreshModal] = useState(false);
   const [showTutorialDrawer, setShowTutorialDrawer] = useState(false);
+  const [showSkipWarmupConfirm, setShowSkipWarmupConfirm] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [stats, setStats] = useState<WorkoutStats>({
@@ -688,6 +689,43 @@ const TabataTimer = () => {
     setShowRefreshModal(false);
   };
 
+  // Skip warm-up handlers
+  const handleSkipWarmupClick = () => {
+    setTimerState((prev) => ({ ...prev, isPaused: true }));
+    setShowSkipWarmupConfirm(true);
+  };
+
+  const handleSkipWarmupCancel = () => {
+    setShowSkipWarmupConfirm(false);
+  };
+
+  const handleSkipWarmupConfirm = () => {
+    // Clear any current timers
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    if (transitionRef.current) {
+      clearInterval(transitionRef.current);
+      transitionRef.current = null;
+    }
+
+    // Close the confirmation modal
+    setShowSkipWarmupConfirm(false);
+
+    // Start transition to main workout with GET READY countdown
+    setTransition({
+      type: "phase",
+      countdown: 3, // 3-second "GET READY" transition
+      nextPhase: "main",
+      nextExerciseName: typedWorkout?.main?.[0]?.name,
+    });
+
+    // Announce the skip
+    speak("Main workout starting", true);
+    vibrate([100, 50, 100]);
+  };
+
   const handleComplete = () => {
     if (wakeLockRef.current) {
       wakeLockRef.current.release();
@@ -999,6 +1037,68 @@ const TabataTimer = () => {
                 ) : (
                   'Replace'
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Skip Warm-up Confirmation Modal */}
+      {showSkipWarmupConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-6 fade-in"
+          style={{ background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(8px)' }}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl p-6 slide-up"
+            style={{
+              background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+              border: '1px solid rgba(148, 163, 184, 0.2)',
+              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            {/* Icon */}
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255, 149, 0, 0.2) 0%, rgba(255, 149, 0, 0.1) 100%)',
+                border: '1px solid rgba(255, 149, 0, 0.3)',
+              }}
+            >
+              <SkipForward className="w-7 h-7 text-[#FF9500]" />
+            </div>
+
+            <h3 className="text-xl font-bold text-white text-center mb-2">
+              Skip Warm-up?
+            </h3>
+            <p className="text-[#B0B8C1] text-center mb-4">
+              Are you sure you want to skip the warm-up and start the main workout?
+            </p>
+            <p className="text-[#94A3B8] text-xs text-center mb-6 italic">
+              ⚠️ Skipping warm-up may increase injury risk
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleSkipWarmupCancel}
+                className="flex-1 py-3 rounded-xl font-semibold transition-all active:scale-95"
+                style={{
+                  background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
+                  border: '1px solid rgba(148, 163, 184, 0.25)',
+                  color: '#FFFFFF',
+                }}
+              >
+                Continue Warm-up
+              </button>
+              <button
+                onClick={handleSkipWarmupConfirm}
+                className="flex-1 py-3 rounded-xl font-semibold transition-all active:scale-95"
+                style={{
+                  background: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
+                  color: '#FFFFFF',
+                }}
+              >
+                Skip Warm-up
               </button>
             </div>
           </div>
@@ -1489,6 +1589,26 @@ const TabataTimer = () => {
             <RefreshCw className="w-7 h-7 text-[#E2E8F0]" />
           </button>
         </div>
+
+        {/* Skip Warm-up Button - Only visible during warm-up phase */}
+        {timerState.phase === "warmup" && (
+          <div className="relative z-10 px-6 pt-3">
+            <button
+              onClick={handleSkipWarmupClick}
+              className="w-full py-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] active:opacity-80"
+              style={{
+                background: 'rgba(30, 41, 59, 0.4)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1px solid rgba(148, 163, 184, 0.2)',
+              }}
+              aria-label="Skip warm-up and start main workout"
+            >
+              <SkipForward className="w-4 h-4 text-[#94A3B8]" />
+              <span className="text-sm font-medium text-[#94A3B8]">Skip to Main Workout</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
