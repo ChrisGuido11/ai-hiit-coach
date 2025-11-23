@@ -859,6 +859,9 @@ const TabataTimer = () => {
     // Close the confirmation modal
     setShowSkipWarmupConfirm(false);
 
+    // Unpause the timer so the transition countdown can run
+    setTimerState((prev) => ({ ...prev, isPaused: false }));
+
     // Start transition to main workout with GET READY countdown
     setTransition({
       type: "phase",
