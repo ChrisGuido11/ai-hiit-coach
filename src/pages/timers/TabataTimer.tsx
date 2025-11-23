@@ -350,12 +350,8 @@ const TabataTimer = () => {
             if (prev.round < phaseMaxRounds) {
               // Start next round, back to first exercise
               const nextRound = prev.round + 1;
-              const isLastRound = nextRound === phaseMaxRounds;
-              if (isLastRound) {
-                speak(`Last round! ${mainExercises[0].name}!`, true);
-              } else {
-                speak(`Round ${nextRound}! ${mainExercises[0].name}!`, true);
-              }
+              // Announce exercise name for first work interval of the new round
+              speak(mainExercises[0].name, true);
               vibrate([100, 50, 100]);
               return {
                 ...prev,
@@ -468,9 +464,10 @@ const TabataTimer = () => {
               timeRemaining: duration,
             }));
 
-            // Announce work start for main phase
+            // Announce exercise name for main phase start
             if (prev.nextPhase === "main") {
-              speak("Work!", true);
+              const firstExerciseName = typedWorkout?.main?.[0]?.name;
+              speak(firstExerciseName || "Work", true);
               vibrate([100]);
             }
           } else if (prev.type === "exercise") {
