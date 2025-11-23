@@ -828,114 +828,113 @@ const TabataTimer = () => {
 
     setIsRefreshing(true);
 
-    // Simulate generating a new exercise (in a real app, this would call an AI API)
-    // For now, we'll create a variation of the current exercise
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Determine current category
+      const category: 'warmup' | 'main' | 'cooldown' = timerState.phase === 'warmup'
+        ? 'warmup'
+        : timerState.phase === 'cooldown'
+          ? 'cooldown'
+          : 'main';
 
-    // Alternative exercises based on category/type
-    const alternativeExercises: Record<string, Exercise[]> = {
-      warmup: [
-        { name: "Arm Circles", duration: "45 seconds", instructions: "Make large circles with your arms, forward then backward" },
-        { name: "Hip Rotations", duration: "45 seconds", instructions: "Hands on hips, rotate hips in circles both directions" },
-        { name: "Leg Swings", duration: "45 seconds", instructions: "Hold a wall for balance, swing each leg forward and back" },
-        { name: "Torso Twists", duration: "45 seconds", instructions: "Feet shoulder-width apart, rotate upper body side to side" },
-        { name: "Neck Rolls", duration: "30 seconds", instructions: "Slowly roll your head in circles, then reverse direction" },
-      ],
-      main: [
-        { name: "Burpees", duration: "20 seconds", instructions: "Jump up, drop to plank, do a push-up, jump back up with arms overhead" },
-        { name: "Mountain Climbers", duration: "20 seconds", instructions: "In plank position, drive knees to chest alternately at high speed" },
-        { name: "Jump Squats", duration: "20 seconds", instructions: "Squat down, then explode up jumping as high as you can" },
-        { name: "High Knees", duration: "20 seconds", instructions: "Run in place, bringing knees up to hip level with each step" },
-        { name: "Plank Jacks", duration: "20 seconds", instructions: "In plank position, jump feet wide then back together" },
-        { name: "Speed Skaters", duration: "20 seconds", instructions: "Leap side to side, landing on one foot and reaching across" },
-        { name: "Tuck Jumps", duration: "20 seconds", instructions: "Jump up and tuck knees to chest at the peak" },
-      ],
-      cooldown: [
-        { name: "Standing Quad Stretch", duration: "30 seconds each side", instructions: "Stand on one leg, pull opposite foot to glute, hold for stretch" },
-        { name: "Seated Forward Fold", duration: "45 seconds", instructions: "Sit with legs extended, reach for toes while keeping back straight" },
-        { name: "Cat-Cow Stretch", duration: "45 seconds", instructions: "On all fours, alternate between arching and rounding your spine" },
-        { name: "Child's Pose", duration: "45 seconds", instructions: "Kneel, sit back on heels, extend arms forward on floor" },
-        { name: "Pigeon Pose", duration: "30 seconds each side", instructions: "One leg bent in front, other extended back, fold forward" },
-      ],
-    };
+      // Build complete list of ALL exercises in the workout to avoid duplicates
+      const allExercisesInWorkout: string[] = [
+        ...workoutData.warmup.map(e => e.name),
+        ...workoutData.main.map(e => e.name),
+        ...workoutData.cooldown.map(e => e.name)
+      ];
 
-    const phaseExercises = alternativeExercises[timerState.phase] || alternativeExercises.main;
-    // Pick a random exercise that's different from current
-    const availableExercises = phaseExercises.filter(e => e.name !== currentExercise.name);
-    const newExercise = availableExercises[Math.floor(Math.random() * availableExercises.length)];
+      console.log('Refresh modal - All exercises in workout:', allExercisesInWorkout);
 
-    // Update the workout data with the new exercise (using proper state update)
-    const updatedWorkout = { ...workoutData };
-    const phaseKey = timerState.phase as 'warmup' | 'main' | 'cooldown';
-    if (phaseKey === 'warmup') {
-      updatedWorkout.warmup = [...workoutData.warmup];
-      updatedWorkout.warmup[timerState.exerciseIndex] = newExercise;
-    } else if (phaseKey === 'main') {
-      updatedWorkout.main = [...workoutData.main];
-      updatedWorkout.main[timerState.exerciseIndex] = newExercise;
-    } else {
-      updatedWorkout.cooldown = [...workoutData.cooldown];
-      updatedWorkout.cooldown[timerState.exerciseIndex] = newExercise;
-    }
+      // Generate replacement exercise using AI with complete workout context
+      const { exercise: newExercise } = await generateReplacementExercise({
+        exerciseName: currentExercise.name,
+        category,
+        framework: 'tabata',
+        fitnessLevel: 'intermediate',
+        equipment: ['bodyweight'],
+        allExercisesInWorkout
+      });
 
-    // Cancel any ongoing speech before updating state
-    // This prevents overlap with any previously playing announcements
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
+      console.log(`Refresh modal - Replacing ${currentExercise.name} with ${newExercise.name}`);
 
-    setWorkoutData(updatedWorkout);
+      // Update the workout data with the new exercise (using proper state update)
+      const updatedWorkout = { ...workoutData };
+      const phaseKey = timerState.phase as 'warmup' | 'main' | 'cooldown';
+      if (phaseKey === 'warmup') {
+        updatedWorkout.warmup = [...workoutData.warmup];
+        updatedWorkout.warmup[timerState.exerciseIndex] = newExercise;
+      } else if (phaseKey === 'main') {
+        updatedWorkout.main = [...workoutData.main];
+        updatedWorkout.main[timerState.exerciseIndex] = newExercise;
+      } else {
+        updatedWorkout.cooldown = [...workoutData.cooldown];
+        updatedWorkout.cooldown[timerState.exerciseIndex] = newExercise;
+      }
 
-    // Reset side state for side-switching exercises in warmup/cooldown
-    if (timerState.phase === 'warmup' || timerState.phase === 'cooldown') {
-      setCurrentSide('right');
-      setHasAnnouncedSwitch(false);
-    }
+      // Cancel any ongoing speech before updating state
+      // This prevents overlap with any previously playing announcements
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
 
-    // CRITICAL: Reset timer and start it in a SINGLE setTimerState call
-    // This ensures the timer restarts at the beginning of the CURRENT exercise
-    // while preserving phase, exerciseIndex, and round
-    if (timerState.phase === 'main') {
-      // Main workout: Reset to start of work interval (20 seconds)
-      setTimerState(prev => ({
-        ...prev,
-        timeRemaining: WORK_DURATION,
-        intervalType: 'work' as IntervalType,
-        isPaused: false  // Start timer automatically
-      }));
-    } else {
-      // Warmup/Cooldown: Parse duration from new exercise
-      const match = newExercise.duration.match(/(\d+)/);
-      const duration = match ? parseInt(match[1], 10) : 45;
-      setTimerState(prev => ({
-        ...prev,
-        timeRemaining: duration,
-        isPaused: false  // Start timer automatically
-      }));
-    }
+      setWorkoutData(updatedWorkout);
 
-    // Close refresh modal
-    setIsRefreshing(false);
-    setShowRefreshModal(false);
+      // Reset side state for side-switching exercises in warmup/cooldown
+      if (timerState.phase === 'warmup' || timerState.phase === 'cooldown') {
+        setCurrentSide('right');
+        setHasAnnouncedSwitch(false);
+      }
 
-    // Announce the new exercise name via voice
-    // Use setTimeout to ensure modal closes first and state is settled
-    setTimeout(() => {
-      if (voiceEnabled) {
-        if (timerState.phase === 'warmup' || timerState.phase === 'cooldown') {
-          const needsSideSwitch = isSideSwitchingExercise(newExercise, timerState.phase);
-          if (needsSideSwitch) {
-            const bodyPart = getBodyPartTerm(newExercise);
-            const sideText = getSideAnnouncement('right', bodyPart);
-            speak(`${newExercise.name}, ${sideText}`, true);
+      // CRITICAL: Reset timer and start it in a SINGLE setTimerState call
+      // This ensures the timer restarts at the beginning of the CURRENT exercise
+      // while preserving phase, exerciseIndex, and round
+      if (timerState.phase === 'main') {
+        // Main workout: Reset to start of work interval (20 seconds)
+        setTimerState(prev => ({
+          ...prev,
+          timeRemaining: WORK_DURATION,
+          intervalType: 'work' as IntervalType,
+          isPaused: false  // Start timer automatically
+        }));
+      } else {
+        // Warmup/Cooldown: Parse duration from new exercise
+        const match = newExercise.duration.match(/(\d+)/);
+        const duration = match ? parseInt(match[1], 10) : 45;
+        setTimerState(prev => ({
+          ...prev,
+          timeRemaining: duration,
+          isPaused: false  // Start timer automatically
+        }));
+      }
+
+      // Close refresh modal
+      setShowRefreshModal(false);
+
+      // Announce the new exercise name via voice
+      // Use setTimeout to ensure modal closes first and state is settled
+      setTimeout(() => {
+        if (voiceEnabled) {
+          if (timerState.phase === 'warmup' || timerState.phase === 'cooldown') {
+            const needsSideSwitch = isSideSwitchingExercise(newExercise, timerState.phase);
+            if (needsSideSwitch) {
+              const bodyPart = getBodyPartTerm(newExercise);
+              const sideText = getSideAnnouncement('right', bodyPart);
+              speak(`${newExercise.name}, ${sideText}`, true);
+            } else {
+              speak(newExercise.name, true);
+            }
           } else {
             speak(newExercise.name, true);
           }
-        } else {
-          speak(newExercise.name, true);
         }
-      }
-    }, 300);
+      }, 300);
+
+    } catch (error) {
+      console.error('Failed to replace exercise:', error);
+      alert('Failed to generate replacement exercise. Please try again.');
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // Replace Exercise from Pause Menu handlers
@@ -964,13 +963,23 @@ const TabataTimer = () => {
           ? 'cooldown'
           : 'main';
 
-      // Generate replacement exercise using AI
+      // Build complete list of ALL exercises in the workout to avoid duplicates
+      const allExercisesInWorkout: string[] = [
+        ...workoutData.warmup.map(e => e.name),
+        ...workoutData.main.map(e => e.name),
+        ...workoutData.cooldown.map(e => e.name)
+      ];
+
+      console.log('All exercises in workout:', allExercisesInWorkout);
+
+      // Generate replacement exercise using AI with complete workout context
       const { exercise: newExercise } = await generateReplacementExercise({
         exerciseName: currentExercise.name,
         category,
         framework: 'tabata',
         fitnessLevel: 'intermediate', // Could fetch from user preferences
-        equipment: ['bodyweight'] // Could fetch from user preferences
+        equipment: ['bodyweight'], // Could fetch from user preferences
+        allExercisesInWorkout
       });
 
       console.log(`Replacing ${currentExercise.name} with ${newExercise.name}`);
