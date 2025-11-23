@@ -60,10 +60,12 @@ const phaseColors = {
   work: {
     primary: "#00D9C0",
     glow: "rgba(0, 217, 192, 0.5)",
+    gradient: "linear-gradient(135deg, rgba(0, 217, 192, 0.15) 0%, rgba(0, 217, 192, 0.05) 100%)",
   },
   rest: {
     primary: "#64748B",
     glow: "rgba(100, 116, 139, 0.4)",
+    gradient: "linear-gradient(135deg, rgba(100, 116, 139, 0.15) 0%, rgba(100, 116, 139, 0.05) 100%)",
   },
 };
 
@@ -228,25 +230,6 @@ const TabataTimer = () => {
     }
   }, [typedWorkout, isInitialized]);
 
-  // Announce first exercise with side information on initialization
-  useEffect(() => {
-    if (!isInitialized || !typedWorkout) return;
-
-    const warmupExercises = typedWorkout.warmup || [];
-    if (warmupExercises.length > 0) {
-      const firstExercise = warmupExercises[0];
-      const needsSideSwitch = isSideSwitchingExercise(firstExercise, "warmup");
-
-      if (needsSideSwitch) {
-        const bodyPart = getBodyPartTerm(firstExercise);
-        const sideText = getSideAnnouncement("right", bodyPart);
-        speak(`${firstExercise.name}, ${sideText}`, true);
-      } else {
-        speak(firstExercise.name, true);
-      }
-    }
-  }, [isInitialized, typedWorkout, speak]);
-
   // Voice announcement function
   const speak = useCallback((text: string, priority: boolean = false) => {
     if (!voiceEnabled || typeof window === "undefined") return;
@@ -266,6 +249,25 @@ const TabataTimer = () => {
       console.log("Speech synthesis not available");
     }
   }, [voiceEnabled]);
+
+  // Announce first exercise with side information on initialization
+  useEffect(() => {
+    if (!isInitialized || !typedWorkout) return;
+
+    const warmupExercises = typedWorkout.warmup || [];
+    if (warmupExercises.length > 0) {
+      const firstExercise = warmupExercises[0];
+      const needsSideSwitch = isSideSwitchingExercise(firstExercise, "warmup");
+
+      if (needsSideSwitch) {
+        const bodyPart = getBodyPartTerm(firstExercise);
+        const sideText = getSideAnnouncement("right", bodyPart);
+        speak(`${firstExercise.name}, ${sideText}`, true);
+      } else {
+        speak(firstExercise.name, true);
+      }
+    }
+  }, [isInitialized, typedWorkout, speak]);
 
   // Haptic feedback
   const vibrate = useCallback((pattern: number | number[]) => {
@@ -1484,7 +1486,7 @@ const TabataTimer = () => {
           <span
             className="text-xs font-semibold px-4 py-1.5 rounded-full tracking-wider"
             style={{
-              background: currentPhaseColors.gradient,
+              background: currentPhaseColors.gradient || `linear-gradient(135deg, ${currentPhaseColors.primary}26 0%, ${currentPhaseColors.primary}0D 100%)`,
               color: currentPhaseColors.primary,
               border: `1px solid ${currentPhaseColors.primary}30`,
             }}
