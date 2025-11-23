@@ -74,7 +74,19 @@ const Workout = () => {
   };
 
   const handleBeginWorkout = () => {
-    console.log("Begin workout - navigate to timer screen");
+    // Navigate to the appropriate timer based on framework
+    if (frameworkKey === "tabata") {
+      navigate("/workout/tabata/timer", {
+        state: {
+          workout: currentWorkout,
+          workoutId,
+          framework: frameworkKey,
+        },
+      });
+    } else {
+      // TODO: Add other framework timers
+      console.log("Timer not yet implemented for:", frameworkKey);
+    }
   };
 
   const handleSaveWorkout = () => {

@@ -12,6 +12,7 @@ import Duration from "./pages/onboarding/Duration";
 import Home from "./pages/Home";
 import Workout from "./pages/Workout";
 import WorkoutGeneration from "./pages/WorkoutGeneration";
+import TabataTimer from "./pages/timers/TabataTimer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/onboarding/duration" element={<Duration />} />
           <Route path="/home" element={<Home />} />
           <Route path="/workout/generate" element={<WorkoutGeneration />} />
+          <Route path="/workout/tabata/timer" element={<TabataTimer />} />
           <Route path="/workout/:framework" element={<Workout />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
