@@ -156,6 +156,7 @@ const TabataTimer = () => {
   const transitionRef = useRef<NodeJS.Timeout | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const startTimeRef = useRef<number>(Date.now());
+  const hasAnnouncedInitialRef = useRef<boolean>(false);
 
   // Use workoutData if available (for exercise replacements), otherwise use passed workout
   const typedWorkout = workoutData || (workout as GeneratedWorkout | undefined);
@@ -267,8 +268,13 @@ const TabataTimer = () => {
   }, [voiceEnabled]);
 
   // Announce first exercise with side information on initialization
+  // This effect should only run ONCE when first initialized, not when workout data changes
   useEffect(() => {
     if (!isInitialized || !typedWorkout) return;
+
+    // Prevent re-announcement when workout data changes (e.g., during exercise replacement)
+    if (hasAnnouncedInitialRef.current) return;
+    hasAnnouncedInitialRef.current = true;
 
     const warmupExercises = typedWorkout.warmup || [];
     if (warmupExercises.length > 0) {
@@ -871,6 +877,13 @@ const TabataTimer = () => {
       updatedWorkout.cooldown = [...workoutData.cooldown];
       updatedWorkout.cooldown[timerState.exerciseIndex] = newExercise;
     }
+
+    // Cancel any ongoing speech before updating state
+    // This prevents overlap with any previously playing announcements
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+
     setWorkoutData(updatedWorkout);
 
     // Reset side state for side-switching exercises in warmup/cooldown
@@ -973,6 +986,12 @@ const TabataTimer = () => {
       } else {
         updatedWorkout.cooldown = [...workoutData.cooldown];
         updatedWorkout.cooldown[timerState.exerciseIndex] = newExercise;
+      }
+
+      // Cancel any ongoing speech before updating state
+      // This prevents overlap with any previously playing announcements
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
       }
 
       // Update state with new workout
