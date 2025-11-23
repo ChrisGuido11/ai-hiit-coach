@@ -83,6 +83,7 @@ const TabataTimer = () => {
   const [transition, setTransition] = useState<TransitionState | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showRefreshModal, setShowRefreshModal] = useState(false);
+  const [showTutorialDrawer, setShowTutorialDrawer] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [stats, setStats] = useState<WorkoutStats>({
@@ -575,24 +576,55 @@ const TabataTimer = () => {
     setShowExitConfirm(false);
   };
 
-  // Lesson button handler - opens YouTube search for exercise tutorial
+  // Lesson button handler - opens YouTube tutorial drawer
   const handleLessonClick = () => {
     // Pause the timer
     setTimerState((prev) => ({ ...prev, isPaused: true }));
 
-    // Get current exercise name, with fallback
-    const exerciseName = currentExercise?.name?.trim() || "HIIT exercise tutorial";
-
-    // Format for YouTube search: "how to [exercise name]"
-    // Convert to lowercase, replace spaces with +
-    const searchQuery = `how to ${exerciseName}`.toLowerCase().replace(/ /g, '+');
-    const youtubeUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
-
-    // Open YouTube in a new tab
-    window.open(youtubeUrl, '_blank');
+    // Open the tutorial drawer
+    setShowTutorialDrawer(true);
 
     // Voice announcement
-    speak("Timer paused. Resume when ready.", true);
+    speak("Timer paused. Tap to view tutorial.", true);
+  };
+
+  // Close tutorial drawer
+  const handleCloseTutorialDrawer = () => {
+    setShowTutorialDrawer(false);
+  };
+
+  // Open YouTube with mobile-aware deep linking
+  const handleOpenYouTube = () => {
+    const exerciseName = currentExercise?.name?.trim() || "HIIT exercise tutorial";
+    const searchQuery = `how to ${exerciseName}`.toLowerCase().replace(/ /g, '+');
+
+    // Detect if on mobile
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      // Try YouTube app deep link first, fallback to web
+      const youtubeAppUrl = `youtube://results?search_query=${searchQuery}`;
+      const youtubeWebUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
+
+      // Create a hidden iframe to try the app URL
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = youtubeAppUrl;
+      document.body.appendChild(iframe);
+
+      // Fallback to web after a short delay if app doesn't open
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+        window.open(youtubeWebUrl, '_blank');
+      }, 500);
+    } else {
+      // Desktop - open in new tab
+      const youtubeUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
+      window.open(youtubeUrl, '_blank');
+    }
+
+    // Close the drawer after opening YouTube
+    setShowTutorialDrawer(false);
   };
 
   // Refresh/replace exercise handlers
@@ -846,6 +878,21 @@ const TabataTimer = () => {
         .breathe { animation: breathe 3s ease-in-out infinite; }
         .fade-in { animation: fadeIn 0.3s ease-out; }
         .slide-up { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUpDrawer {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+        @keyframes slideDownDrawer {
+          from { transform: translateY(0); }
+          to { transform: translateY(100%); }
+        }
+        @keyframes fadeInBackdrop {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .drawer-slide-up { animation: slideUpDrawer 300ms ease-out forwards; }
+        .drawer-slide-down { animation: slideDownDrawer 250ms ease-in forwards; }
+        .backdrop-fade-in { animation: fadeInBackdrop 300ms ease-out forwards; }
       `}</style>
 
       {/* Exit Confirmation Modal */}
@@ -956,6 +1003,151 @@ const TabataTimer = () => {
                   'Replace'
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* YouTube Tutorial Drawer */}
+      {showTutorialDrawer && (
+        <div className="fixed inset-0 z-50">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 backdrop-fade-in"
+            style={{
+              background: 'rgba(0, 0, 0, 0.7)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+            }}
+            onClick={handleCloseTutorialDrawer}
+          />
+
+          {/* Drawer */}
+          <div
+            className="absolute inset-x-0 bottom-0 drawer-slide-up"
+            style={{
+              height: '75vh',
+              background: 'rgba(15, 23, 42, 0.95)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              borderTopLeftRadius: '24px',
+              borderTopRightRadius: '24px',
+              borderTop: '1px solid rgba(148, 163, 184, 0.3)',
+              boxShadow: '0 -20px 60px rgba(0, 0, 0, 0.5)',
+              paddingBottom: 'env(safe-area-inset-bottom)',
+            }}
+          >
+            {/* Drawer Header */}
+            <div
+              className="relative flex flex-col items-center pt-3"
+              style={{ height: '60px' }}
+            >
+              {/* Drag Handle */}
+              <div
+                className="mb-3"
+                style={{
+                  width: '40px',
+                  height: '4px',
+                  borderRadius: '2px',
+                  background: 'rgba(148, 163, 184, 0.5)',
+                }}
+              />
+
+              {/* Title */}
+              <div className="text-center px-16">
+                <h3 className="text-lg font-bold text-white truncate">
+                  {currentExercise?.name || 'Exercise'} Tutorial
+                </h3>
+              </div>
+
+              {/* Close Button */}
+              <button
+                onClick={handleCloseTutorialDrawer}
+                className="absolute right-4 top-3 w-10 h-10 rounded-xl flex items-center justify-center active:scale-95 transition-transform"
+                style={{
+                  background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
+                  border: '1px solid rgba(148, 163, 184, 0.25)',
+                }}
+                aria-label="Close tutorial"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+            </div>
+
+            {/* Subtitle */}
+            <p className="text-center text-sm text-[#64748B] mb-6">
+              Swipe down or tap X to close
+            </p>
+
+            {/* Content */}
+            <div className="flex flex-col items-center px-6 flex-1">
+              {/* YouTube Icon/Preview */}
+              <div
+                className="w-full max-w-sm rounded-2xl p-8 mb-6 flex flex-col items-center"
+                style={{
+                  background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
+                  border: '1px solid rgba(148, 163, 184, 0.15)',
+                }}
+              >
+                {/* YouTube Play Icon */}
+                <div
+                  className="w-20 h-20 rounded-full flex items-center justify-center mb-4"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 0, 0, 0.2) 0%, rgba(255, 0, 0, 0.1) 100%)',
+                    border: '2px solid rgba(255, 0, 0, 0.3)',
+                  }}
+                >
+                  <svg
+                    className="w-10 h-10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"
+                      fill="#FF0000"
+                    />
+                  </svg>
+                </div>
+
+                <p className="text-white text-center text-lg font-medium mb-2">
+                  Search YouTube for:
+                </p>
+                <p
+                  className="text-center font-semibold text-lg mb-1"
+                  style={{ color: '#00D9C0' }}
+                >
+                  "How to {currentExercise?.name || 'Exercise'}"
+                </p>
+                <p className="text-[#64748B] text-sm text-center">
+                  Watch tutorial videos from fitness experts
+                </p>
+              </div>
+
+              {/* Open YouTube Button */}
+              <button
+                onClick={handleOpenYouTube}
+                className="w-full max-w-sm py-4 rounded-2xl font-semibold text-lg transition-all active:scale-95 flex items-center justify-center gap-3 mb-4"
+                style={{
+                  background: 'linear-gradient(135deg, #FF0000 0%, #CC0000 100%)',
+                  boxShadow: '0 8px 32px rgba(255, 0, 0, 0.3)',
+                  color: '#FFFFFF',
+                }}
+              >
+                <svg
+                  className="w-6 h-6"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                </svg>
+                Open in YouTube
+              </button>
+
+              {/* Info Text */}
+              <p className="text-[#64748B] text-sm text-center max-w-sm">
+                On mobile devices, this will open the YouTube app if installed
+              </p>
             </div>
           </div>
         </div>
