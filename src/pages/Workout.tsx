@@ -29,18 +29,18 @@ const frameworkDetails: Record<string, { fullName: string; description: string; 
 
 const mockWorkout = {
   warmup: [
-    { name: "Jumping Jacks", duration: "60 seconds", instructions: "Start with feet together, jump and spread legs while raising arms" },
-    { name: "Arm Circles", duration: "30 seconds", instructions: "Extend arms and make circular motions" }
+    { name: "Jumping Jacks", duration: "60 seconds", instructions: "Jump feet wide while raising arms overhead, return to start" },
+    { name: "Arm Circles", duration: "30 seconds", instructions: "Extend arms and rotate in controlled circular motions" }
   ],
   main: [
-    { name: "Bodyweight Squats", duration: "20s work / 10s rest", instructions: "Stand with feet shoulder-width apart, lower into squat" },
-    { name: "Push-ups", duration: "20s work / 10s rest", instructions: "Start in plank position, lower chest to ground" },
-    { name: "Mountain Climbers", duration: "20s work / 10s rest", instructions: "Drive knees to chest alternately in plank position" },
-    { name: "Burpees", duration: "20s work / 10s rest", instructions: "Squat, jump back to plank, return and jump up" }
+    { name: "Bodyweight Squats", duration: "20s work / 10s rest", instructions: "Sit back and down with weight in heels, chest up" },
+    { name: "Push-ups", duration: "20s work / 10s rest", instructions: "Lower chest to floor, maintain rigid plank throughout" },
+    { name: "Mountain Climbers", duration: "20s work / 10s rest", instructions: "Hold plank position, rapidly alternate driving knees to chest" },
+    { name: "Burpees", duration: "20s work / 10s rest", instructions: "Drop to plank, perform push-up, jump feet forward, explode up" }
   ],
   cooldown: [
-    { name: "Quad Stretch", duration: "30 seconds each leg", instructions: "Stand on one leg, pull heel to glutes" },
-    { name: "Hamstring Stretch", duration: "30 seconds each leg", instructions: "Sit and reach towards toes" }
+    { name: "Quad Stretch", duration: "30 seconds each leg", instructions: "Stand on one leg, pull heel to glutes, keep knees together" },
+    { name: "Hamstring Stretch", duration: "30 seconds each leg", instructions: "Sit with legs extended, reach forward toward toes" }
   ]
 };
 

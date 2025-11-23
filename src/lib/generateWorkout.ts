@@ -21,139 +21,101 @@ export interface GenerateWorkoutParams {
   duration: string;
 }
 
-// Framework-specific rules for the AI
-const frameworkRules: Record<string, string> = {
-  tabata: `Tabata Protocol Rules:
-- 20 seconds of maximum effort work
-- 10 seconds of rest
-- 8 rounds per exercise (4 minutes total per exercise)
-- Duration format for main exercises: "20s work / 10s rest × 8 rounds"
-- Choose explosive, high-intensity exercises
-- Total workout time should fit within the user's duration preference`,
-
-  emom: `EMOM (Every Minute On the Minute) Rules:
-- Complete prescribed reps at the start of each minute
-- Rest for the remainder of the minute
-- Duration format: "X reps every minute for Y minutes"
-- Choose compound movements that can be done quickly
-- Reps should be achievable in 30-40 seconds to allow rest`,
-
-  amrap: `AMRAP (As Many Rounds As Possible) Rules:
-- Complete as many rounds of the circuit as possible
-- Minimal rest between exercises
-- Duration format: "X reps" (the time limit is set separately)
-- Choose exercises that flow well together
-- Mix upper body, lower body, and cardio movements`,
-
-  circuit: `Circuit Training Rules:
-- Move through exercises with minimal rest (15-30 seconds)
-- Complete multiple rounds of the full circuit
-- Duration format: "X seconds" or "X reps"
-- Include variety: strength, cardio, and mobility
-- Balance push/pull and upper/lower body movements`,
-
-  custom: `Custom Goal Workout Rules:
-- Design based on the user's specific goal
-- Balance the workout appropriately
-- Include proper warm-up and cool-down
-- Duration format should match the exercise type`
-};
-
-// Fallback workouts for each framework
+// Fallback workouts for each framework (with correct duration formats and concise instructions)
 const fallbackWorkouts: Record<string, GeneratedWorkout> = {
   tabata: {
     warmup: [
-      { name: "Jumping Jacks", duration: "60 seconds", instructions: "Start with feet together, jump and spread legs while raising arms overhead" },
-      { name: "Arm Circles", duration: "30 seconds each direction", instructions: "Extend arms and make controlled circular motions" },
-      { name: "High Knees", duration: "45 seconds", instructions: "Run in place, driving knees up to hip height" }
+      { name: "Jumping Jacks", duration: "60 seconds", instructions: "Jump feet wide while raising arms overhead, return to start" },
+      { name: "Arm Circles", duration: "30 seconds each direction", instructions: "Extend arms and rotate in controlled circular motions" },
+      { name: "High Knees", duration: "45 seconds", instructions: "Drive knees to hip height while pumping arms" }
     ],
     main: [
-      { name: "Burpees", duration: "20s work / 10s rest × 8 rounds", instructions: "Squat down, jump back to plank, perform push-up, jump feet forward, explode up" },
-      { name: "Mountain Climbers", duration: "20s work / 10s rest × 8 rounds", instructions: "In plank position, rapidly alternate driving knees to chest" },
-      { name: "Jump Squats", duration: "20s work / 10s rest × 8 rounds", instructions: "Lower into squat, explode upward, land softly and repeat" },
-      { name: "High Knees", duration: "20s work / 10s rest × 8 rounds", instructions: "Run in place with maximum speed, driving knees up high" }
+      { name: "Burpees", duration: "20s work / 10s rest", instructions: "Drop to plank, perform push-up, jump feet forward, explode up" },
+      { name: "Mountain Climbers", duration: "20s work / 10s rest", instructions: "Hold plank position, rapidly alternate driving knees to chest" },
+      { name: "Jump Squats", duration: "20s work / 10s rest", instructions: "Lower into squat, explode upward, land softly with bent knees" },
+      { name: "High Knees", duration: "20s work / 10s rest", instructions: "Run in place bringing knees to hip height, pump arms vigorously" }
     ],
     cooldown: [
-      { name: "Standing Forward Fold", duration: "45 seconds", instructions: "Bend at hips, let head and arms hang, relax hamstrings" },
+      { name: "Standing Forward Fold", duration: "45 seconds", instructions: "Hinge at hips, let head hang, relax into the stretch" },
       { name: "Quad Stretch", duration: "30 seconds each leg", instructions: "Stand on one leg, pull heel to glutes, keep knees together" },
-      { name: "Child's Pose", duration: "60 seconds", instructions: "Kneel, sit back on heels, extend arms forward on floor" }
+      { name: "Child's Pose", duration: "60 seconds", instructions: "Kneel and sit back on heels, extend arms forward on floor" }
     ]
   },
   emom: {
     warmup: [
-      { name: "Light Jog in Place", duration: "60 seconds", instructions: "Easy pace to elevate heart rate gradually" },
-      { name: "Leg Swings", duration: "30 seconds each leg", instructions: "Swing leg forward and back, holding wall for balance" },
-      { name: "Arm Swings", duration: "30 seconds", instructions: "Swing arms across body and back, loosening shoulders" }
+      { name: "Light Jog in Place", duration: "60 seconds", instructions: "Easy pace jog to gradually elevate heart rate" },
+      { name: "Leg Swings", duration: "30 seconds each leg", instructions: "Swing leg forward and back, hold wall for balance" },
+      { name: "Arm Swings", duration: "30 seconds", instructions: "Swing arms across body dynamically to loosen shoulders" }
     ],
     main: [
-      { name: "Push-ups", duration: "10 reps every minute for 4 minutes", instructions: "Full range of motion, chest to floor, arms fully extended at top" },
-      { name: "Air Squats", duration: "15 reps every minute for 4 minutes", instructions: "Break parallel, weight in heels, chest up" },
-      { name: "Sit-ups", duration: "12 reps every minute for 4 minutes", instructions: "Full sit-up, touch toes at top, shoulder blades to floor" },
-      { name: "Lunges", duration: "10 reps (alternating) every minute for 4 minutes", instructions: "Step forward, both knees at 90 degrees, drive through front heel" }
+      { name: "Push-ups", duration: "10 reps", instructions: "Lower chest to floor, push up with full arm extension" },
+      { name: "Air Squats", duration: "15 reps", instructions: "Sit back and down past parallel, weight in heels, chest up" },
+      { name: "Sit-ups", duration: "12 reps", instructions: "Lie flat, engage core, curl up to touch toes" },
+      { name: "Lunges", duration: "10 reps", instructions: "Step forward into lunge, both knees at 90 degrees, alternate legs" }
     ],
     cooldown: [
-      { name: "Pigeon Pose", duration: "45 seconds each side", instructions: "From plank, bring knee forward, extend back leg, fold forward" },
-      { name: "Seated Spinal Twist", duration: "30 seconds each side", instructions: "Sit tall, cross one leg over, twist toward bent knee" },
+      { name: "Pigeon Pose", duration: "45 seconds each side", instructions: "Bring knee forward, extend back leg, fold forward over front leg" },
+      { name: "Seated Spinal Twist", duration: "30 seconds each side", instructions: "Sit tall, cross one leg over, rotate torso toward bent knee" },
       { name: "Lying Hamstring Stretch", duration: "45 seconds each leg", instructions: "On back, extend leg up, gently pull toward chest" }
     ]
   },
   amrap: {
     warmup: [
-      { name: "Jumping Jacks", duration: "45 seconds", instructions: "Moderate pace to warm up entire body" },
-      { name: "Bodyweight Good Mornings", duration: "30 seconds", instructions: "Hands behind head, hinge at hips, feel hamstring stretch" },
-      { name: "Inchworms", duration: "45 seconds", instructions: "Fold forward, walk hands to plank, walk feet to hands, stand" }
+      { name: "Jumping Jacks", duration: "45 seconds", instructions: "Jump feet wide while swinging arms overhead" },
+      { name: "Bodyweight Good Mornings", duration: "30 seconds", instructions: "Hands behind head, hinge at hips keeping back flat" },
+      { name: "Inchworms", duration: "45 seconds", instructions: "Fold forward, walk hands to plank, walk feet back to hands" }
     ],
     main: [
-      { name: "Burpees", duration: "5 reps", instructions: "Full burpee with push-up and jump at top" },
-      { name: "Air Squats", duration: "10 reps", instructions: "Break parallel, drive through heels" },
-      { name: "Push-ups", duration: "10 reps", instructions: "Chest to floor, full arm extension" },
-      { name: "Sit-ups", duration: "15 reps", instructions: "Full range of motion, touch toes" },
-      { name: "Jumping Lunges", duration: "10 reps total", instructions: "Lunge, jump and switch legs mid-air" }
+      { name: "Burpees", duration: "5 reps", instructions: "Drop to plank with push-up, jump feet forward, explode up" },
+      { name: "Air Squats", duration: "10 reps", instructions: "Sit back past parallel, drive through heels to stand" },
+      { name: "Push-ups", duration: "10 reps", instructions: "Lower chest to floor, maintain rigid plank throughout" },
+      { name: "Sit-ups", duration: "15 reps", instructions: "Engage core, curl up fully, control the descent" },
+      { name: "Jumping Lunges", duration: "10 reps", instructions: "Lunge position, jump and switch legs mid-air, land softly" }
     ],
     cooldown: [
-      { name: "Cat-Cow Stretch", duration: "60 seconds", instructions: "On all fours, alternate arching and rounding spine" },
+      { name: "Cat-Cow Stretch", duration: "60 seconds", instructions: "On all fours, alternate between arching and rounding spine" },
       { name: "Figure Four Stretch", duration: "45 seconds each side", instructions: "On back, cross ankle over knee, pull thigh toward chest" },
       { name: "Chest Opener", duration: "45 seconds", instructions: "Clasp hands behind back, lift chest, squeeze shoulder blades" }
     ]
   },
   circuit: {
     warmup: [
-      { name: "March in Place", duration: "60 seconds", instructions: "High knees march, pump arms naturally" },
-      { name: "Hip Circles", duration: "30 seconds each direction", instructions: "Hands on hips, make large circles with hips" },
-      { name: "Shoulder Rolls", duration: "30 seconds", instructions: "Roll shoulders forward then backward" }
+      { name: "March in Place", duration: "60 seconds", instructions: "Lift knees high while pumping arms naturally" },
+      { name: "Hip Circles", duration: "30 seconds each direction", instructions: "Hands on hips, rotate hips in large controlled circles" },
+      { name: "Shoulder Rolls", duration: "30 seconds", instructions: "Roll shoulders forward then backward in smooth motions" }
     ],
     main: [
-      { name: "Squats", duration: "45 seconds", instructions: "Feet shoulder-width, sit back and down, chest up" },
-      { name: "Push-ups", duration: "45 seconds", instructions: "Modify on knees if needed, maintain plank position" },
-      { name: "Reverse Lunges", duration: "45 seconds", instructions: "Step back into lunge, alternate legs" },
-      { name: "Plank Hold", duration: "45 seconds", instructions: "Forearms on ground, body in straight line" },
-      { name: "Jumping Jacks", duration: "45 seconds", instructions: "Full range of motion, arms overhead" }
+      { name: "Squats", duration: "45 seconds", instructions: "Feet shoulder-width, sit back and down, keep chest up" },
+      { name: "Push-ups", duration: "45 seconds", instructions: "Maintain plank position, lower chest to floor with control" },
+      { name: "Reverse Lunges", duration: "45 seconds", instructions: "Step back into lunge, keep front knee over ankle" },
+      { name: "Plank Hold", duration: "45 seconds", instructions: "Forearms on ground, maintain straight line from head to heels" },
+      { name: "Jumping Jacks", duration: "45 seconds", instructions: "Jump feet wide while raising arms overhead, return to start" }
     ],
     cooldown: [
-      { name: "Standing Side Stretch", duration: "30 seconds each side", instructions: "Reach arm overhead, lean to opposite side" },
-      { name: "Downward Dog", duration: "60 seconds", instructions: "Hands and feet on floor, hips high, heels toward ground" },
-      { name: "Neck Stretches", duration: "30 seconds each side", instructions: "Gently tilt ear to shoulder, hold" }
+      { name: "Standing Side Stretch", duration: "30 seconds each side", instructions: "Reach arm overhead and lean to opposite side" },
+      { name: "Downward Dog", duration: "60 seconds", instructions: "Press hips high, push heels toward ground, relax neck" },
+      { name: "Neck Stretches", duration: "30 seconds each side", instructions: "Gently tilt ear toward shoulder, hold the stretch" }
     ]
   },
   custom: {
     warmup: [
-      { name: "Light Cardio", duration: "60 seconds", instructions: "Jumping jacks or jogging in place" },
-      { name: "Dynamic Stretching", duration: "60 seconds", instructions: "Leg swings, arm circles, torso twists" }
+      { name: "Light Cardio", duration: "60 seconds", instructions: "Jog in place or perform jumping jacks at easy pace" },
+      { name: "Dynamic Stretching", duration: "60 seconds", instructions: "Perform leg swings, arm circles, and torso twists" }
     ],
     main: [
-      { name: "Squats", duration: "45 seconds", instructions: "Basic bodyweight squats with good form" },
-      { name: "Push-ups", duration: "45 seconds", instructions: "Standard or modified push-ups" },
-      { name: "Lunges", duration: "45 seconds", instructions: "Alternating forward lunges" },
-      { name: "Plank", duration: "45 seconds", instructions: "Hold strong plank position" }
+      { name: "Squats", duration: "45 seconds", instructions: "Lower hips back and down, keep weight in heels" },
+      { name: "Push-ups", duration: "45 seconds", instructions: "Lower chest to floor, maintain straight body alignment" },
+      { name: "Lunges", duration: "45 seconds", instructions: "Step forward into lunge, alternate legs with control" },
+      { name: "Plank", duration: "45 seconds", instructions: "Hold rigid plank position, engage core throughout" }
     ],
     cooldown: [
-      { name: "Full Body Stretch", duration: "45 seconds", instructions: "Standing forward fold, reach for toes" },
-      { name: "Hip Flexor Stretch", duration: "30 seconds each side", instructions: "Kneeling lunge stretch" }
+      { name: "Full Body Stretch", duration: "45 seconds", instructions: "Fold forward at hips, reach toward toes" },
+      { name: "Hip Flexor Stretch", duration: "30 seconds each side", instructions: "Kneel in lunge position, push hips forward gently" }
     ]
   }
 };
 
-// Main function to generate workout
+// Main function to generate workout (uses Supabase edge function)
 export async function generateWorkout(params: GenerateWorkoutParams): Promise<{
   workout: GeneratedWorkout;
   usedFallback: boolean;
