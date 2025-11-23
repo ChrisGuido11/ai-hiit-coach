@@ -83,12 +83,12 @@ const WorkoutGeneration = () => {
         if (user) {
           const { data: savedWorkout, error: saveError } = await supabase
             .from("workouts")
-            .insert({
+            .insert([{
               user_id: user.id,
               framework_type: framework || "custom",
-              exercises: workout as unknown as Record<string, unknown>,
+              exercises: workout as any,
               completed: false
-            })
+            }])
             .select("id")
             .single();
 

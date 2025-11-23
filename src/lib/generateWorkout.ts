@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import { supabase } from "@/integrations/supabase/client";
 
 // Types for workout structure
 export interface Exercise {
@@ -153,145 +153,41 @@ const fallbackWorkouts: Record<string, GeneratedWorkout> = {
   }
 };
 
-// Clean AI response by removing markdown code blocks
-function cleanJsonResponse(response: string): string {
-  // Remove markdown code blocks
-  let cleaned = response.replace(/```json\n?/gi, "").replace(/```\n?/gi, "");
-  // Trim whitespace
-  cleaned = cleaned.trim();
-  return cleaned;
-}
-
-// Initialize OpenAI client
-function getOpenAIClient(): OpenAI {
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("OpenAI API key not configured");
-  }
-
-  return new OpenAI({
-    apiKey,
-    dangerouslyAllowBrowser: true // For development only - will move to backend later
-  });
-}
-
-// Build the system prompt
-function buildSystemPrompt(framework: string): string {
-  const rules = frameworkRules[framework] || frameworkRules.custom;
-
-  return `You are an expert HIIT fitness coach and workout designer. Your job is to create personalized, effective workouts that are safe and appropriate for the user's fitness level.
-
-${rules}
-
-IMPORTANT GUIDELINES:
-1. Always include a proper warm-up to prepare the body
-2. Main workout should be challenging but achievable
-3. Cool-down should help with recovery and flexibility
-4. Consider the available equipment when selecting exercises
-5. Adjust intensity based on fitness level:
-   - Beginner: Lower reps, longer rest, simpler movements
-   - Intermediate: Moderate challenge, standard protocols
-   - Advanced: Higher intensity, complex movements, shorter rest
-
-You must respond with ONLY valid JSON in this exact structure (no markdown, no explanations):
-{
-  "warmup": [
-    { "name": "Exercise Name", "duration": "time format", "instructions": "Brief form cue" }
-  ],
-  "main": [
-    { "name": "Exercise Name", "duration": "time format per framework rules", "instructions": "Brief form cue" }
-  ],
-  "cooldown": [
-    { "name": "Exercise Name", "duration": "time format", "instructions": "Brief form cue" }
-  ]
-}`;
-}
-
-// Build the user prompt
-function buildUserPrompt(params: GenerateWorkoutParams): string {
-  const { framework, goal, fitnessLevel, equipment, duration } = params;
-
-  const equipmentList = equipment.length > 0
-    ? equipment.join(", ")
-    : "bodyweight only (no equipment)";
-
-  let prompt = `Create a ${framework.toUpperCase()} workout for me with these specifications:
-
-FITNESS LEVEL: ${fitnessLevel}
-AVAILABLE EQUIPMENT: ${equipmentList}
-TARGET DURATION: ${duration} minutes total`;
-
-  if (goal) {
-    prompt += `\nSPECIFIC GOAL: ${goal}`;
-  }
-
-  prompt += `
-
-Please create:
-- 2-3 warm-up exercises (about 3-5 minutes total)
-- 4-6 main workout exercises following ${framework.toUpperCase()} protocol
-- 2-3 cool-down stretches (about 3-5 minutes total)
-
-Remember to use ONLY the equipment I have available and adjust difficulty for my ${fitnessLevel} fitness level.
-
-Respond with ONLY the JSON object, no additional text or markdown.`;
-
-  return prompt;
-}
-
 // Main function to generate workout
 export async function generateWorkout(params: GenerateWorkoutParams): Promise<{
   workout: GeneratedWorkout;
   usedFallback: boolean;
 }> {
-  const { framework } = params;
+  const { framework, goal, fitnessLevel, equipment, duration } = params;
   const frameworkKey = framework.toLowerCase();
 
   try {
-    const openai = getOpenAIClient();
+    console.log("Calling edge function to generate workout...");
 
-    const systemPrompt = buildSystemPrompt(frameworkKey);
-    const userPrompt = buildUserPrompt(params);
-
-    console.log("Calling OpenAI API for workout generation...");
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
-      ],
-      temperature: 0.8,
-      max_tokens: 1500
+    const { data, error } = await supabase.functions.invoke('generate-workout', {
+      body: {
+        framework: frameworkKey,
+        goal,
+        fitnessLevel,
+        equipment,
+        duration
+      }
     });
 
-    const content = response.choices[0]?.message?.content;
-
-    if (!content) {
-      throw new Error("No response content from OpenAI");
+    if (error) {
+      console.error("Edge function error:", error);
+      throw error;
     }
 
-    console.log("Raw AI response:", content);
-
-    // Clean and parse the response
-    const cleanedContent = cleanJsonResponse(content);
-    const workout: GeneratedWorkout = JSON.parse(cleanedContent);
-
-    // Validate the workout structure
-    if (!workout.warmup || !workout.main || !workout.cooldown) {
-      throw new Error("Invalid workout structure returned by AI");
+    if (!data || !data.workout) {
+      throw new Error("No workout data returned from edge function");
     }
 
-    if (!Array.isArray(workout.warmup) || !Array.isArray(workout.main) || !Array.isArray(workout.cooldown)) {
-      throw new Error("Workout sections must be arrays");
-    }
-
-    console.log("Successfully generated workout:", workout);
+    console.log("Successfully generated workout:", data.workout);
 
     return {
-      workout,
-      usedFallback: false
+      workout: data.workout,
+      usedFallback: data.usedFallback || false
     };
 
   } catch (error) {
