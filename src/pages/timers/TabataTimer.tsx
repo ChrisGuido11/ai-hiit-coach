@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Pause, Play, X, ChevronRight, Volume2, VolumeX, RefreshCw, SkipForward } from "lucide-react";
-import { GeneratedWorkout, Exercise } from "@/lib/generateWorkout";
+import { Pause, Play, X, ChevronRight, Volume2, VolumeX, RefreshCw, SkipForward, Loader2 } from "lucide-react";
+import { GeneratedWorkout, Exercise, generateReplacementExercise } from "@/lib/generateWorkout";
+import { supabase } from "@/integrations/supabase/client";
 
 type TimerPhase = "warmup" | "main" | "cooldown" | "complete";
 type IntervalType = "work" | "rest" | "exercise";
@@ -136,6 +137,11 @@ const TabataTimer = () => {
   const [showPauseMenu, setShowPauseMenu] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [isReplacingExercise, setIsReplacingExercise] = useState(false);
+  const [showReplaceConfirm, setShowReplaceConfirm] = useState(false);
+
+  // Mutable workout state for exercise replacements
+  const [workoutData, setWorkoutData] = useState<GeneratedWorkout | undefined>(undefined);
   const [stats, setStats] = useState<WorkoutStats>({
     totalTime: 0,
     exercisesCompleted: 0,
@@ -150,7 +156,16 @@ const TabataTimer = () => {
   const transitionRef = useRef<NodeJS.Timeout | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const startTimeRef = useRef<number>(Date.now());
-  const typedWorkout = workout as GeneratedWorkout | undefined;
+
+  // Use workoutData if available (for exercise replacements), otherwise use passed workout
+  const typedWorkout = workoutData || (workout as GeneratedWorkout | undefined);
+
+  // Initialize workoutData from passed workout
+  useEffect(() => {
+    if (workout && !workoutData) {
+      setWorkoutData(workout as GeneratedWorkout);
+    }
+  }, [workout, workoutData]);
 
   // Wake Lock API to prevent screen sleep
   useEffect(() => {
@@ -856,6 +871,121 @@ const TabataTimer = () => {
     setShowRefreshModal(false);
   };
 
+  // Replace Exercise from Pause Menu handlers
+  const handleReplaceFromPauseMenu = () => {
+    setShowReplaceConfirm(true);
+  };
+
+  const handleReplaceConfirmCancel = () => {
+    setShowReplaceConfirm(false);
+  };
+
+  const handleReplaceConfirmExecute = async () => {
+    if (!currentExercise || !typedWorkout || !workoutData) {
+      setShowReplaceConfirm(false);
+      return;
+    }
+
+    setShowReplaceConfirm(false);
+    setIsReplacingExercise(true);
+
+    try {
+      // Determine current category
+      const category: 'warmup' | 'main' | 'cooldown' = timerState.phase === 'warmup'
+        ? 'warmup'
+        : timerState.phase === 'cooldown'
+          ? 'cooldown'
+          : 'main';
+
+      // Generate replacement exercise using AI
+      const { exercise: newExercise } = await generateReplacementExercise({
+        exerciseName: currentExercise.name,
+        category,
+        framework: 'tabata',
+        fitnessLevel: 'intermediate', // Could fetch from user preferences
+        equipment: ['bodyweight'] // Could fetch from user preferences
+      });
+
+      console.log(`Replacing ${currentExercise.name} with ${newExercise.name}`);
+
+      // Update the workout data with the new exercise
+      const updatedWorkout = { ...workoutData };
+      if (category === 'warmup') {
+        updatedWorkout.warmup = [...workoutData.warmup];
+        updatedWorkout.warmup[timerState.exerciseIndex] = newExercise;
+      } else if (category === 'main') {
+        updatedWorkout.main = [...workoutData.main];
+        updatedWorkout.main[timerState.exerciseIndex] = newExercise;
+      } else {
+        updatedWorkout.cooldown = [...workoutData.cooldown];
+        updatedWorkout.cooldown[timerState.exerciseIndex] = newExercise;
+      }
+
+      // Update state with new workout
+      setWorkoutData(updatedWorkout);
+
+      // Reset timer for new exercise
+      if (timerState.phase === 'main') {
+        // Reset to work interval start (20 seconds)
+        setTimerState(prev => ({
+          ...prev,
+          timeRemaining: WORK_DURATION,
+          intervalType: 'work'
+        }));
+      } else {
+        // For warmup/cooldown, parse duration from new exercise
+        const match = newExercise.duration.match(/(\d+)/);
+        const duration = match ? parseInt(match[1], 10) : 45;
+        setTimerState(prev => ({
+          ...prev,
+          timeRemaining: duration
+        }));
+        // Reset side state for side-switching exercises
+        setCurrentSide('right');
+        setHasAnnouncedSwitch(false);
+      }
+
+      // Update database if workout is saved
+      if (workoutId) {
+        const { error } = await supabase
+          .from('workouts')
+          .update({
+            exercises: updatedWorkout as unknown as Record<string, unknown>
+          })
+          .eq('id', workoutId);
+
+        if (error) {
+          console.error('Failed to update workout in database:', error);
+        }
+      }
+
+      // Close pause menu and resume timer
+      setShowPauseMenu(false);
+      setTimerState(prev => ({ ...prev, isPaused: false }));
+
+      // Announce the new exercise
+      if (timerState.phase === 'warmup' || timerState.phase === 'cooldown') {
+        const needsSideSwitch = isSideSwitchingExercise(newExercise, timerState.phase);
+        if (needsSideSwitch) {
+          const bodyPart = getBodyPartTerm(newExercise);
+          const sideText = getSideAnnouncement('right', bodyPart);
+          speak(`${newExercise.name}, ${sideText}`, true);
+        } else {
+          speak(newExercise.name, true);
+        }
+      } else {
+        speak(newExercise.name, true);
+      }
+
+    } catch (error) {
+      console.error('Failed to replace exercise:', error);
+      // Show a simple alert for now
+      alert('Failed to generate replacement exercise. Please try again.');
+    } finally {
+      setIsReplacingExercise(false);
+    }
+  };
+
   // Skip warm-up handlers
   const handleSkipWarmupClick = () => {
     setTimerState((prev) => ({ ...prev, isPaused: true }));
@@ -1124,7 +1254,8 @@ const TabataTimer = () => {
               {/* Resume Button - Primary */}
               <button
                 onClick={handleResume}
-                className="w-full py-4 rounded-2xl font-semibold text-lg transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                disabled={isReplacingExercise}
+                className="w-full py-4 rounded-2xl font-semibold text-lg transition-all active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50"
                 style={{
                   background: 'linear-gradient(135deg, #00D9C0 0%, #00B4A0 100%)',
                   boxShadow: '0 8px 24px rgba(0, 217, 192, 0.3)',
@@ -1135,10 +1266,35 @@ const TabataTimer = () => {
                 Resume Workout
               </button>
 
+              {/* Replace Exercise Button */}
+              <button
+                onClick={handleReplaceFromPauseMenu}
+                disabled={isReplacingExercise || !!transition}
+                className="w-full py-4 rounded-2xl font-semibold transition-all active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
+                  border: '1px solid rgba(148, 163, 184, 0.25)',
+                  color: '#FFFFFF',
+                }}
+              >
+                {isReplacingExercise ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-5 h-5" />
+                    Replace Exercise
+                  </>
+                )}
+              </button>
+
               {/* Sound Toggle */}
               <button
                 onClick={handleToggleSound}
-                className="w-full py-4 rounded-2xl font-semibold transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                disabled={isReplacingExercise}
+                className="w-full py-4 rounded-2xl font-semibold transition-all active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50"
                 style={{
                   background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
                   border: '1px solid rgba(148, 163, 184, 0.25)',
@@ -1161,7 +1317,8 @@ const TabataTimer = () => {
               {/* Exit Button - Destructive */}
               <button
                 onClick={handleExitFromMenu}
-                className="w-full py-4 rounded-2xl font-semibold transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                disabled={isReplacingExercise}
+                className="w-full py-4 rounded-2xl font-semibold transition-all active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50"
                 style={{
                   background: 'linear-gradient(180deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.2) 100%)',
                   border: '1px solid rgba(239, 68, 68, 0.4)',
@@ -1345,6 +1502,68 @@ const TabataTimer = () => {
                 }}
               >
                 Skip Warm-up
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Replace Exercise Confirmation Modal */}
+      {showReplaceConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-6 fade-in"
+          style={{ background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(8px)' }}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl p-6 slide-up"
+            style={{
+              background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+              border: '1px solid rgba(148, 163, 184, 0.2)',
+              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            {/* Icon */}
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{
+                background: 'linear-gradient(135deg, rgba(0, 217, 192, 0.2) 0%, rgba(0, 217, 192, 0.1) 100%)',
+                border: '1px solid rgba(0, 217, 192, 0.3)',
+              }}
+            >
+              <RefreshCw className="w-7 h-7 text-[#00D9C0]" />
+            </div>
+
+            <h3 className="text-xl font-bold text-white text-center mb-2">
+              Replace Exercise?
+            </h3>
+            <p className="text-[#B0B8C1] text-center mb-4">
+              Generate a new exercise to replace "<span className="text-white font-medium">{currentExercise?.name}</span>"? The current interval will restart.
+            </p>
+            <p className="text-[#64748B] text-xs text-center mb-6">
+              Your round progress will be maintained.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleReplaceConfirmCancel}
+                className="flex-1 py-3 rounded-xl font-semibold transition-all active:scale-95"
+                style={{
+                  background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
+                  border: '1px solid rgba(148, 163, 184, 0.25)',
+                  color: '#FFFFFF',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReplaceConfirmExecute}
+                className="flex-1 py-3 rounded-xl font-semibold transition-all active:scale-95"
+                style={{
+                  background: 'linear-gradient(135deg, #00D9C0 0%, #00B4A0 100%)',
+                  color: '#0A1F2E',
+                }}
+              >
+                Replace & Resume
               </button>
             </div>
           </div>
