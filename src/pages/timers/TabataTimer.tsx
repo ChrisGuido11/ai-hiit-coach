@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Pause, Play, X, ChevronRight } from "lucide-react";
+import { Pause, Play, X, ChevronRight, Volume2, VolumeX } from "lucide-react";
 import { GeneratedWorkout, Exercise } from "@/lib/generateWorkout";
 
 type TimerPhase = "warmup" | "main" | "cooldown" | "complete";
 type IntervalType = "work" | "rest" | "exercise";
+type TransitionType = "phase" | "exercise" | null;
 
 interface TimerState {
   phase: TimerPhase;
@@ -16,15 +17,60 @@ interface TimerState {
   isCountdown: boolean;
 }
 
+interface TransitionState {
+  type: TransitionType;
+  countdown: number;
+  nextPhase?: TimerPhase;
+  nextExerciseName?: string;
+}
+
+interface WorkoutStats {
+  totalTime: number;
+  exercisesCompleted: number;
+  roundsCompleted: number;
+}
+
 const WORK_DURATION = 20;
 const REST_DURATION = 10;
 const ROUNDS_PER_EXERCISE = 8;
 const COUNTDOWN_DURATION = 3;
+const TRANSITION_DURATION = 10;
+
+// Phase colors
+const phaseColors = {
+  warmup: {
+    primary: "#FF9500",
+    glow: "rgba(255, 149, 0, 0.5)",
+    gradient: "linear-gradient(135deg, rgba(255, 149, 0, 0.15) 0%, rgba(255, 149, 0, 0.05) 100%)",
+  },
+  main: {
+    primary: "#00D9C0",
+    glow: "rgba(0, 217, 192, 0.5)",
+    gradient: "linear-gradient(135deg, rgba(0, 217, 192, 0.15) 0%, rgba(0, 217, 192, 0.05) 100%)",
+  },
+  cooldown: {
+    primary: "#8B5CF6",
+    glow: "rgba(139, 92, 246, 0.5)",
+    gradient: "linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 100%)",
+  },
+  work: {
+    primary: "#00D9C0",
+    glow: "rgba(0, 217, 192, 0.5)",
+  },
+  rest: {
+    primary: "#64748B",
+    glow: "rgba(100, 116, 139, 0.4)",
+  },
+  countdown: {
+    primary: "#F59E0B",
+    glow: "rgba(245, 158, 11, 0.5)",
+  },
+};
 
 const TabataTimer = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { workout, workoutId, framework } = location.state || {};
+  const { workout, workoutId } = location.state || {};
 
   const [timerState, setTimerState] = useState<TimerState>({
     phase: "warmup",
@@ -36,8 +82,89 @@ const TabataTimer = () => {
     isCountdown: true,
   });
 
+  const [transition, setTransition] = useState<TransitionState | null>(null);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [stats, setStats] = useState<WorkoutStats>({
+    totalTime: 0,
+    exercisesCompleted: 0,
+    roundsCompleted: 0,
+  });
+
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const transitionRef = useRef<NodeJS.Timeout | null>(null);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const startTimeRef = useRef<number>(Date.now());
   const typedWorkout = workout as GeneratedWorkout | undefined;
+
+  // Wake Lock API to prevent screen sleep
+  useEffect(() => {
+    const requestWakeLock = async () => {
+      try {
+        if ("wakeLock" in navigator) {
+          wakeLockRef.current = await navigator.wakeLock.request("screen");
+        }
+      } catch (err) {
+        console.log("Wake Lock not supported or denied");
+      }
+    };
+
+    requestWakeLock();
+
+    return () => {
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release();
+        wakeLockRef.current = null;
+      }
+    };
+  }, []);
+
+  // Re-acquire wake lock on visibility change
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible" && "wakeLock" in navigator) {
+        try {
+          wakeLockRef.current = await navigator.wakeLock.request("screen");
+        } catch (err) {
+          console.log("Wake Lock re-acquisition failed");
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
+  // Voice announcement function
+  const speak = useCallback((text: string, priority: boolean = false) => {
+    if (!voiceEnabled || typeof window === "undefined") return;
+
+    try {
+      if ("speechSynthesis" in window) {
+        if (priority) {
+          window.speechSynthesis.cancel();
+        }
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 0.8;
+        window.speechSynthesis.speak(utterance);
+      }
+    } catch (err) {
+      console.log("Speech synthesis not available");
+    }
+  }, [voiceEnabled]);
+
+  // Haptic feedback
+  const vibrate = useCallback((pattern: number | number[]) => {
+    try {
+      if ("vibrate" in navigator) {
+        navigator.vibrate(pattern);
+      }
+    } catch (err) {
+      // Vibration not supported
+    }
+  }, []);
 
   // Get current exercises based on phase
   const getCurrentExercises = useCallback((): Exercise[] => {
@@ -58,6 +185,18 @@ const TabataTimer = () => {
   const currentExercise = currentExercises[timerState.exerciseIndex];
   const nextExercise = currentExercises[timerState.exerciseIndex + 1];
 
+  // Get next phase's first exercise name
+  const getNextPhaseExercise = useCallback((): string | undefined => {
+    if (!typedWorkout) return undefined;
+    if (timerState.phase === "warmup" && typedWorkout.main?.length > 0) {
+      return typedWorkout.main[0].name;
+    }
+    if (timerState.phase === "main" && typedWorkout.cooldown?.length > 0) {
+      return typedWorkout.cooldown[0].name;
+    }
+    return undefined;
+  }, [typedWorkout, timerState.phase]);
+
   // Parse duration from exercise (for warmup/cooldown)
   const parseDuration = (duration: string): number => {
     const match = duration.match(/(\d+)/);
@@ -70,7 +209,6 @@ const TabataTimer = () => {
     if (timerState.phase === "main") {
       return timerState.intervalType === "work" ? WORK_DURATION : REST_DURATION;
     }
-    // Warmup and cooldown use exercise duration
     if (currentExercise) {
       return parseDuration(currentExercise.duration);
     }
@@ -80,6 +218,35 @@ const TabataTimer = () => {
   // Calculate progress (0 to 1)
   const progress = timerState.timeRemaining / getTotalDuration();
 
+  // Start phase transition
+  const startPhaseTransition = useCallback((nextPhase: TimerPhase) => {
+    setTransition({
+      type: "phase",
+      countdown: TRANSITION_DURATION,
+      nextPhase,
+      nextExerciseName: nextPhase === "main"
+        ? typedWorkout?.main?.[0]?.name
+        : typedWorkout?.cooldown?.[0]?.name,
+    });
+
+    const phaseAnnouncement = nextPhase === "main"
+      ? "Main workout starting"
+      : "Cool down starting";
+    speak(phaseAnnouncement, true);
+    vibrate([100, 50, 100]);
+  }, [typedWorkout, speak, vibrate]);
+
+  // Start exercise transition
+  const startExerciseTransition = useCallback((nextExerciseName: string) => {
+    setTransition({
+      type: "exercise",
+      countdown: TRANSITION_DURATION,
+      nextExerciseName,
+    });
+    speak(`Next exercise: ${nextExerciseName}`, true);
+    vibrate([50, 25, 50]);
+  }, [speak, vibrate]);
+
   // Move to next state
   const advanceTimer = useCallback(() => {
     setTimerState((prev) => {
@@ -87,6 +254,13 @@ const TabataTimer = () => {
       if (prev.isCountdown) {
         const duration = prev.phase === "main" ? WORK_DURATION :
           (currentExercise ? parseDuration(currentExercise.duration) : 45);
+
+        // Announce work start for main phase
+        if (prev.phase === "main") {
+          speak("Work!", true);
+          vibrate([100]);
+        }
+
         return {
           ...prev,
           isCountdown: false,
@@ -99,6 +273,8 @@ const TabataTimer = () => {
       if (prev.phase === "main") {
         if (prev.intervalType === "work") {
           // Work -> Rest
+          speak("Rest", true);
+          vibrate([50]);
           return {
             ...prev,
             intervalType: "rest",
@@ -107,6 +283,16 @@ const TabataTimer = () => {
         } else {
           // Rest -> Next round or next exercise
           if (prev.round < ROUNDS_PER_EXERCISE) {
+            const isLastRound = prev.round === ROUNDS_PER_EXERCISE - 1;
+            if (isLastRound) {
+              speak("Last round!", true);
+            } else {
+              speak("Work!", true);
+            }
+            vibrate([100]);
+
+            setStats(s => ({ ...s, roundsCompleted: s.roundsCompleted + 1 }));
+
             return {
               ...prev,
               round: prev.round + 1,
@@ -118,29 +304,22 @@ const TabataTimer = () => {
             const nextIndex = prev.exerciseIndex + 1;
             const mainExercises = typedWorkout?.main || [];
 
+            setStats(s => ({
+              ...s,
+              exercisesCompleted: s.exercisesCompleted + 1,
+              roundsCompleted: s.roundsCompleted + 1
+            }));
+
             if (nextIndex < mainExercises.length) {
-              // Move to next exercise
-              return {
-                ...prev,
-                exerciseIndex: nextIndex,
-                round: 1,
-                intervalType: "work",
-                timeRemaining: COUNTDOWN_DURATION,
-                isCountdown: true,
-              };
+              // Start transition to next exercise
+              startExerciseTransition(mainExercises[nextIndex].name);
+              return prev; // Keep current state during transition
             } else {
               // Move to cooldown
               const cooldownExercises = typedWorkout?.cooldown || [];
               if (cooldownExercises.length > 0) {
-                return {
-                  ...prev,
-                  phase: "cooldown",
-                  exerciseIndex: 0,
-                  round: 1,
-                  intervalType: "exercise",
-                  timeRemaining: COUNTDOWN_DURATION,
-                  isCountdown: true,
-                };
+                startPhaseTransition("cooldown");
+                return prev; // Keep current state during transition
               } else {
                 return { ...prev, phase: "complete" };
               }
@@ -155,7 +334,12 @@ const TabataTimer = () => {
         : typedWorkout?.cooldown || [];
       const nextIndex = prev.exerciseIndex + 1;
 
+      setStats(s => ({ ...s, exercisesCompleted: s.exercisesCompleted + 1 }));
+
       if (nextIndex < exercises.length) {
+        // Next exercise in same phase
+        speak(`Next: ${exercises[nextIndex].name}`, true);
+        vibrate([50]);
         return {
           ...prev,
           exerciseIndex: nextIndex,
@@ -167,25 +351,77 @@ const TabataTimer = () => {
         if (prev.phase === "warmup") {
           const mainExercises = typedWorkout?.main || [];
           if (mainExercises.length > 0) {
-            return {
-              ...prev,
-              phase: "main",
-              exerciseIndex: 0,
-              round: 1,
-              intervalType: "work",
-              timeRemaining: COUNTDOWN_DURATION,
-              isCountdown: true,
-            };
+            startPhaseTransition("main");
+            return prev; // Keep current state during transition
           }
         }
         return { ...prev, phase: "complete" };
       }
     });
-  }, [typedWorkout, currentExercise]);
+  }, [typedWorkout, currentExercise, speak, vibrate, startPhaseTransition, startExerciseTransition]);
+
+  // Handle transition countdown
+  useEffect(() => {
+    if (!transition || timerState.isPaused) {
+      if (transitionRef.current) {
+        clearInterval(transitionRef.current);
+        transitionRef.current = null;
+      }
+      return;
+    }
+
+    transitionRef.current = setInterval(() => {
+      setTransition((prev) => {
+        if (!prev) return null;
+
+        if (prev.countdown <= 1) {
+          // Transition complete - update timer state
+          clearInterval(transitionRef.current!);
+          transitionRef.current = null;
+
+          if (prev.type === "phase" && prev.nextPhase) {
+            setTimerState((ts) => ({
+              ...ts,
+              phase: prev.nextPhase!,
+              exerciseIndex: 0,
+              round: 1,
+              intervalType: prev.nextPhase === "main" ? "work" : "exercise",
+              timeRemaining: COUNTDOWN_DURATION,
+              isCountdown: true,
+            }));
+          } else if (prev.type === "exercise") {
+            setTimerState((ts) => ({
+              ...ts,
+              exerciseIndex: ts.exerciseIndex + 1,
+              round: 1,
+              intervalType: "work",
+              timeRemaining: COUNTDOWN_DURATION,
+              isCountdown: true,
+            }));
+          }
+
+          return null;
+        }
+
+        // Countdown voice
+        if (prev.countdown <= 3) {
+          speak(prev.countdown.toString());
+        }
+
+        return { ...prev, countdown: prev.countdown - 1 };
+      });
+    }, 1000);
+
+    return () => {
+      if (transitionRef.current) {
+        clearInterval(transitionRef.current);
+      }
+    };
+  }, [transition, timerState.isPaused, speak]);
 
   // Timer tick
   useEffect(() => {
-    if (timerState.isPaused || timerState.phase === "complete") {
+    if (timerState.isPaused || timerState.phase === "complete" || transition) {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -198,6 +434,15 @@ const TabataTimer = () => {
         if (prev.timeRemaining <= 1) {
           return prev; // Will be handled by advanceTimer
         }
+
+        // Count down voice for last 3 seconds
+        if (prev.timeRemaining <= 4 && prev.timeRemaining > 1) {
+          speak((prev.timeRemaining - 1).toString());
+        }
+
+        // Track total time
+        setStats(s => ({ ...s, totalTime: s.totalTime + 1 }));
+
         return { ...prev, timeRemaining: prev.timeRemaining - 1 };
       });
     }, 1000);
@@ -207,58 +452,82 @@ const TabataTimer = () => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [timerState.isPaused, timerState.phase]);
+  }, [timerState.isPaused, timerState.phase, transition, speak]);
 
   // Check for timer completion
   useEffect(() => {
-    if (timerState.timeRemaining <= 0 && timerState.phase !== "complete") {
+    if (timerState.timeRemaining <= 0 && timerState.phase !== "complete" && !transition) {
       advanceTimer();
     }
-  }, [timerState.timeRemaining, timerState.phase, advanceTimer]);
+  }, [timerState.timeRemaining, timerState.phase, transition, advanceTimer]);
 
   const togglePause = () => {
     setTimerState((prev) => ({ ...prev, isPaused: !prev.isPaused }));
+    if (!timerState.isPaused) {
+      speak("Paused");
+    } else {
+      speak("Resume");
+    }
   };
 
-  const handleExit = () => {
+  const handleExitRequest = () => {
+    setShowExitConfirm(true);
+    setTimerState((prev) => ({ ...prev, isPaused: true }));
+  };
+
+  const handleExitConfirm = () => {
+    // Release wake lock
+    if (wakeLockRef.current) {
+      wakeLockRef.current.release();
+    }
     navigate(-1);
   };
 
+  const handleExitCancel = () => {
+    setShowExitConfirm(false);
+  };
+
   const handleComplete = () => {
+    if (wakeLockRef.current) {
+      wakeLockRef.current.release();
+    }
     navigate("/home");
   };
 
-  // Colors based on interval type
+  // Get colors based on current state
   const getColors = () => {
     if (timerState.isCountdown) {
       return {
-        primary: "#F59E0B", // Amber for countdown
-        glow: "rgba(245, 158, 11, 0.5)",
+        primary: phaseColors.countdown.primary,
+        glow: phaseColors.countdown.glow,
         text: "GET READY",
       };
     }
     if (timerState.phase === "main" && timerState.intervalType === "work") {
       return {
-        primary: "#00D9C0", // Cyan for work
-        glow: "rgba(0, 217, 192, 0.5)",
+        primary: phaseColors.work.primary,
+        glow: phaseColors.work.glow,
         text: "WORK",
       };
     }
     if (timerState.phase === "main" && timerState.intervalType === "rest") {
       return {
-        primary: "#64748B", // Slate for rest
-        glow: "rgba(100, 116, 139, 0.4)",
+        primary: phaseColors.rest.primary,
+        glow: phaseColors.rest.glow,
         text: "REST",
       };
     }
+    // Warmup/Cooldown
+    const phaseColor = phaseColors[timerState.phase as keyof typeof phaseColors] || phaseColors.main;
     return {
-      primary: "#00D9C0",
-      glow: "rgba(0, 217, 192, 0.4)",
+      primary: phaseColor.primary,
+      glow: phaseColor.glow,
       text: timerState.phase.toUpperCase(),
     };
   };
 
   const colors = getColors();
+  const currentPhaseColors = phaseColors[timerState.phase as keyof typeof phaseColors] || phaseColors.main;
 
   // SVG circle calculations
   const size = 300;
@@ -267,28 +536,97 @@ const TabataTimer = () => {
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - progress);
 
+  // Format time for completion screen
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
   // Completion screen
   if (timerState.phase === "complete") {
+    const totalDuration = Math.floor((Date.now() - startTimeRef.current) / 1000);
+
     return (
       <div className="min-h-screen bg-[#0A1F2E] flex flex-col items-center justify-center p-6">
+        <style>{`
+          @keyframes celebration {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.1) rotate(-5deg); }
+            75% { transform: scale(1.1) rotate(5deg); }
+          }
+          @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 40px rgba(0, 217, 192, 0.4); }
+            50% { box-shadow: 0 0 60px rgba(0, 217, 192, 0.6); }
+          }
+          .celebration-icon { animation: celebration 0.6s ease-in-out infinite; }
+          .fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
+          .pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
+        `}</style>
+
         <div className="text-center">
           <div
-            className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6"
+            className="w-28 h-28 rounded-full flex items-center justify-center mx-auto mb-8 pulse-glow celebration-icon"
             style={{
               background: 'linear-gradient(135deg, rgba(0, 217, 192, 0.3) 0%, rgba(0, 217, 192, 0.1) 100%)',
-              boxShadow: '0 0 40px rgba(0, 217, 192, 0.4)',
+              border: '2px solid rgba(0, 217, 192, 0.4)',
             }}
           >
-            <span className="text-5xl">🎉</span>
+            <span className="text-6xl">🎉</span>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-3">Workout Complete!</h1>
-          <p className="text-[#B0B8C1] mb-8">Great job! You crushed that Tabata session.</p>
+
+          <h1 className="text-3xl font-bold text-white mb-3 fade-in-up">
+            Workout Complete!
+          </h1>
+          <p className="text-[#B0B8C1] mb-8 fade-in-up" style={{ animationDelay: '0.1s' }}>
+            Amazing work! You crushed that Tabata session.
+          </p>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-3 gap-3 mb-8 max-w-sm mx-auto fade-in-up" style={{ animationDelay: '0.2s' }}>
+            <div
+              className="rounded-xl p-4 backdrop-blur-md"
+              style={{
+                background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
+                border: '1px solid rgba(148, 163, 184, 0.1)',
+              }}
+            >
+              <p className="text-2xl font-bold text-white">{formatTime(totalDuration)}</p>
+              <p className="text-xs text-[#B0B8C1] mt-1">Duration</p>
+            </div>
+            <div
+              className="rounded-xl p-4 backdrop-blur-md"
+              style={{
+                background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
+                border: '1px solid rgba(148, 163, 184, 0.1)',
+              }}
+            >
+              <p className="text-2xl font-bold text-white">{stats.exercisesCompleted}</p>
+              <p className="text-xs text-[#B0B8C1] mt-1">Exercises</p>
+            </div>
+            <div
+              className="rounded-xl p-4 backdrop-blur-md"
+              style={{
+                background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
+                border: '1px solid rgba(148, 163, 184, 0.1)',
+              }}
+            >
+              <p className="text-2xl font-bold text-white">{stats.roundsCompleted}</p>
+              <p className="text-xs text-[#B0B8C1] mt-1">Rounds</p>
+            </div>
+          </div>
+
           <button
             onClick={handleComplete}
-            className="px-8 py-4 rounded-2xl font-semibold text-lg transition-transform active:scale-95"
+            className="px-10 py-4 rounded-2xl font-semibold text-lg transition-all active:scale-95 fade-in-up"
             style={{
               background: 'linear-gradient(135deg, #00D9C0 0%, #00B4A0 100%)',
               boxShadow: '0 8px 32px rgba(0, 217, 192, 0.4)',
+              animationDelay: '0.3s',
             }}
           >
             Back to Home
@@ -316,11 +654,152 @@ const TabataTimer = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A1F2E] flex flex-col">
+    <div className="min-h-screen bg-[#0A1F2E] flex flex-col overflow-hidden">
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.02); opacity: 0.9; }
+        }
+        @keyframes glowPulse {
+          0%, 100% { filter: drop-shadow(0 0 8px ${colors.glow}); }
+          50% { filter: drop-shadow(0 0 20px ${colors.glow}); }
+        }
+        @keyframes breathe {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .work-pulse { animation: pulse 1s ease-in-out infinite; }
+        .glow-pulse { animation: glowPulse 1.5s ease-in-out infinite; }
+        .breathe { animation: breathe 3s ease-in-out infinite; }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        .slide-up { animation: slideUp 0.3s ease-out; }
+      `}</style>
+
+      {/* Exit Confirmation Modal */}
+      {showExitConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-6 fade-in"
+          style={{ background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(8px)' }}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl p-6 slide-up"
+            style={{
+              background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+              border: '1px solid rgba(148, 163, 184, 0.2)',
+              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            <h3 className="text-xl font-bold text-white mb-2">Exit Workout?</h3>
+            <p className="text-[#B0B8C1] mb-6">
+              Your progress will be lost. Are you sure you want to exit?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleExitCancel}
+                className="flex-1 py-3 rounded-xl font-semibold transition-all active:scale-95"
+                style={{
+                  background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
+                  border: '1px solid rgba(148, 163, 184, 0.25)',
+                  color: '#FFFFFF',
+                }}
+              >
+                Continue
+              </button>
+              <button
+                onClick={handleExitConfirm}
+                className="flex-1 py-3 rounded-xl font-semibold transition-all active:scale-95"
+                style={{
+                  background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                  color: '#FFFFFF',
+                }}
+              >
+                Exit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Phase Transition Overlay */}
+      {transition && (
+        <div
+          className="fixed inset-0 z-40 flex flex-col items-center justify-center p-6 fade-in"
+          style={{
+            background: 'rgba(10, 31, 46, 0.95)',
+            backdropFilter: 'blur(16px)'
+          }}
+        >
+          <div className="text-center slide-up">
+            {/* Phase Icon */}
+            <div
+              className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 breathe"
+              style={{
+                background: transition.nextPhase === "main"
+                  ? 'linear-gradient(135deg, rgba(0, 217, 192, 0.3) 0%, rgba(0, 217, 192, 0.1) 100%)'
+                  : transition.nextPhase === "cooldown"
+                  ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(139, 92, 246, 0.1) 100%)'
+                  : 'linear-gradient(135deg, rgba(0, 217, 192, 0.3) 0%, rgba(0, 217, 192, 0.1) 100%)',
+                boxShadow: transition.nextPhase === "main"
+                  ? '0 0 40px rgba(0, 217, 192, 0.4)'
+                  : transition.nextPhase === "cooldown"
+                  ? '0 0 40px rgba(139, 92, 246, 0.4)'
+                  : '0 0 40px rgba(0, 217, 192, 0.4)',
+                border: `2px solid ${transition.nextPhase === "cooldown" ? 'rgba(139, 92, 246, 0.5)' : 'rgba(0, 217, 192, 0.5)'}`,
+              }}
+            >
+              <span className="text-5xl">
+                {transition.nextPhase === "main" ? "💪" : transition.nextPhase === "cooldown" ? "🧘" : "🔥"}
+              </span>
+            </div>
+
+            {/* Phase Title */}
+            <h2 className="text-2xl font-bold text-white mb-2">
+              {transition.type === "phase"
+                ? transition.nextPhase === "main"
+                  ? "Main Workout Starting"
+                  : "Cool-down Starting"
+                : "Next Exercise"
+              }
+            </h2>
+
+            {/* Next Exercise Name */}
+            {transition.nextExerciseName && (
+              <p
+                className="text-xl font-medium mb-8"
+                style={{ color: transition.nextPhase === "cooldown" ? "#8B5CF6" : "#00D9C0" }}
+              >
+                {transition.nextExerciseName}
+              </p>
+            )}
+
+            {/* Countdown */}
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center mx-auto"
+              style={{
+                background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
+                border: '3px solid',
+                borderColor: transition.nextPhase === "cooldown" ? "#8B5CF6" : "#00D9C0",
+                boxShadow: `0 0 30px ${transition.nextPhase === "cooldown" ? 'rgba(139, 92, 246, 0.5)' : 'rgba(0, 217, 192, 0.5)'}`,
+              }}
+            >
+              <span className="text-4xl font-bold text-white">{transition.countdown}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
-      <div className="flex items-center justify-between p-4 pt-6">
+      <div className="flex items-center justify-between p-4 pt-6 safe-area-top">
         <button
-          onClick={handleExit}
+          onClick={handleExitRequest}
           className="w-11 h-11 rounded-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-transform"
           style={{
             background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
@@ -329,12 +808,14 @@ const TabataTimer = () => {
         >
           <X className="w-5 h-5 text-white" />
         </button>
+
         <div className="text-center">
           <span
-            className="text-xs font-medium px-3 py-1 rounded-full"
+            className="text-xs font-semibold px-4 py-1.5 rounded-full tracking-wider"
             style={{
-              background: 'rgba(0, 217, 192, 0.15)',
-              color: '#00D9C0',
+              background: currentPhaseColors.gradient,
+              color: currentPhaseColors.primary,
+              border: `1px solid ${currentPhaseColors.primary}30`,
             }}
           >
             {timerState.phase === "warmup" && "WARM UP"}
@@ -342,28 +823,57 @@ const TabataTimer = () => {
             {timerState.phase === "cooldown" && "COOL DOWN"}
           </span>
         </div>
-        <div className="w-11" /> {/* Spacer */}
+
+        {/* Voice Toggle */}
+        <button
+          onClick={() => setVoiceEnabled(!voiceEnabled)}
+          className="w-11 h-11 rounded-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-transform"
+          style={{
+            background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
+            border: '1px solid rgba(148, 163, 184, 0.25)',
+          }}
+        >
+          {voiceEnabled ? (
+            <Volume2 className="w-5 h-5 text-white" />
+          ) : (
+            <VolumeX className="w-5 h-5 text-[#64748B]" />
+          )}
+        </button>
       </div>
 
       {/* Main Timer Area */}
       <div className="flex-1 flex flex-col items-center justify-center px-6">
         {/* Circular Progress Ring */}
-        <div className="relative mb-8">
+        <div className={`relative mb-8 ${timerState.phase === "main" && timerState.intervalType === "work" && !timerState.isCountdown ? 'work-pulse' : ''}`}>
           {/* Glow effect */}
           <div
-            className="absolute inset-0 rounded-full blur-2xl opacity-60"
+            className="absolute inset-[-20px] rounded-full blur-3xl opacity-50 transition-colors duration-500"
             style={{ background: colors.glow }}
           />
 
+          {/* Glass background */}
+          <div
+            className="absolute inset-[20px] rounded-full"
+            style={{
+              background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%)',
+              backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(148, 163, 184, 0.08)',
+            }}
+          />
+
           {/* SVG Ring */}
-          <svg width={size} height={size} className="relative z-10 transform -rotate-90">
+          <svg
+            width={size}
+            height={size}
+            className={`relative z-10 transform -rotate-90 ${timerState.phase === "main" && timerState.intervalType === "work" && !timerState.isCountdown ? 'glow-pulse' : ''}`}
+          >
             {/* Background ring */}
             <circle
               cx={size / 2}
               cy={size / 2}
               r={radius}
               fill="none"
-              stroke="rgba(100, 116, 139, 0.2)"
+              stroke="rgba(100, 116, 139, 0.15)"
               strokeWidth={strokeWidth}
             />
             {/* Progress ring */}
@@ -378,7 +888,7 @@ const TabataTimer = () => {
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
               style={{
-                transition: 'stroke-dashoffset 0.3s ease-out',
+                transition: 'stroke-dashoffset 0.3s ease-out, stroke 0.3s ease-out',
                 filter: `drop-shadow(0 0 8px ${colors.glow})`,
               }}
             />
@@ -387,34 +897,40 @@ const TabataTimer = () => {
           {/* Center content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
             <span
-              className="text-sm font-semibold tracking-wider mb-2"
+              className="text-sm font-bold tracking-widest mb-1 transition-colors duration-300"
               style={{ color: colors.primary }}
             >
               {colors.text}
             </span>
-            <span className="text-7xl font-bold text-white tabular-nums">
+            <span className="text-8xl font-bold text-white tabular-nums leading-none">
               {timerState.timeRemaining}
             </span>
             {timerState.phase === "main" && !timerState.isCountdown && (
-              <span className="text-[#B0B8C1] text-sm mt-2">
+              <span
+                className="text-sm mt-3 font-medium transition-colors duration-300"
+                style={{ color: timerState.intervalType === "work" ? "#00D9C0" : "#64748B" }}
+              >
                 Round {timerState.round} of {ROUNDS_PER_EXERCISE}
               </span>
             )}
           </div>
         </div>
 
-        {/* Current Exercise */}
+        {/* Current Exercise Card */}
         {currentExercise && (
           <div
-            className="w-full max-w-sm rounded-2xl p-5 mb-4"
+            className="w-full max-w-sm rounded-2xl p-5 mb-4 slide-up"
             style={{
               background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
               backdropFilter: 'blur(16px)',
               border: '1px solid rgba(148, 163, 184, 0.1)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              boxShadow: `0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(${
+                timerState.phase === "warmup" ? "255, 149, 0" :
+                timerState.phase === "cooldown" ? "139, 92, 246" : "0, 217, 192"
+              }, 0.1)`,
             }}
           >
-            <h2 className="text-xl font-bold text-white text-center mb-2">
+            <h2 className="text-2xl font-bold text-white text-center mb-2">
               {currentExercise.name}
             </h2>
             <p className="text-[#B0B8C1] text-sm text-center leading-relaxed">
@@ -424,20 +940,43 @@ const TabataTimer = () => {
         )}
 
         {/* Next Exercise Preview */}
-        {nextExercise && (
-          <div className="flex items-center gap-2 text-[#64748B] text-sm">
+        {nextExercise && !transition && (
+          <div
+            className="flex items-center gap-2 text-sm fade-in"
+            style={{ color: '#64748B' }}
+          >
             <span>Next:</span>
-            <span className="text-[#B0B8C1]">{nextExercise.name}</span>
+            <span className="text-[#B0B8C1] font-medium">{nextExercise.name}</span>
+            <ChevronRight className="w-4 h-4" />
+          </div>
+        )}
+
+        {/* Show next phase exercise on last exercise */}
+        {!nextExercise && !transition && timerState.phase !== "cooldown" && (
+          <div
+            className="flex items-center gap-2 text-sm fade-in"
+            style={{ color: '#64748B' }}
+          >
+            <span>Up next:</span>
+            <span
+              className="font-medium"
+              style={{ color: timerState.phase === "warmup" ? "#00D9C0" : "#8B5CF6" }}
+            >
+              {timerState.phase === "warmup" ? "Main Workout" : "Cool Down"}
+            </span>
             <ChevronRight className="w-4 h-4" />
           </div>
         )}
       </div>
 
       {/* Bottom Controls */}
-      <div className="p-6 pb-8">
+      <div
+        className="p-6 pb-8"
+        style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))' }}
+      >
         <button
           onClick={togglePause}
-          className="w-full py-5 rounded-2xl font-semibold text-lg flex items-center justify-center gap-3 active:scale-[0.98] transition-transform"
+          className="w-full py-5 rounded-2xl font-semibold text-lg flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-200"
           style={{
             background: timerState.isPaused
               ? 'linear-gradient(135deg, #00D9C0 0%, #00B4A0 100%)'
