@@ -170,14 +170,17 @@ const Workout = () => {
                       </p>
                       <p className="text-sm text-muted-foreground">{exercise.instructions}</p>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
+                    <button
                       onClick={() => handlePlayTutorial(exercise.name)}
-                      className="text-muted-foreground active:text-foreground active:scale-95 transition-transform flex-shrink-0"
+                      className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 backdrop-blur-md active:scale-95 transition-transform"
+                      style={{
+                        background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
+                        border: '1px solid rgba(148, 163, 184, 0.25)',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                      }}
                     >
-                      <Play className="w-5 h-5" />
-                    </Button>
+                      <Play className="w-5 h-5" style={{ color: '#B8C4CE' }} />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -223,23 +226,29 @@ const Workout = () => {
                       </p>
                       <p className="text-sm text-muted-foreground">{exercise.instructions}</p>
                     </div>
-                    <div className="flex gap-1 flex-shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
+                    <div className="flex gap-2 flex-shrink-0">
+                      <button
                         onClick={() => handlePlayTutorial(exercise.name)}
-                        className="text-muted-foreground active:text-foreground active:scale-95 transition-transform"
+                        className="w-11 h-11 rounded-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-transform"
+                        style={{
+                          background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
+                          border: '1px solid rgba(148, 163, 184, 0.25)',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                        }}
                       >
-                        <Play className="w-5 h-5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
+                        <Play className="w-5 h-5" style={{ color: '#B8C4CE' }} />
+                      </button>
+                      <button
                         onClick={() => handleReplaceExercise(exercise.name)}
-                        className="text-muted-foreground active:text-foreground active:scale-95 transition-transform"
+                        className="w-11 h-11 rounded-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-transform"
+                        style={{
+                          background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
+                          border: '1px solid rgba(148, 163, 184, 0.25)',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                        }}
                       >
-                        <RefreshCw className="w-5 h-5" />
-                      </Button>
+                        <RefreshCw className="w-5 h-5" style={{ color: '#B8C4CE' }} />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -286,14 +295,17 @@ const Workout = () => {
                       </p>
                       <p className="text-sm text-muted-foreground">{exercise.instructions}</p>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
+                    <button
                       onClick={() => handlePlayTutorial(exercise.name)}
-                      className="text-muted-foreground active:text-foreground active:scale-95 transition-transform flex-shrink-0"
+                      className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 backdrop-blur-md active:scale-95 transition-transform"
+                      style={{
+                        background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
+                        border: '1px solid rgba(148, 163, 184, 0.25)',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                      }}
                     >
-                      <Play className="w-5 h-5" />
-                    </Button>
+                      <Play className="w-5 h-5" style={{ color: '#B8C4CE' }} />
+                    </button>
                   </div>
                 </div>
               ))}
