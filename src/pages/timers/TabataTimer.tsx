@@ -133,6 +133,7 @@ const TabataTimer = () => {
   const [showRefreshModal, setShowRefreshModal] = useState(false);
   const [showTutorialDrawer, setShowTutorialDrawer] = useState(false);
   const [showSkipWarmupConfirm, setShowSkipWarmupConfirm] = useState(false);
+  const [showPauseMenu, setShowPauseMenu] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [stats, setStats] = useState<WorkoutStats>({
@@ -696,13 +697,31 @@ const TabataTimer = () => {
     }
   }, [timerState.timeRemaining, timerState.phase, timerState.isPaused, transition, currentExercise, hasAnnouncedSwitch, speak, vibrate]);
 
-  const togglePause = () => {
-    setTimerState((prev) => ({ ...prev, isPaused: !prev.isPaused }));
+  // Open pause menu (pauses and opens modal)
+  const handlePauseMenuOpen = () => {
     if (!timerState.isPaused) {
+      setTimerState((prev) => ({ ...prev, isPaused: true }));
       speak("Paused");
-    } else {
-      speak("Resume");
     }
+    setShowPauseMenu(true);
+  };
+
+  // Resume from pause menu
+  const handleResume = () => {
+    setShowPauseMenu(false);
+    setTimerState((prev) => ({ ...prev, isPaused: false }));
+    speak("Resume");
+  };
+
+  // Toggle sound from pause menu
+  const handleToggleSound = () => {
+    setVoiceEnabled(!voiceEnabled);
+  };
+
+  // Show exit confirmation from pause menu
+  const handleExitFromMenu = () => {
+    setShowPauseMenu(false);
+    setShowExitConfirm(true);
   };
 
   const handleExitRequest = () => {
@@ -912,9 +931,11 @@ const TabataTimer = () => {
   const colors = getColors();
   const currentPhaseColors = phaseColors[timerState.phase as keyof typeof phaseColors] || phaseColors.main;
 
-  // SVG circle calculations
-  const size = 300;
-  const strokeWidth = 12;
+  // SVG circle calculations - responsive sizing for mobile
+  // Use smaller size on mobile (screen height < 750px typical for iPhone SE/smaller phones)
+  const size = typeof window !== 'undefined' && window.innerHeight < 750 ? 240 :
+               typeof window !== 'undefined' && window.innerHeight < 850 ? 260 : 280;
+  const strokeWidth = 10;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - progress);
@@ -1081,6 +1102,81 @@ const TabataTimer = () => {
         .backdrop-fade-in { animation: fadeInBackdrop 300ms ease-out forwards; }
       `}</style>
 
+      {/* Pause Menu Modal */}
+      {showPauseMenu && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-6 fade-in"
+          style={{ background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(12px)' }}
+          onClick={() => {}} // Prevent backdrop clicks from closing
+        >
+          <div
+            className="w-full max-w-[400px] rounded-3xl p-6 slide-up"
+            style={{
+              background: 'rgba(15, 23, 42, 0.95)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              border: '1px solid rgba(148, 163, 184, 0.3)',
+              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            <h3 className="text-2xl font-bold text-white text-center mb-6">Workout Paused</h3>
+
+            <div className="flex flex-col gap-3">
+              {/* Resume Button - Primary */}
+              <button
+                onClick={handleResume}
+                className="w-full py-4 rounded-2xl font-semibold text-lg transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                style={{
+                  background: 'linear-gradient(135deg, #00D9C0 0%, #00B4A0 100%)',
+                  boxShadow: '0 8px 24px rgba(0, 217, 192, 0.3)',
+                  color: '#0A1F2E',
+                }}
+              >
+                <Play className="w-6 h-6" />
+                Resume Workout
+              </button>
+
+              {/* Sound Toggle */}
+              <button
+                onClick={handleToggleSound}
+                className="w-full py-4 rounded-2xl font-semibold transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                style={{
+                  background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
+                  border: '1px solid rgba(148, 163, 184, 0.25)',
+                  color: '#FFFFFF',
+                }}
+              >
+                {voiceEnabled ? (
+                  <>
+                    <Volume2 className="w-5 h-5 text-[#00D9C0]" />
+                    Sound: On
+                  </>
+                ) : (
+                  <>
+                    <VolumeX className="w-5 h-5 text-[#64748B]" />
+                    Sound: Off
+                  </>
+                )}
+              </button>
+
+              {/* Exit Button - Destructive */}
+              <button
+                onClick={handleExitFromMenu}
+                className="w-full py-4 rounded-2xl font-semibold transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                style={{
+                  background: 'linear-gradient(180deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.2) 100%)',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  color: '#EF4444',
+                }}
+              >
+                <X className="w-5 h-5" />
+                Exit Workout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Exit Confirmation Modal */}
       {showExitConfirm && (
         <div
@@ -1095,8 +1191,8 @@ const TabataTimer = () => {
               boxShadow: '0 24px 48px rgba(0, 0, 0, 0.5)',
             }}
           >
-            <h3 className="text-xl font-bold text-white mb-2">Exit Workout?</h3>
-            <p className="text-[#B0B8C1] mb-6">
+            <h3 className="text-xl font-bold text-white text-center mb-2">Exit Workout?</h3>
+            <p className="text-[#B0B8C1] text-center mb-6">
               Your progress will be lost. Are you sure you want to exit?
             </p>
             <div className="flex gap-3">
@@ -1109,7 +1205,7 @@ const TabataTimer = () => {
                   color: '#FFFFFF',
                 }}
               >
-                Continue
+                Cancel
               </button>
               <button
                 onClick={handleExitConfirm}
@@ -1119,7 +1215,7 @@ const TabataTimer = () => {
                   color: '#FFFFFF',
                 }}
               >
-                Exit
+                Exit Workout
               </button>
             </div>
           </div>
@@ -1469,64 +1565,38 @@ const TabataTimer = () => {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 pt-6 safe-area-top">
-        <button
-          onClick={handleExitRequest}
-          className="w-11 h-11 rounded-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-transform"
+      {/* Header - Minimal with only centered phase badge */}
+      <div
+        className="flex items-center justify-center px-4 pt-3 pb-2"
+        style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}
+      >
+        <span
+          className="text-xs font-semibold px-4 py-1.5 rounded-full tracking-wider"
           style={{
-            background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
-            border: '1px solid rgba(148, 163, 184, 0.25)',
+            background: currentPhaseColors.gradient || `linear-gradient(135deg, ${currentPhaseColors.primary}26 0%, ${currentPhaseColors.primary}0D 100%)`,
+            color: currentPhaseColors.primary,
+            border: `1px solid ${currentPhaseColors.primary}30`,
           }}
         >
-          <X className="w-5 h-5 text-white" />
-        </button>
-
-        <div className="text-center">
-          <span
-            className="text-xs font-semibold px-4 py-1.5 rounded-full tracking-wider"
-            style={{
-              background: currentPhaseColors.gradient || `linear-gradient(135deg, ${currentPhaseColors.primary}26 0%, ${currentPhaseColors.primary}0D 100%)`,
-              color: currentPhaseColors.primary,
-              border: `1px solid ${currentPhaseColors.primary}30`,
-            }}
-          >
-            {timerState.phase === "warmup" && "WARM UP"}
-            {timerState.phase === "main" && "TABATA"}
-            {timerState.phase === "cooldown" && "COOL DOWN"}
-          </span>
-        </div>
-
-        {/* Voice Toggle */}
-        <button
-          onClick={() => setVoiceEnabled(!voiceEnabled)}
-          className="w-11 h-11 rounded-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-transform"
-          style={{
-            background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
-            border: '1px solid rgba(148, 163, 184, 0.25)',
-          }}
-        >
-          {voiceEnabled ? (
-            <Volume2 className="w-5 h-5 text-white" />
-          ) : (
-            <VolumeX className="w-5 h-5 text-[#64748B]" />
-          )}
-        </button>
+          {timerState.phase === "warmup" && "WARM UP"}
+          {timerState.phase === "main" && "TABATA"}
+          {timerState.phase === "cooldown" && "COOL DOWN"}
+        </span>
       </div>
 
-      {/* Main Timer Area */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6">
+      {/* Main Timer Area - Optimized for mobile fit */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4">
         {/* Circular Progress Ring */}
-        <div className={`relative mb-8 ${timerState.phase === "main" && timerState.intervalType === "work" ? 'work-pulse' : ''}`}>
+        <div className={`relative mb-4 ${timerState.phase === "main" && timerState.intervalType === "work" ? 'work-pulse' : ''}`}>
           {/* Glow effect */}
           <div
-            className="absolute inset-[-20px] rounded-full blur-3xl opacity-50 transition-colors duration-500"
+            className="absolute inset-[-16px] rounded-full blur-2xl opacity-40 transition-colors duration-500"
             style={{ background: colors.glow }}
           />
 
           {/* Glass background */}
           <div
-            className="absolute inset-[20px] rounded-full"
+            className="absolute inset-[16px] rounded-full"
             style={{
               background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%)',
               backdropFilter: 'blur(16px)',
@@ -1570,17 +1640,17 @@ const TabataTimer = () => {
           {/* Center content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
             <span
-              className="text-sm font-bold tracking-widest mb-1 transition-colors duration-300"
+              className="text-xs font-bold tracking-widest mb-0.5 transition-colors duration-300"
               style={{ color: colors.primary }}
             >
               {colors.text}
             </span>
-            <span className="text-8xl font-bold text-white tabular-nums leading-none">
+            <span className="text-7xl font-bold text-white tabular-nums leading-none">
               {timerState.timeRemaining}
             </span>
             {/* Show round info */}
             <span
-              className="text-sm font-medium transition-colors duration-300 mt-3"
+              className="text-xs font-medium transition-colors duration-300 mt-2"
               style={{ color: timerState.phase === "main" && timerState.intervalType === "work" ? "#00D9C0" : "#64748B" }}
             >
               Round {timerState.round} of {maxRounds}
@@ -1588,30 +1658,30 @@ const TabataTimer = () => {
           </div>
         </div>
 
-        {/* Current Exercise Card */}
+        {/* Current Exercise Card - Compact for mobile */}
         {currentExercise && (
           <div
-            className="w-full max-w-sm rounded-2xl p-5 mb-4 slide-up"
+            className="w-full max-w-sm rounded-xl p-3 mb-2 slide-up"
             style={{
               background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
               backdropFilter: 'blur(16px)',
               border: '1px solid rgba(148, 163, 184, 0.1)',
-              boxShadow: `0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(${
+              boxShadow: `0 4px 16px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(${
                 timerState.phase === "warmup" ? "255, 149, 0" :
                 timerState.phase === "cooldown" ? "139, 92, 246" : "0, 217, 192"
               }, 0.1)`,
             }}
           >
-            <h2 className="text-2xl font-bold text-white text-center mb-2">
+            <h2 className="text-xl font-bold text-white text-center mb-1">
               {currentExercise.name}
             </h2>
             {/* Side indicator for side-switching exercises */}
             {isSideSwitchingExercise(currentExercise, timerState.phase) && currentSide && (
               <div
-                className="flex items-center justify-center gap-2 mb-2 transition-all duration-300"
+                className="flex items-center justify-center gap-2 mb-1 transition-all duration-300"
               >
                 <span
-                  className="px-3 py-1 rounded-full text-sm font-semibold"
+                  className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
                   style={{
                     background: currentSide === "right"
                       ? 'linear-gradient(135deg, rgba(0, 217, 192, 0.2) 0%, rgba(0, 217, 192, 0.1) 100%)'
@@ -1624,7 +1694,7 @@ const TabataTimer = () => {
                 </span>
               </div>
             )}
-            <p className="text-[#B0B8C1] text-sm text-center leading-relaxed">
+            <p className="text-[#B0B8C1] text-xs text-center leading-relaxed line-clamp-2">
               {currentExercise.instructions}
             </p>
           </div>
@@ -1686,86 +1756,76 @@ const TabataTimer = () => {
         })()}
       </div>
 
-      {/* Bottom Controls */}
+      {/* Bottom Controls - Compact for mobile */}
       <div
         className="relative"
-        style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
+        style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
       >
         {/* Gradient fade background for better button visibility */}
         <div
-          className="absolute inset-x-0 bottom-0 h-32 pointer-events-none"
+          className="absolute inset-x-0 bottom-0 h-28 pointer-events-none"
           style={{
             background: 'linear-gradient(to top, rgba(10, 31, 46, 0.95) 0%, rgba(10, 31, 46, 0.7) 50%, transparent 100%)',
           }}
         />
 
         {/* Button container */}
-        <div className="relative z-10 flex items-center justify-center gap-4 px-6 pt-4">
+        <div className="relative z-10 flex items-center justify-center gap-3 px-6 pt-2">
           {/* Lesson Button (Left) */}
           <button
             onClick={handleLessonClick}
-            className="w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-200 active:scale-95 active:opacity-80"
+            className="w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95 active:opacity-80"
             style={{
               background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(148, 163, 184, 0.3)',
-              boxShadow: '0 8px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+              boxShadow: '0 6px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
             }}
             aria-label="View exercise tutorial"
           >
-            <Play className="w-7 h-7 text-[#E2E8F0]" />
+            <Play className="w-6 h-6 text-[#E2E8F0]" />
           </button>
 
-          {/* Pause/Resume Button (Center) */}
+          {/* Pause/Menu Button (Center) - Opens pause menu */}
           <button
-            onClick={togglePause}
-            className="w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-200 active:scale-95 active:opacity-80"
+            onClick={handlePauseMenuOpen}
+            className="w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95 active:opacity-80"
             style={{
-              background: timerState.isPaused
-                ? 'linear-gradient(180deg, rgba(0, 217, 192, 0.7) 0%, rgba(0, 180, 160, 0.8) 100%)'
-                : 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
+              background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
-              border: timerState.isPaused
-                ? '1px solid rgba(0, 217, 192, 0.5)'
-                : '1px solid rgba(148, 163, 184, 0.3)',
-              boxShadow: timerState.isPaused
-                ? '0 8px 16px rgba(0, 217, 192, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
-                : '0 8px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(148, 163, 184, 0.3)',
+              boxShadow: '0 6px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
             }}
-            aria-label={timerState.isPaused ? "Resume timer" : "Pause timer"}
+            aria-label="Open pause menu"
           >
-            {timerState.isPaused ? (
-              <Play className="w-7 h-7 text-[#0A1F2E]" />
-            ) : (
-              <Pause className="w-7 h-7 text-[#E2E8F0]" />
-            )}
+            <Pause className="w-6 h-6 text-[#E2E8F0]" />
           </button>
 
           {/* Refresh/Replace Button (Right) */}
           <button
             onClick={handleRefreshClick}
-            className="w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-200 active:scale-95 active:opacity-80"
+            className="w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95 active:opacity-80"
             style={{
               background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(148, 163, 184, 0.3)',
-              boxShadow: '0 8px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+              boxShadow: '0 6px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
             }}
             aria-label="Replace exercise"
           >
-            <RefreshCw className="w-7 h-7 text-[#E2E8F0]" />
+            <RefreshCw className="w-6 h-6 text-[#E2E8F0]" />
           </button>
         </div>
 
         {/* Skip Warm-up Button - Only visible during warm-up phase */}
         {timerState.phase === "warmup" && (
-          <div className="relative z-10 px-6 pt-3">
+          <div className="relative z-10 px-6 pt-2">
             <button
               onClick={handleSkipWarmupClick}
-              className="w-full py-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] active:opacity-80"
+              className="w-full py-2.5 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] active:opacity-80"
               style={{
                 background: 'rgba(30, 41, 59, 0.4)',
                 backdropFilter: 'blur(12px)',
@@ -1775,7 +1835,7 @@ const TabataTimer = () => {
               aria-label="Skip warm-up and start main workout"
             >
               <SkipForward className="w-4 h-4 text-[#94A3B8]" />
-              <span className="text-sm font-medium text-[#94A3B8]">Skip to Main Workout</span>
+              <span className="text-xs font-medium text-[#94A3B8]">Skip to Main Workout</span>
             </button>
           </div>
         )}
