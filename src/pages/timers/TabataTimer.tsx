@@ -818,7 +818,7 @@ const TabataTimer = () => {
   };
 
   const handleRefreshConfirm = async () => {
-    if (!currentExercise || !typedWorkout) return;
+    if (!currentExercise || !typedWorkout || !workoutData) return;
 
     setIsRefreshing(true);
 
@@ -858,17 +858,71 @@ const TabataTimer = () => {
     const availableExercises = phaseExercises.filter(e => e.name !== currentExercise.name);
     const newExercise = availableExercises[Math.floor(Math.random() * availableExercises.length)];
 
-    // Update the workout with the new exercise
-    if (typedWorkout) {
-      const phaseKey = timerState.phase as 'warmup' | 'main' | 'cooldown';
-      if (typedWorkout[phaseKey]) {
-        typedWorkout[phaseKey][timerState.exerciseIndex] = newExercise;
-      }
+    // Update the workout data with the new exercise (using proper state update)
+    const updatedWorkout = { ...workoutData };
+    const phaseKey = timerState.phase as 'warmup' | 'main' | 'cooldown';
+    if (phaseKey === 'warmup') {
+      updatedWorkout.warmup = [...workoutData.warmup];
+      updatedWorkout.warmup[timerState.exerciseIndex] = newExercise;
+    } else if (phaseKey === 'main') {
+      updatedWorkout.main = [...workoutData.main];
+      updatedWorkout.main[timerState.exerciseIndex] = newExercise;
+    } else {
+      updatedWorkout.cooldown = [...workoutData.cooldown];
+      updatedWorkout.cooldown[timerState.exerciseIndex] = newExercise;
+    }
+    setWorkoutData(updatedWorkout);
+
+    // Reset side state for side-switching exercises in warmup/cooldown
+    if (timerState.phase === 'warmup' || timerState.phase === 'cooldown') {
+      setCurrentSide('right');
+      setHasAnnouncedSwitch(false);
     }
 
-    speak(`New exercise: ${newExercise.name}`, true);
+    // CRITICAL: Reset timer and start it in a SINGLE setTimerState call
+    // This ensures the timer restarts at the beginning of the CURRENT exercise
+    // while preserving phase, exerciseIndex, and round
+    if (timerState.phase === 'main') {
+      // Main workout: Reset to start of work interval (20 seconds)
+      setTimerState(prev => ({
+        ...prev,
+        timeRemaining: WORK_DURATION,
+        intervalType: 'work' as IntervalType,
+        isPaused: false  // Start timer automatically
+      }));
+    } else {
+      // Warmup/Cooldown: Parse duration from new exercise
+      const match = newExercise.duration.match(/(\d+)/);
+      const duration = match ? parseInt(match[1], 10) : 45;
+      setTimerState(prev => ({
+        ...prev,
+        timeRemaining: duration,
+        isPaused: false  // Start timer automatically
+      }));
+    }
+
+    // Close refresh modal
     setIsRefreshing(false);
     setShowRefreshModal(false);
+
+    // Announce the new exercise name via voice
+    // Use setTimeout to ensure modal closes first and state is settled
+    setTimeout(() => {
+      if (voiceEnabled) {
+        if (timerState.phase === 'warmup' || timerState.phase === 'cooldown') {
+          const needsSideSwitch = isSideSwitchingExercise(newExercise, timerState.phase);
+          if (needsSideSwitch) {
+            const bodyPart = getBodyPartTerm(newExercise);
+            const sideText = getSideAnnouncement('right', bodyPart);
+            speak(`${newExercise.name}, ${sideText}`, true);
+          } else {
+            speak(newExercise.name, true);
+          }
+        } else {
+          speak(newExercise.name, true);
+        }
+      }
+    }, 300);
   };
 
   // Replace Exercise from Pause Menu handlers
@@ -924,57 +978,72 @@ const TabataTimer = () => {
       // Update state with new workout
       setWorkoutData(updatedWorkout);
 
-      // Reset timer for new exercise
-      if (timerState.phase === 'main') {
-        // Reset to work interval start (20 seconds)
-        setTimerState(prev => ({
-          ...prev,
-          timeRemaining: WORK_DURATION,
-          intervalType: 'work'
-        }));
-      } else {
-        // For warmup/cooldown, parse duration from new exercise
-        const match = newExercise.duration.match(/(\d+)/);
-        const duration = match ? parseInt(match[1], 10) : 45;
-        setTimerState(prev => ({
-          ...prev,
-          timeRemaining: duration
-        }));
-        // Reset side state for side-switching exercises
+      // Reset side state for side-switching exercises in warmup/cooldown
+      if (timerState.phase === 'warmup' || timerState.phase === 'cooldown') {
         setCurrentSide('right');
         setHasAnnouncedSwitch(false);
       }
 
-      // Update database if workout is saved
+      // CRITICAL: Reset timer and start it in a SINGLE setTimerState call
+      // This ensures the timer restarts at the beginning of the CURRENT exercise
+      // while preserving phase, exerciseIndex, and round
+      if (timerState.phase === 'main') {
+        // Main workout: Reset to start of work interval (20 seconds)
+        // Keep currentRound the same - DO NOT reset to 1
+        setTimerState(prev => ({
+          ...prev,
+          timeRemaining: WORK_DURATION,
+          intervalType: 'work' as IntervalType,
+          isPaused: false  // Start timer automatically
+          // Note: phase, exerciseIndex, and round are preserved from prev
+        }));
+      } else {
+        // Warmup/Cooldown: Parse duration from new exercise
+        const match = newExercise.duration.match(/(\d+)/);
+        const duration = match ? parseInt(match[1], 10) : 45;
+        setTimerState(prev => ({
+          ...prev,
+          timeRemaining: duration,
+          isPaused: false  // Start timer automatically
+          // Note: phase, exerciseIndex, and round are preserved from prev
+        }));
+      }
+
+      // Close pause menu (timer is already started above)
+      setShowPauseMenu(false);
+
+      // Announce the new exercise name via voice
+      // Use setTimeout to ensure modal closes first and state is settled
+      setTimeout(() => {
+        if (voiceEnabled) {
+          if (timerState.phase === 'warmup' || timerState.phase === 'cooldown') {
+            const needsSideSwitch = isSideSwitchingExercise(newExercise, timerState.phase);
+            if (needsSideSwitch) {
+              const bodyPart = getBodyPartTerm(newExercise);
+              const sideText = getSideAnnouncement('right', bodyPart);
+              speak(`${newExercise.name}, ${sideText}`, true);
+            } else {
+              speak(newExercise.name, true);
+            }
+          } else {
+            speak(newExercise.name, true);
+          }
+        }
+      }, 300);
+
+      // Update database if workout is saved (do this async, don't block UI)
       if (workoutId) {
-        const { error } = await supabase
+        supabase
           .from('workouts')
           .update({
             exercises: updatedWorkout as unknown as Record<string, unknown>
           })
-          .eq('id', workoutId);
-
-        if (error) {
-          console.error('Failed to update workout in database:', error);
-        }
-      }
-
-      // Close pause menu and resume timer
-      setShowPauseMenu(false);
-      setTimerState(prev => ({ ...prev, isPaused: false }));
-
-      // Announce the new exercise
-      if (timerState.phase === 'warmup' || timerState.phase === 'cooldown') {
-        const needsSideSwitch = isSideSwitchingExercise(newExercise, timerState.phase);
-        if (needsSideSwitch) {
-          const bodyPart = getBodyPartTerm(newExercise);
-          const sideText = getSideAnnouncement('right', bodyPart);
-          speak(`${newExercise.name}, ${sideText}`, true);
-        } else {
-          speak(newExercise.name, true);
-        }
-      } else {
-        speak(newExercise.name, true);
+          .eq('id', workoutId)
+          .then(({ error }) => {
+            if (error) {
+              console.error('Failed to update workout in database:', error);
+            }
+          });
       }
 
     } catch (error) {
