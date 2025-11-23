@@ -1229,20 +1229,13 @@ const TabataTimer = () => {
             <span className="text-8xl font-bold text-white tabular-nums leading-none">
               {timerState.timeRemaining}
             </span>
-            {/* Show round and exercise info */}
-            <div className="flex flex-col items-center mt-3">
-              <span
-                className="text-sm font-medium transition-colors duration-300"
-                style={{ color: timerState.phase === "main" && timerState.intervalType === "work" ? "#00D9C0" : "#64748B" }}
-              >
-                Round {timerState.round} of {maxRounds}
-              </span>
-              {currentExercises.length > 1 && (
-                <span className="text-xs mt-1 text-[#64748B]">
-                  Exercise {timerState.exerciseIndex + 1} of {currentExercises.length}
-                </span>
-              )}
-            </div>
+            {/* Show round info */}
+            <span
+              className="text-sm font-medium transition-colors duration-300 mt-3"
+              style={{ color: timerState.phase === "main" && timerState.intervalType === "work" ? "#00D9C0" : "#64748B" }}
+            >
+              Round {timerState.round} of {maxRounds}
+            </span>
           </div>
         </div>
 
