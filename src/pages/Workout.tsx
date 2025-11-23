@@ -66,7 +66,22 @@ const Workout = () => {
   const details = frameworkDetails[frameworkKey] || frameworkDetails.tabata;
 
   const handlePlayTutorial = (exerciseName: string) => {
-    console.log(`Watch tutorial for ${exerciseName}`);
+    // Format the exercise name for URL (replace spaces with +)
+    const searchQuery = `how to ${exerciseName}`.replace(/\s+/g, '+');
+
+    // YouTube deep link (opens YouTube app on mobile)
+    const youtubeDeepLink = `youtube://results?search_query=${searchQuery}`;
+
+    // Fallback web URL
+    const youtubeWebUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
+
+    // Try to open YouTube app first
+    window.location.href = youtubeDeepLink;
+
+    // Set a timeout to fallback to web if deep link doesn't work
+    setTimeout(() => {
+      window.open(youtubeWebUrl, '_blank');
+    }, 500);
   };
 
   const handleReplaceExercise = (exerciseName: string) => {
