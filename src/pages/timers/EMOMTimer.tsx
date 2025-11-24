@@ -323,25 +323,25 @@ const EMOMTimer = () => {
 
   const maxRounds = getMaxRounds();
 
-  // Get next exercise in the rotation (cycles within the round)
+  // Get next exercise in the rotation (cycles within the minute/round)
   const getNextExerciseInRotation = useCallback((): { exercise: Exercise | null; isNextRound: boolean; isNextPhase: boolean } => {
     const exercises = getCurrentExercises();
     const nextIndex = timerState.exerciseIndex + 1;
 
     if (nextIndex < exercises.length) {
-      // Next exercise in current round
+      // Next exercise in current minute/round
       return { exercise: exercises[nextIndex], isNextRound: false, isNextPhase: false };
     } else {
-      // Finished all exercises in this round
-      if (timerState.round < maxRounds) {
-        // Start next round with first exercise
+      // Finished all exercises in this minute/round
+      if (timerState.currentMinute < maxRounds) {
+        // Start next minute/round with first exercise
         return { exercise: exercises[0], isNextRound: true, isNextPhase: false };
       } else {
         // Move to next phase
         return { exercise: null, isNextRound: false, isNextPhase: true };
       }
     }
-  }, [getCurrentExercises, timerState.exerciseIndex, timerState.round, maxRounds]);
+  }, [getCurrentExercises, timerState.exerciseIndex, timerState.currentMinute, maxRounds]);
 
   // Get next phase's first exercise name
   const getNextPhaseExercise = useCallback((): string | undefined => {
@@ -1990,10 +1990,10 @@ const EMOMTimer = () => {
             }
 
             if (nextInfo.isNextRound) {
-              // Show next round info
+              // Show next minute/round info
               return (
                 <span className="text-sm text-slate-400">
-                  Next: Round {timerState.round + 1} → {nextInfo.exercise?.name}
+                  Next: {timerState.phase === "main" ? "Minute" : "Round"} {timerState.currentMinute + 1} → {nextInfo.exercise?.name}
                 </span>
               );
             }
