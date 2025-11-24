@@ -5,7 +5,7 @@ import { GeneratedWorkout, Exercise, generateReplacementExercise } from "@/lib/g
 import { supabase } from "@/integrations/supabase/client";
 
 type TimerPhase = "warmup" | "main" | "cooldown" | "complete";
-type IntervalType = "work" | "rest" | "exercise";
+type IntervalType = "exercise";
 type TransitionType = "phase" | "exercise" | null;
 type SideType = "right" | "left" | null;
 type BodyPartType = "leg" | "arm" | "side";
@@ -13,8 +13,7 @@ type BodyPartType = "leg" | "arm" | "side";
 interface TimerState {
   phase: TimerPhase;
   exerciseIndex: number;
-  round: number;
-  intervalType: IntervalType;
+  currentMinute: number;
   timeRemaining: number;
   isPaused: boolean;
 }
@@ -29,19 +28,19 @@ interface TransitionState {
 interface WorkoutStats {
   totalTime: number;
   exercisesCompleted: number;
-  roundsCompleted: number;
+  minutesCompleted: number;
 }
 
-const WORK_DURATION = 20;
-const REST_DURATION = 10;
+const MINUTE_DURATION = 60;
 const TRANSITION_DURATION = 10;
 
-// Phase-specific round counts (each round cycles through ALL exercises)
-const WARMUP_ROUNDS = 2;
-const MAIN_ROUNDS = 8;
-const COOLDOWN_ROUNDS = 1; // Cooldown just goes through once
+// Phase-specific minute counts (EMOM uses minutes instead of rounds)
+const WARMUP_ROUNDS = 2; // Warmup still uses 2 cycles through exercises
+const COOLDOWN_ROUNDS = 1; // Cooldown uses 1 cycle through exercises
+// MAIN_MINUTES is calculated from workout duration - default 20 minutes
+const DEFAULT_MAIN_MINUTES = 20;
 
-// Phase colors
+// Phase colors (EMOM uses consistent colors - no work/rest switching)
 const phaseColors = {
   warmup: {
     primary: "#FF9500",
@@ -57,16 +56,6 @@ const phaseColors = {
     primary: "#8B5CF6",
     glow: "rgba(139, 92, 246, 0.5)",
     gradient: "linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 100%)",
-  },
-  work: {
-    primary: "#00D9C0",
-    glow: "rgba(0, 217, 192, 0.5)",
-    gradient: "linear-gradient(135deg, rgba(0, 217, 192, 0.15) 0%, rgba(0, 217, 192, 0.05) 100%)",
-  },
-  rest: {
-    primary: "#64748B",
-    glow: "rgba(100, 116, 139, 0.4)",
-    gradient: "linear-gradient(135deg, rgba(100, 116, 139, 0.15) 0%, rgba(100, 116, 139, 0.05) 100%)",
   },
 };
 
@@ -122,12 +111,12 @@ const EMOMTimer = () => {
   const [timerState, setTimerState] = useState<TimerState>({
     phase: "warmup",
     exerciseIndex: 0,
-    round: 1,
-    intervalType: "exercise",
+    currentMinute: 1,
     timeRemaining: 0, // Will be initialized by useEffect
     isPaused: true, // Start paused until initialized
   });
   const [isInitialized, setIsInitialized] = useState(false);
+  const [totalMainMinutes, setTotalMainMinutes] = useState(DEFAULT_MAIN_MINUTES);
 
   const [transition, setTransition] = useState<TransitionState | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -145,7 +134,7 @@ const EMOMTimer = () => {
   const [stats, setStats] = useState<WorkoutStats>({
     totalTime: 0,
     exercisesCompleted: 0,
-    roundsCompleted: 0,
+    minutesCompleted: 0,
   });
 
   // Side-switching state for warmup/cooldown exercises
@@ -219,8 +208,7 @@ const EMOMTimer = () => {
       setTimerState({
         phase: "warmup",
         exerciseIndex: 0,
-        round: 1,
-        intervalType: "exercise",
+        currentMinute: 1,
         timeRemaining: duration,
         isPaused: false,
       });
@@ -237,9 +225,8 @@ const EMOMTimer = () => {
         setTimerState({
           phase: "main",
           exerciseIndex: 0,
-          round: 1,
-          intervalType: "work",
-          timeRemaining: WORK_DURATION,
+          currentMinute: 1,
+          timeRemaining: MINUTE_DURATION,
           isPaused: false,
         });
         setIsInitialized(true);
@@ -320,19 +307,19 @@ const EMOMTimer = () => {
   const currentExercises = getCurrentExercises();
   const currentExercise = currentExercises[timerState.exerciseIndex];
 
-  // Get max rounds for current phase
+  // Get max rounds/minutes for current phase
   const getMaxRounds = useCallback((): number => {
     switch (timerState.phase) {
       case "warmup":
         return WARMUP_ROUNDS;
       case "main":
-        return MAIN_ROUNDS;
+        return totalMainMinutes; // EMOM uses minutes instead of rounds
       case "cooldown":
         return COOLDOWN_ROUNDS;
       default:
-        return MAIN_ROUNDS;
+        return totalMainMinutes;
     }
-  }, [timerState.phase]);
+  }, [timerState.phase, totalMainMinutes]);
 
   const maxRounds = getMaxRounds();
 
@@ -377,13 +364,13 @@ const EMOMTimer = () => {
   // Get total duration for current interval
   const getTotalDuration = useCallback((): number => {
     if (timerState.phase === "main") {
-      return timerState.intervalType === "work" ? WORK_DURATION : REST_DURATION;
+      return MINUTE_DURATION; // EMOM always uses 60-second minutes
     }
     if (currentExercise) {
       return parseDuration(currentExercise.duration);
     }
     return 45;
-  }, [timerState.phase, timerState.intervalType, currentExercise]);
+  }, [timerState.phase, currentExercise]);
 
   // Calculate progress (0 to 1)
   const progress = timerState.timeRemaining / getTotalDuration();
@@ -406,74 +393,50 @@ const EMOMTimer = () => {
     vibrate([100, 50, 100]);
   }, [typedWorkout, speak, vibrate]);
 
-  // Move to next state - cycles through exercises within each round
+  // Move to next state - EMOM version: advances by minute and cycles through exercises
   const advanceTimer = useCallback(() => {
     setTimerState((prev) => {
       const phaseMaxRounds = prev.phase === "warmup" ? WARMUP_ROUNDS
-        : prev.phase === "main" ? MAIN_ROUNDS
+        : prev.phase === "main" ? totalMainMinutes
         : COOLDOWN_ROUNDS;
 
-      // Main phase logic (Tabata intervals with exercise cycling)
+      // Main phase logic (EMOM: 60-second minutes with exercise cycling)
       if (prev.phase === "main") {
         const mainExercises = typedWorkout?.main || [];
 
-        if (prev.intervalType === "work") {
-          // Work -> Rest
-          speak("Rest", true);
-          vibrate([50]);
+        // At end of minute, move to next exercise
+        setStats(s => ({ ...s, exercisesCompleted: s.exercisesCompleted + 1, minutesCompleted: s.minutesCompleted + 1 }));
+
+        const nextExerciseIndex = prev.exerciseIndex + 1;
+        const nextMinute = prev.currentMinute + 1;
+
+        if (nextMinute <= phaseMaxRounds) {
+          // Continue with next minute
+          const exerciseToShow = mainExercises[nextExerciseIndex % mainExercises.length];
+
+          // Announce next exercise
+          speak(`${exerciseToShow.name}`, true);
+          vibrate([100]);
+
           return {
             ...prev,
-            intervalType: "rest",
-            timeRemaining: REST_DURATION,
+            exerciseIndex: nextExerciseIndex % mainExercises.length,
+            currentMinute: nextMinute,
+            timeRemaining: MINUTE_DURATION,
           };
         } else {
-          // Rest -> Next exercise in rotation or next round
-          const nextExerciseIndex = prev.exerciseIndex + 1;
-
-          setStats(s => ({ ...s, exercisesCompleted: s.exercisesCompleted + 1 }));
-
-          if (nextExerciseIndex < mainExercises.length) {
-            // Move to next exercise in the current round
-            speak(`${mainExercises[nextExerciseIndex].name}!`, true);
-            vibrate([100]);
-            return {
-              ...prev,
-              exerciseIndex: nextExerciseIndex,
-              intervalType: "work",
-              timeRemaining: WORK_DURATION,
-            };
+          // Finished all minutes - move to cooldown
+          const cooldownExercises = typedWorkout?.cooldown || [];
+          if (cooldownExercises.length > 0) {
+            startPhaseTransition("cooldown");
+            return prev; // Keep current state during transition
           } else {
-            // Finished all exercises in this round
-            setStats(s => ({ ...s, roundsCompleted: s.roundsCompleted + 1 }));
-
-            if (prev.round < phaseMaxRounds) {
-              // Start next round, back to first exercise
-              const nextRound = prev.round + 1;
-              // Announce exercise name for first work interval of the new round
-              speak(mainExercises[0].name, true);
-              vibrate([100, 50, 100]);
-              return {
-                ...prev,
-                round: nextRound,
-                exerciseIndex: 0,
-                intervalType: "work",
-                timeRemaining: WORK_DURATION,
-              };
-            } else {
-              // Finished all rounds - move to cooldown
-              const cooldownExercises = typedWorkout?.cooldown || [];
-              if (cooldownExercises.length > 0) {
-                startPhaseTransition("cooldown");
-                return prev; // Keep current state during transition
-              } else {
-                return { ...prev, phase: "complete" };
-              }
-            }
+            return { ...prev, phase: "complete" };
           }
         }
       }
 
-      // Warmup/Cooldown logic (cycling through exercises with rounds)
+      // Warmup/Cooldown logic (cycling through exercises with rounds - keeps Tabata-like behavior)
       const exercises = prev.phase === "warmup"
         ? typedWorkout?.warmup || []
         : typedWorkout?.cooldown || [];
@@ -504,15 +467,16 @@ const EMOMTimer = () => {
         return {
           ...prev,
           exerciseIndex: nextExerciseIndex,
+          currentMinute: prev.currentMinute + 1,
           timeRemaining: nextDuration,
         };
       } else {
         // Finished all exercises in this round
-        setStats(s => ({ ...s, roundsCompleted: s.roundsCompleted + 1 }));
+        setStats(s => ({ ...s, minutesCompleted: s.minutesCompleted + 1 }));
 
-        if (prev.round < phaseMaxRounds) {
+        if (prev.currentMinute < phaseMaxRounds) {
           // Start next round, back to first exercise
-          const nextRound = prev.round + 1;
+          const nextMinute = prev.currentMinute + 1;
           const firstExercise = exercises[0];
           const duration = parseDuration(firstExercise.duration);
 
@@ -525,15 +489,15 @@ const EMOMTimer = () => {
           if (needsSideSwitch) {
             const bodyPart = getBodyPartTerm(firstExercise);
             const sideText = getSideAnnouncement("right", bodyPart);
-            speak(`Round ${nextRound}! ${firstExercise.name}, ${sideText}`, true);
+            speak(`Round ${nextMinute}! ${firstExercise.name}, ${sideText}`, true);
           } else {
-            speak(`Round ${nextRound}! ${firstExercise.name}`, true);
+            speak(`Round ${nextMinute}! ${firstExercise.name}`, true);
           }
 
           vibrate([100, 50, 100]);
           return {
             ...prev,
-            round: nextRound,
+            currentMinute: nextMinute,
             exerciseIndex: 0,
             timeRemaining: duration,
           };
@@ -550,7 +514,7 @@ const EMOMTimer = () => {
         }
       }
     });
-  }, [typedWorkout, speak, vibrate, startPhaseTransition]);
+  }, [typedWorkout, speak, vibrate, startPhaseTransition, totalMainMinutes]);
 
   // Handle transition countdown
   useEffect(() => {
@@ -573,7 +537,7 @@ const EMOMTimer = () => {
 
           if (prev.type === "phase" && prev.nextPhase) {
             // Calculate duration for first exercise of new phase
-            let duration = WORK_DURATION;
+            let duration = MINUTE_DURATION;
             if (prev.nextPhase === "cooldown") {
               const cooldownExercise = typedWorkout?.cooldown?.[0];
               if (cooldownExercise) {
@@ -586,8 +550,7 @@ const EMOMTimer = () => {
               ...ts,
               phase: prev.nextPhase!,
               exerciseIndex: 0,
-              round: 1,
-              intervalType: prev.nextPhase === "main" ? "work" : "exercise",
+              currentMinute: 1,
               timeRemaining: duration,
             }));
 
@@ -614,17 +577,6 @@ const EMOMTimer = () => {
                 vibrate([100]);
               }
             }
-          } else if (prev.type === "exercise") {
-            // Start next exercise in main phase
-            setTimerState((ts) => ({
-              ...ts,
-              exerciseIndex: ts.exerciseIndex + 1,
-              round: 1,
-              intervalType: "work",
-              timeRemaining: WORK_DURATION,
-            }));
-            speak("Work!", true);
-            vibrate([100]);
           }
 
           return null;
@@ -886,14 +838,13 @@ const EMOMTimer = () => {
       }
 
       // CRITICAL: Reset timer and start it in a SINGLE setTimerState call
-      // This ensures the timer restarts at the beginning of the CURRENT exercise
-      // while preserving phase, exerciseIndex, and round
+      // This ensures the timer restarts at the beginning of the CURRENT minute
+      // while preserving phase, exerciseIndex, and currentMinute
       if (timerState.phase === 'main') {
-        // Main workout: Reset to start of work interval (20 seconds)
+        // Main workout: Reset to start of minute (60 seconds)
         setTimerState(prev => ({
           ...prev,
-          timeRemaining: WORK_DURATION,
-          intervalType: 'work' as IntervalType,
+          timeRemaining: MINUTE_DURATION,
           isPaused: false  // Start timer automatically
         }));
       } else {
@@ -1013,17 +964,16 @@ const EMOMTimer = () => {
       }
 
       // CRITICAL: Reset timer and start it in a SINGLE setTimerState call
-      // This ensures the timer restarts at the beginning of the CURRENT exercise
-      // while preserving phase, exerciseIndex, and round
+      // This ensures the timer restarts at the beginning of the CURRENT minute
+      // while preserving phase, exerciseIndex, and currentMinute
       if (timerState.phase === 'main') {
-        // Main workout: Reset to start of work interval (20 seconds)
-        // Keep currentRound the same - DO NOT reset to 1
+        // Main workout: Reset to start of minute (60 seconds)
+        // Keep currentMinute the same - DO NOT reset to 1
         setTimerState(prev => ({
           ...prev,
-          timeRemaining: WORK_DURATION,
-          intervalType: 'work' as IntervalType,
+          timeRemaining: MINUTE_DURATION,
           isPaused: false  // Start timer automatically
-          // Note: phase, exerciseIndex, and round are preserved from prev
+          // Note: phase, exerciseIndex, and currentMinute are preserved from prev
         }));
       } else {
         // Warmup/Cooldown: Parse duration from new exercise
@@ -1033,7 +983,7 @@ const EMOMTimer = () => {
           ...prev,
           timeRemaining: duration,
           isPaused: false  // Start timer automatically
-          // Note: phase, exerciseIndex, and round are preserved from prev
+          // Note: phase, exerciseIndex, and currentMinute are preserved from prev
         }));
       }
 
@@ -1130,28 +1080,13 @@ const EMOMTimer = () => {
     navigate("/home");
   };
 
-  // Get colors based on current state
+  // Get colors based on current phase (EMOM doesn't switch between work/rest)
   const getColors = () => {
-    if (timerState.phase === "main" && timerState.intervalType === "work") {
-      return {
-        primary: phaseColors.work.primary,
-        glow: phaseColors.work.glow,
-        text: "WORK",
-      };
-    }
-    if (timerState.phase === "main" && timerState.intervalType === "rest") {
-      return {
-        primary: phaseColors.rest.primary,
-        glow: phaseColors.rest.glow,
-        text: "REST",
-      };
-    }
-    // Warmup/Cooldown
     const phaseColor = phaseColors[timerState.phase as keyof typeof phaseColors] || phaseColors.main;
     return {
       primary: phaseColor.primary,
       glow: phaseColor.glow,
-      text: timerState.phase.toUpperCase(),
+      text: timerState.phase === "main" ? "EMOM" : timerState.phase.toUpperCase(),
     };
   };
 
@@ -1238,8 +1173,8 @@ const EMOMTimer = () => {
                 border: '1px solid rgba(148, 163, 184, 0.1)',
               }}
             >
-              <p className="text-2xl font-bold text-white">{stats.roundsCompleted}</p>
-              <p className="text-xs text-[#B0B8C1] mt-1">Rounds</p>
+              <p className="text-2xl font-bold text-white">{stats.minutesCompleted}</p>
+              <p className="text-xs text-[#B0B8C1] mt-1">Minutes</p>
             </div>
           </div>
 
@@ -1897,14 +1832,14 @@ const EMOMTimer = () => {
             }}
           >
             {timerState.phase === "warmup" && "WARM UP"}
-            {timerState.phase === "main" && "TABATA"}
+            {timerState.phase === "main" && "EMOM"}
             {timerState.phase === "cooldown" && "COOL DOWN"}
           </div>
         </div>
 
         {/* Circular Progress Ring */}
         <div className="flex justify-center">
-          <div className={`w-[280px] h-[280px] relative ${timerState.phase === "main" && timerState.intervalType === "work" ? 'work-pulse' : ''}`}>
+          <div className="w-[280px] h-[280px] relative">
             {/* Glow effect */}
             <div
               className="absolute inset-[-10px] rounded-full blur-xl opacity-30 transition-colors duration-500"
@@ -1925,7 +1860,7 @@ const EMOMTimer = () => {
             <svg
               width={ringSize}
               height={ringSize}
-              className={`relative z-10 transform -rotate-90 ${timerState.phase === "main" && timerState.intervalType === "work" ? 'glow-pulse' : ''}`}
+              className="relative z-10 transform -rotate-90"
             >
               {/* Background ring */}
               <circle
@@ -1967,12 +1902,14 @@ const EMOMTimer = () => {
               <span className="text-8xl font-bold text-white tabular-nums leading-none">
                 {timerState.timeRemaining}
               </span>
-              {/* Round Counter */}
+              {/* Minute/Round Counter */}
               <span
                 className="text-base font-medium transition-colors duration-300 mt-2"
-                style={{ color: timerState.phase === "main" && timerState.intervalType === "work" ? "#00D9C0" : "#64748B" }}
+                style={{ color: timerState.phase === "main" ? "#00D9C0" : "#64748B" }}
               >
-                Round {timerState.round} of {maxRounds}
+                {timerState.phase === "main"
+                  ? `Minute ${timerState.currentMinute} of ${maxRounds}`
+                  : `Round ${timerState.currentMinute} of ${maxRounds}`}
               </span>
             </div>
           </div>
