@@ -218,6 +218,14 @@ const Workout = () => {
           framework: frameworkKey,
         },
       });
+    } else if (frameworkKey === "emom") {
+      navigate("/workout/emom/timer", {
+        state: {
+          workout: currentWorkout,
+          workoutId,
+          framework: frameworkKey,
+        },
+      });
     } else {
       // TODO: Add other framework timers
       console.log("Timer not yet implemented for:", frameworkKey);
