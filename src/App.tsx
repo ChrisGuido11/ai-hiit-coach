@@ -13,6 +13,7 @@ import Home from "./pages/Home";
 import Workout from "./pages/Workout";
 import WorkoutGeneration from "./pages/WorkoutGeneration";
 import TabataTimer from "./pages/timers/TabataTimer";
+import EMOMTimer from "./pages/timers/EMOMTimer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/home" element={<Home />} />
           <Route path="/workout/generate" element={<WorkoutGeneration />} />
           <Route path="/workout/tabata/timer" element={<TabataTimer />} />
+          <Route path="/workout/emom/timer" element={<EMOMTimer />} />
           <Route path="/workout/:framework" element={<Workout />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

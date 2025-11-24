@@ -103,6 +103,16 @@ const getSideAnnouncement = (side: SideType, bodyPart: BodyPartType): string => 
   return `${capitalizedSide} ${capitalizedPart}`;
 };
 
+// Calculate total EMOM main minutes based on number of exercises
+// Allocate time proportionally: warmup ~3min, main ~proportional, cooldown ~3min
+const calculateEMOMMinutes = (mainExerciseCount: number): number => {
+  // Default calculation: more exercises = more minutes to complete each
+  // Minimum 10 minutes, maximum 35 minutes for main phase
+  // Estimate ~2-3 exercises per minute on average
+  const baseMinutes = Math.max(10, Math.min(35, mainExerciseCount * 2));
+  return baseMinutes;
+};
+
 const EMOMTimer = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -156,6 +166,14 @@ const EMOMTimer = () => {
       setWorkoutData(workout as GeneratedWorkout);
     }
   }, [workout, workoutData]);
+
+  // Calculate total EMOM minutes based on number of exercises
+  useEffect(() => {
+    if (typedWorkout?.main && typedWorkout.main.length > 0) {
+      const calculatedMinutes = calculateEMOMMinutes(typedWorkout.main.length);
+      setTotalMainMinutes(calculatedMinutes);
+    }
+  }, [typedWorkout?.main?.length]);
 
   // Wake Lock API to prevent screen sleep
   useEffect(() => {
