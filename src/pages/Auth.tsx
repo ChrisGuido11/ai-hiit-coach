@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { AIBlob } from "@/components/AIBlob";
+import { Dumbbell } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -93,9 +93,13 @@ const Auth = () => {
       }}
     >
       <div className="w-full max-w-md">
-        {/* Logo and AI Blob */}
+        {/* Logo and Icon */}
         <div className="text-center mb-8">
-          <AIBlob size="small" className="mx-auto mb-4" />
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center glow-primary">
+              <Dumbbell className="w-8 h-8 text-white" />
+            </div>
+          </div>
           <h1 className="text-4xl font-bold mb-2">
             <span className="text-foreground">HIIT </span>
             <span className="bg-gradient-primary bg-clip-text text-transparent">

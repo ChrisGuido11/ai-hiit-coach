@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { AIBlob } from "@/components/AIBlob";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Zap, Clock, Repeat, Activity, Bookmark, User } from "lucide-react";
+import { ArrowRight, Zap, Clock, Repeat, Activity, Bookmark, User, Dumbbell, Sparkles, Send } from "lucide-react";
 import { useTypingAnimation } from "@/hooks/useTypingAnimation";
 
 const frameworks = [
@@ -66,52 +65,60 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gradient-warm flex flex-col">
-      {/* AI Blob */}
+      {/* Header Area */}
       <div
-        className="flex justify-center pt-6"
+        className="px-6 pt-4 flex items-center justify-between"
         style={{
-          paddingTop: 'calc(1.5rem + var(--safe-area-top))'
+          paddingTop: 'calc(1rem + var(--safe-area-top))'
         }}
       >
-        <AIBlob size="medium" />
+        {/* Future: Add close/back button if needed */}
+        <div></div>
+        {/* Future: Pro badge can go here */}
+        <div></div>
       </div>
 
-      {/* Header - Below AI Blob */}
-      <div className="pt-6 text-center">
-        <h1 className="text-3xl md:text-4xl font-bold mb-2">
-          <span className="text-foreground">HIIT </span>
-          <span className="bg-gradient-primary bg-clip-text text-transparent">
-            Coach
-          </span>
+      {/* Hero Icon Circle */}
+      <div className="flex justify-center pt-8 mb-8">
+        <div className="relative w-20 h-20 rounded-full bg-gradient-primary flex items-center justify-center glow-primary">
+          <Dumbbell className="w-10 h-10 text-white" />
+        </div>
+      </div>
+
+      {/* Main Title */}
+      <div className="px-6 mb-12">
+        <h1 className="text-4xl font-semibold text-center text-foreground leading-tight max-w-xs mx-auto">
+          AI-Powered HIIT Coach
         </h1>
-        <p className="text-base text-muted-foreground">AI-powered HIIT training for any level</p>
       </div>
 
-      {/* Custom Goal Input */}
-      <div className="px-6 mt-8 mb-6">
+      {/* AI Input Bar */}
+      <div className="px-6 mb-8">
         <form onSubmit={handleGoalSubmit} className="max-w-2xl mx-auto">
-          <div className="relative">
-            <Input
+          <div className="relative glass-pill h-14 flex items-center px-5 gap-3">
+            <div className="w-9 h-9 rounded-full bg-accent-amrap flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+            <input
               type="text"
-              placeholder={animatedPlaceholder}
+              placeholder={animatedPlaceholder || "Tap to Ask..."}
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              className="h-14 pr-14"
+              className="flex-1 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground"
             />
-            <Button
+            <button
               type="submit"
-              size="icon"
-              className="absolute right-2 top-2 h-10 w-10"
+              className="w-9 h-9 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform"
             >
-              <ArrowRight className="w-5 h-5" />
-            </Button>
+              <Send className="w-4 h-4 text-white" />
+            </button>
           </div>
         </form>
       </div>
 
-      {/* Framework Cards */}
+      {/* Workout Type Cards Section */}
       <div
         className="flex-1 px-6"
         style={{
@@ -119,11 +126,11 @@ const Home = () => {
         }}
       >
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-xl font-semibold text-foreground mb-6">
-            Or try one of these:
+          <h2 className="text-[22px] font-semibold text-foreground mb-4">
+            Quick Start Workouts
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {frameworks.map((framework, index) => {
               const Icon = framework.icon;
               const gradientClasses = [
@@ -132,25 +139,29 @@ const Home = () => {
                 "bg-gradient-amrap",
                 "bg-gradient-circuit"
               ];
+              const glowClasses = [
+                "shadow-[0_0_32px_rgba(54,209,220,0.5)]",
+                "shadow-[0_0_32px_rgba(255,107,181,0.5)]",
+                "shadow-[0_0_32px_rgba(168,85,247,0.5)]",
+                "shadow-[0_0_32px_rgba(74,222,128,0.5)]"
+              ];
 
               return (
                 <button
                   key={framework.id}
                   onClick={() => handleFrameworkClick(framework.id)}
-                  className="p-6 rounded-3xl glass-card hover:shadow-elevated transition-all text-left group"
+                  className="p-5 rounded-3xl glass-card hover:shadow-elevated transition-all active:scale-97 active:opacity-90"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${gradientClasses[index]} group-hover:scale-110 transition-transform`}>
-                      <Icon className="w-6 h-6 text-white" />
+                  <div className="flex flex-col items-start">
+                    <div className={`w-14 h-14 rounded-full flex items-center justify-center ${gradientClasses[index]} ${glowClasses[index]} mb-4`}>
+                      <Icon className="w-7 h-7 text-white" />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg text-foreground mb-1">
-                        {framework.name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {framework.description}
-                      </p>
-                    </div>
+                    <h3 className="font-semibold text-lg text-foreground mb-1 text-left">
+                      {framework.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground text-left">
+                      {framework.description}
+                    </p>
                   </div>
                 </button>
               );

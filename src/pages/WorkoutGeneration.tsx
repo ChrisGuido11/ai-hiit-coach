@@ -141,7 +141,7 @@ const WorkoutGeneration = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#0A1F2E] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-warm flex items-center justify-center p-6">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
             <span className="text-3xl">!</span>
@@ -149,7 +149,7 @@ const WorkoutGeneration = () => {
           <h2 className="text-xl font-bold text-foreground mb-3">
             Oops! Something went wrong
           </h2>
-          <p className="text-sm text-[#B0B8C1] mb-2">
+          <p className="text-sm text-muted-foreground mb-2">
             Failed to generate workout
           </p>
           {errorMessage && (
@@ -160,14 +160,16 @@ const WorkoutGeneration = () => {
           <div className="flex flex-col gap-3">
             <Button
               onClick={handleRetry}
-              className="w-full bg-primary active:bg-primary/80 active:scale-[0.98] transition-transform"
+              className="w-full"
+              size="lg"
             >
               Try Again
             </Button>
             <Button
               onClick={handleGoBack}
-              variant="outline"
+              variant="ghost"
               className="w-full"
+              size="lg"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Go Back
@@ -179,44 +181,27 @@ const WorkoutGeneration = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A1F2E] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-warm flex items-center justify-center p-6">
       <div className="flex flex-col items-center max-w-md mx-auto text-center">
-        {/* Active AI Blob with faster animation */}
+        {/* Simple loading icon circle */}
         <div className="relative mb-8">
           <div
-            className="relative rounded-full bg-gradient-to-br from-primary via-primary to-accent w-40 h-40 md:w-44 md:h-44"
+            className="relative rounded-full bg-gradient-primary w-20 h-20 flex items-center justify-center glow-primary"
             style={{
-              animation: "activeBreath 1s ease-in-out infinite, spin 3s linear infinite",
-              boxShadow: "0 0 60px rgba(0, 217, 192, 0.6)",
+              animation: "activeBreath 1.5s ease-in-out infinite",
             }}
           >
             {/* Inner glow */}
-            <div className="absolute inset-8 rounded-full bg-primary/40 blur-xl" />
-          </div>
-
-          {/* Outer glow rings */}
-          <div className="absolute inset-0 animate-pulse">
-            <div
-              className="absolute inset-0 rounded-full bg-primary/20 blur-3xl"
-              style={{
-                animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-              }}
-            />
-            <div
-              className="absolute inset-4 rounded-full bg-primary/30 blur-2xl"
-              style={{
-                animation: "pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite 0.3s",
-              }}
-            />
+            <div className="absolute inset-4 rounded-full bg-white/40 blur-xl" />
           </div>
         </div>
 
         {/* Status Text */}
-        <h1 className="text-xl font-bold text-foreground mb-3">
+        <h1 className="text-xl font-semibold text-foreground mb-3">
           Creating your personalized workout...
         </h1>
 
-        <p className="text-sm text-[#B0B8C1] mb-6">
+        <p className="text-sm text-muted-foreground mb-6">
           {goal
             ? `Our AI is designing a workout for: ${goal}`
             : `Our AI is designing the perfect ${framework?.toUpperCase()} workout for you`
@@ -243,20 +228,11 @@ const WorkoutGeneration = () => {
           @keyframes activeBreath {
             0%, 100% {
               transform: scale(1);
-              box-shadow: 0 0 60px rgba(0, 217, 192, 0.6);
+              opacity: 0.9;
             }
             50% {
-              transform: scale(1.1);
-              box-shadow: 0 0 80px rgba(0, 217, 192, 0.9);
-            }
-          }
-
-          @keyframes spin {
-            from {
-              transform: rotate(0deg);
-            }
-            to {
-              transform: rotate(360deg);
+              transform: scale(1.05);
+              opacity: 1;
             }
           }
 
