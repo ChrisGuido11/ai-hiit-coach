@@ -180,7 +180,7 @@ const Workout = () => {
         const { error } = await supabase
           .from('workouts')
           .update({
-            exercises: updatedWorkout as unknown as Record<string, unknown>
+            exercises: updatedWorkout as any
           })
           .eq('id', workoutId);
 
