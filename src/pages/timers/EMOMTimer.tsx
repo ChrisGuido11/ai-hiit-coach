@@ -1237,7 +1237,7 @@ const EMOMTimer = () => {
   const ringStrokeDashoffset = ringCircumference * (1 - progress);
 
   return (
-    <div className="min-h-screen bg-gradient-warm flex flex-col overflow-hidden">
+    <div className="min-h-screen flex flex-col overflow-hidden" style={{ background: 'linear-gradient(90deg, #F5F1EE, #F8E0C8)' }}>
       <style>{`
         @keyframes pulse {
           0%, 100% { transform: scale(1); opacity: 1; }
@@ -1291,40 +1291,58 @@ const EMOMTimer = () => {
           <div
             className="w-full max-w-[400px] rounded-3xl p-6 slide-up"
             style={{
-              background: 'rgba(15, 23, 42, 0.95)',
-              backdropFilter: 'blur(24px)',
-              WebkitBackdropFilter: 'blur(24px)',
-              border: '1px solid rgba(148, 163, 184, 0.3)',
-              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.5)',
+              background: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: 'none',
+              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.15)',
             }}
           >
-            <h3 className="text-2xl font-bold text-white text-center mb-6">Workout Paused</h3>
+            <h3 className="text-2xl font-bold text-center mb-6" style={{ color: '#1F2124' }}>Paused</h3>
 
             <div className="flex flex-col gap-3">
-              {/* Resume Button - Primary */}
+              {/* Resume Button - Primary with orange gradient */}
               <button
                 onClick={handleResume}
                 disabled={isReplacingExercise}
-                className="w-full py-4 rounded-2xl font-semibold text-lg transition-all active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50"
+                className="w-full py-4 rounded-full font-semibold text-lg transition-all active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50"
                 style={{
-                  background: 'linear-gradient(135deg, #00D9C0 0%, #00B4A0 100%)',
-                  boxShadow: '0 8px 24px rgba(0, 217, 192, 0.3)',
-                  color: '#0A1F2E',
+                  background: 'linear-gradient(90deg, #FEAD63, #FBCDA4)',
+                  boxShadow: '0 8px 24px rgba(254, 173, 99, 0.4)',
+                  color: '#FFFFFF',
                 }}
               >
                 <Play className="w-6 h-6" />
-                Resume Workout
+                Resume
+              </button>
+
+              {/* View Tutorial Button */}
+              <button
+                onClick={() => {
+                  setShowPauseMenu(false);
+                  handleLessonClick();
+                }}
+                disabled={isReplacingExercise}
+                className="w-full py-3.5 rounded-full font-medium transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
+                style={{
+                  background: 'transparent',
+                  border: '1px solid rgba(31, 33, 36, 0.2)',
+                  color: '#1F2124',
+                }}
+              >
+                <Play className="w-5 h-5" />
+                View Tutorial
               </button>
 
               {/* Replace Exercise Button */}
               <button
                 onClick={handleReplaceFromPauseMenu}
                 disabled={isReplacingExercise || !!transition}
-                className="w-full py-4 rounded-2xl font-semibold transition-all active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3.5 rounded-full font-medium transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
-                  background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
-                  border: '1px solid rgba(148, 163, 184, 0.25)',
-                  color: '#FFFFFF',
+                  background: 'transparent',
+                  border: '1px solid rgba(31, 33, 36, 0.2)',
+                  color: '#1F2124',
                 }}
               >
                 {isReplacingExercise ? (
@@ -1340,44 +1358,26 @@ const EMOMTimer = () => {
                 )}
               </button>
 
-              {/* Sound Toggle */}
-              <button
-                onClick={handleToggleSound}
-                disabled={isReplacingExercise}
-                className="w-full py-4 rounded-2xl font-semibold transition-all active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50"
-                style={{
-                  background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
-                  border: '1px solid rgba(148, 163, 184, 0.25)',
-                  color: '#FFFFFF',
-                }}
-              >
-                {voiceEnabled ? (
-                  <>
-                    <Volume2 className="w-5 h-5 text-[#00D9C0]" />
-                    Sound: On
-                  </>
-                ) : (
-                  <>
-                    <VolumeX className="w-5 h-5 text-[#64748B]" />
-                    Sound: Off
-                  </>
-                )}
-              </button>
-
-              {/* Exit Button - Destructive */}
-              <button
-                onClick={handleExitFromMenu}
-                disabled={isReplacingExercise}
-                className="w-full py-4 rounded-2xl font-semibold transition-all active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50"
-                style={{
-                  background: 'linear-gradient(180deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.2) 100%)',
-                  border: '1px solid rgba(239, 68, 68, 0.4)',
-                  color: '#EF4444',
-                }}
-              >
-                <X className="w-5 h-5" />
-                Exit Workout
-              </button>
+              {/* Additional options row */}
+              <div className="flex items-center justify-center gap-4 mt-2">
+                <button
+                  onClick={handleToggleSound}
+                  disabled={isReplacingExercise}
+                  className="text-sm font-medium disabled:opacity-50 transition-opacity"
+                  style={{ color: '#8F8A84' }}
+                >
+                  {voiceEnabled ? "Sound: On" : "Sound: Off"}
+                </button>
+                <span style={{ color: '#8F8A84' }}>•</span>
+                <button
+                  onClick={handleExitFromMenu}
+                  disabled={isReplacingExercise}
+                  className="text-sm font-medium disabled:opacity-50 transition-opacity"
+                  style={{ color: '#8F8A84' }}
+                >
+                  End Workout
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1840,95 +1840,84 @@ const EMOMTimer = () => {
       <div className="flex-1 flex flex-col px-4 overflow-hidden">
 
         {/* Phase Badge */}
-        <div className="flex justify-center pt-4 pb-6">
+        <div className="flex justify-center pt-8 pb-12">
           <div
-            className="px-6 py-2.5 rounded-full text-sm font-semibold tracking-wider"
+            className="px-5 py-2 rounded-full text-sm font-semibold tracking-widest"
             style={{
-              background: currentPhaseColors.gradient || `linear-gradient(135deg, ${currentPhaseColors.primary}26 0%, ${currentPhaseColors.primary}0D 100%)`,
-              color: currentPhaseColors.primary,
-              border: `1px solid ${currentPhaseColors.primary}30`,
+              background: 'rgba(255, 255, 255, 0.75)',
+              border: '1px solid rgba(255, 255, 255, 0.85)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              color: timerState.phase === "warmup" ? "#FF9500" : timerState.phase === "main" ? "#FF6BB5" : "#A855F7",
+              letterSpacing: '1px',
             }}
           >
             {timerState.phase === "warmup" && "WARM UP"}
-            {timerState.phase === "main" && "EMOM"}
+            {timerState.phase === "main" && "WORK"}
             {timerState.phase === "cooldown" && "COOL DOWN"}
           </div>
         </div>
 
-        {/* Circular Progress Ring */}
+        {/* Timer Display Area */}
         <div className="flex justify-center">
-          <div className="w-[280px] h-[280px] relative">
-            {/* Glow effect */}
-            <div
-              className="absolute inset-[-10px] rounded-full blur-xl opacity-30 transition-colors duration-500"
-              style={{ background: colors.glow }}
-            />
-
-            {/* Glass background */}
-            <div
-              className="absolute inset-[14px] rounded-full"
-              style={{
-                background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%)',
-                backdropFilter: 'blur(16px)',
-                border: '1px solid rgba(148, 163, 184, 0.08)',
-              }}
-            />
-
-            {/* SVG Ring */}
+          <div className="relative flex flex-col items-center">
+            {/* Optional subtle progress ring behind timer */}
             <svg
               width={ringSize}
               height={ringSize}
-              className="relative z-10 transform -rotate-90"
+              className="absolute transform -rotate-90"
+              style={{ opacity: 0.3 }}
             >
-              {/* Background ring */}
+              {/* Very subtle background ring */}
               <circle
                 cx={ringSize / 2}
                 cy={ringSize / 2}
                 r={ringRadius}
                 fill="none"
-                stroke="rgba(100, 116, 139, 0.15)"
-                strokeWidth={ringStrokeWidth}
+                stroke="rgba(254, 173, 99, 0.15)"
+                strokeWidth={8}
               />
-              {/* Progress ring */}
+              {/* Very subtle progress ring */}
               <circle
                 cx={ringSize / 2}
                 cy={ringSize / 2}
                 r={ringRadius}
                 fill="none"
-                stroke={colors.primary}
-                strokeWidth={ringStrokeWidth}
+                stroke="url(#progressGradient)"
+                strokeWidth={8}
                 strokeLinecap="round"
                 strokeDasharray={ringCircumference}
                 strokeDashoffset={ringStrokeDashoffset}
                 style={{
-                  transition: 'stroke-dashoffset 0.3s ease-out, stroke 0.3s ease-out',
-                  filter: `drop-shadow(0 0 8px ${colors.glow})`,
+                  transition: 'stroke-dashoffset 0.3s ease-out',
                 }}
               />
+              <defs>
+                <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#FEAD63" />
+                  <stop offset="100%" stopColor="#FBCDA4" />
+                </linearGradient>
+              </defs>
             </svg>
 
-            {/* Center content */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-              {/* Interval Label */}
-              <span
-                className="text-lg font-bold tracking-widest mb-1 transition-colors duration-300"
-                style={{ color: colors.primary }}
-              >
-                {colors.text}
-              </span>
-              {/* Countdown Number */}
-              <span className="text-8xl font-bold text-white tabular-nums leading-none">
+            {/* Center content - Timer Number as hero element */}
+            <div className="relative z-10 flex flex-col items-center justify-center" style={{ width: ringSize, height: ringSize }}>
+              {/* Countdown Number - HUGE */}
+              <span className="font-bold tabular-nums leading-none" style={{ fontSize: '120px', color: '#1F2124', fontVariantNumeric: 'tabular-nums' }}>
                 {timerState.timeRemaining}
               </span>
               {/* Minute/Round Counter */}
-              <span
-                className="text-base font-medium transition-colors duration-300 mt-2"
-                style={{ color: timerState.phase === "main" ? "#00D9C0" : "#64748B" }}
+              <div
+                className="mt-6 px-4 py-1.5 rounded-full text-xs font-medium"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.6)',
+                  color: '#8F8A84',
+                }}
               >
                 {timerState.phase === "main"
                   ? `Minute ${timerState.currentMinute} of ${maxRounds}`
                   : `Round ${timerState.currentMinute} of ${maxRounds}`}
-              </span>
+              </div>
             </div>
           </div>
         </div>
@@ -1936,41 +1925,36 @@ const EMOMTimer = () => {
         {/* Gap */}
         <div className="h-6" />
 
-        {/* Exercise Name Card */}
+        {/* Exercise Name Card - Dark glass for contrast */}
         {currentExercise && (
           <div
-            className="max-w-md w-full mx-auto px-6 py-6 rounded-xl max-h-[140px] overflow-hidden"
+            className="max-w-md w-full mx-auto px-6 py-5 rounded-3xl"
             style={{
-              background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
-              backdropFilter: 'blur(16px)',
-              border: '1px solid rgba(148, 163, 184, 0.1)',
-              boxShadow: `0 4px 16px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(${
-                timerState.phase === "warmup" ? "255, 149, 0" :
-                timerState.phase === "cooldown" ? "139, 92, 246" : "0, 217, 192"
-              }, 0.1)`,
+              background: 'rgba(43, 45, 58, 0.95)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              boxShadow: '0 4px 24px rgba(0, 0, 0, 0.15)',
             }}
           >
-            <h3 className="text-2xl font-bold text-white mb-2 text-center">
+            <h3 className="text-xl font-semibold text-white mb-2 text-center">
               {currentExercise.name}
             </h3>
             {/* Side indicator for side-switching exercises */}
             {isSideSwitchingExercise(currentExercise, timerState.phase) && currentSide && (
               <div className="flex items-center justify-center gap-2 mb-2 transition-all duration-300">
                 <span
-                  className="px-3 py-1 rounded-full text-xs font-semibold"
+                  className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide"
                   style={{
-                    background: currentSide === "right"
-                      ? 'linear-gradient(135deg, rgba(0, 217, 192, 0.2) 0%, rgba(0, 217, 192, 0.1) 100%)'
-                      : 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%)',
-                    border: `1px solid ${currentSide === "right" ? 'rgba(0, 217, 192, 0.4)' : 'rgba(139, 92, 246, 0.4)'}`,
-                    color: currentSide === "right" ? '#00D9C0' : '#8B5CF6',
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    color: '#FFFFFF',
                   }}
                 >
                   {getSideAnnouncement(currentSide, getBodyPartTerm(currentExercise))}
                 </span>
               </div>
             )}
-            <p className="text-base text-slate-300 text-center leading-snug line-clamp-2">
+            <p className="text-sm text-white/80 text-center leading-relaxed">
               {currentExercise.instructions}
             </p>
           </div>
@@ -1988,17 +1972,17 @@ const EMOMTimer = () => {
               // Show next phase (or workout complete)
               if (timerState.phase === "cooldown" || (timerState.phase === "main" && !typedWorkout?.cooldown?.length)) {
                 return (
-                  <span className="text-sm text-slate-400">
-                    Almost done! <span className="text-[#00D9C0] font-medium">Finish strong!</span>
+                  <span className="text-xs" style={{ color: '#8F8A84' }}>
+                    Almost done! <span style={{ color: '#FEAD63' }} className="font-medium">Finish strong!</span>
                   </span>
                 );
               }
               return (
-                <span className="text-sm text-slate-400">
+                <span className="text-xs" style={{ color: '#8F8A84' }}>
                   Next:{' '}
                   <span
                     className="font-medium"
-                    style={{ color: timerState.phase === "warmup" ? "#00D9C0" : "#8B5CF6" }}
+                    style={{ color: timerState.phase === "warmup" ? "#FF6BB5" : "#A855F7" }}
                   >
                     {timerState.phase === "warmup" ? "Main Workout" : "Cool Down"}
                   </span>
@@ -2010,7 +1994,7 @@ const EMOMTimer = () => {
             if (nextInfo.isNextRound) {
               // Show next minute/round info
               return (
-                <span className="text-sm text-slate-400">
+                <span className="text-xs" style={{ color: '#8F8A84' }}>
                   Next: {timerState.phase === "main" ? "Minute" : "Round"} {timerState.currentMinute + 1} → {nextInfo.exercise?.name}
                 </span>
               );
@@ -2019,7 +2003,7 @@ const EMOMTimer = () => {
             if (nextInfo.exercise) {
               // Show next exercise in current round
               return (
-                <span className="text-sm text-slate-400">
+                <span className="text-xs" style={{ color: '#8F8A84' }}>
                   Next: {nextInfo.exercise.name} →
                 </span>
               );
@@ -2032,61 +2016,32 @@ const EMOMTimer = () => {
         {/* Gap */}
         <div className="h-6" />
 
-        {/* Action Buttons Row */}
-        <div className="flex justify-center items-center gap-4">
-          {/* Lesson Button */}
-          <button
-            onClick={handleLessonClick}
-            className="w-16 h-16 rounded-2xl flex items-center justify-center active:scale-95 transition-all duration-200 hover:bg-white/40"
-            style={{
-              background: 'rgba(255, 255, 255, 0.25)',
-              border: '1px solid rgba(255, 255, 255, 0.4)',
-              backdropFilter: 'blur(10px)'
-            }}
-            aria-label="View exercise tutorial"
-          >
-            <Play className="w-6 h-6 text-white" />
-          </button>
-
-          {/* Pause Button */}
+        {/* Primary Action Button - Only Play/Pause */}
+        <div className="flex justify-center items-center">
+          {/* Play/Pause Button - Orange gradient */}
           <button
             onClick={handlePauseMenuOpen}
-            className="w-16 h-16 rounded-2xl flex items-center justify-center active:scale-95 transition-all duration-200 hover:bg-white/40"
+            className="w-16 h-16 rounded-full flex items-center justify-center active:scale-95 transition-all duration-200"
             style={{
-              background: 'rgba(255, 255, 255, 0.25)',
-              border: '1px solid rgba(255, 255, 255, 0.4)',
-              backdropFilter: 'blur(10px)'
+              background: 'linear-gradient(90deg, #FEAD63, #FBCDA4)',
+              boxShadow: '0 10px 30px rgba(254, 173, 99, 0.4)',
             }}
-            aria-label="Open pause menu"
+            aria-label={timerState.isPaused ? "Resume workout" : "Open pause menu"}
           >
-            <Pause className="w-6 h-6 text-white" />
-          </button>
-
-          {/* Refresh Button */}
-          <button
-            onClick={handleRefreshClick}
-            className="w-12 h-12 rounded-xl flex items-center justify-center active:scale-95 transition-all duration-200 hover:bg-white/40"
-            style={{
-              background: 'rgba(255, 255, 255, 0.25)',
-              border: '1px solid rgba(255, 255, 255, 0.4)',
-              backdropFilter: 'blur(10px)'
-            }}
-            aria-label="Replace exercise"
-          >
-            <RefreshCw className="w-5 h-5 text-white" />
+            <Pause className="w-7 h-7 text-white" />
           </button>
         </div>
 
-        {/* Skip Warm-up Button (conditional) */}
+        {/* Skip Warm-up Button (conditional) - Minimal style */}
         {timerState.phase === "warmup" && (
-          <div className="mt-4">
+          <div className="mt-6">
             <button
               onClick={handleSkipWarmupClick}
-              className="w-full max-w-md mx-auto h-12 bg-slate-800/40 backdrop-blur-md border border-slate-400/40 rounded-xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform"
+              className="text-sm font-medium active:opacity-70 transition-opacity"
+              style={{ color: '#8F8A84' }}
               aria-label="Skip warm-up and start main workout"
             >
-              <SkipForward className="w-4 h-4 text-slate-400" />
-              <span className="text-base text-slate-400">Skip Warm-up</span>
+              Skip Warm-up →
             </button>
           </div>
         )}
