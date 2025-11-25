@@ -48,14 +48,14 @@ const phaseColors = {
     gradient: "linear-gradient(135deg, rgba(255, 149, 0, 0.15) 0%, rgba(255, 149, 0, 0.05) 100%)",
   },
   main: {
-    primary: "#00D9C0",
-    glow: "rgba(0, 217, 192, 0.5)",
-    gradient: "linear-gradient(135deg, rgba(0, 217, 192, 0.15) 0%, rgba(0, 217, 192, 0.05) 100%)",
+    primary: "#FF6BB5",
+    glow: "rgba(255, 107, 181, 0.5)",
+    gradient: "linear-gradient(135deg, rgba(255, 107, 181, 0.15) 0%, rgba(255, 107, 181, 0.05) 100%)",
   },
   cooldown: {
-    primary: "#8B5CF6",
-    glow: "rgba(139, 92, 246, 0.5)",
-    gradient: "linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 100%)",
+    primary: "#A855F7",
+    glow: "rgba(168, 85, 247, 0.5)",
+    gradient: "linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(168, 85, 247, 0.05) 100%)",
   },
 };
 
@@ -1124,7 +1124,7 @@ const EMOMTimer = () => {
     const totalDuration = Math.floor((Date.now() - startTimeRef.current) / 1000);
 
     return (
-      <div className="min-h-screen bg-[#0A1F2E] flex flex-col items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-warm flex flex-col items-center justify-center p-6">
         <style>{`
           @keyframes celebration {
             0%, 100% { transform: scale(1) rotate(0deg); }
@@ -1215,7 +1215,7 @@ const EMOMTimer = () => {
   // No workout data
   if (!typedWorkout) {
     return (
-      <div className="min-h-screen bg-[#0A1F2E] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-warm flex items-center justify-center p-6">
         <div className="text-center">
           <p className="text-[#B0B8C1] mb-4">No workout data found</p>
           <button
@@ -1237,7 +1237,7 @@ const EMOMTimer = () => {
   const ringStrokeDashoffset = ringCircumference * (1 - progress);
 
   return (
-    <div className="min-h-screen bg-[#0A1F2E] flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-gradient-warm flex flex-col overflow-hidden">
       <style>{`
         @keyframes pulse {
           0%, 100% { transform: scale(1); opacity: 1; }

@@ -42,14 +42,14 @@ const Level = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col p-6 md:p-8">
+    <div className="min-h-screen bg-gradient-warm flex flex-col p-6 md:p-8">
       <div className="mb-8">
         <div className="flex gap-2 mb-8">
           {[1, 2, 3, 4].map((step) => (
             <div
               key={step}
-              className={`h-1 flex-1 rounded-full transition-colors ${
-                step <= 2 ? "bg-primary" : "bg-muted"
+              className={`h-2 flex-1 rounded-full transition-colors ${
+                step <= 2 ? "bg-gradient-primary" : "bg-white/50"
               }`}
             />
           ))}
@@ -63,15 +63,15 @@ const Level = () => {
       <div className="flex-1 flex flex-col gap-3 max-w-2xl mx-auto w-full">
         {levels.map((level) => {
           const isSelected = selectedLevel === level.id;
-          
+
           return (
             <button
               key={level.id}
               onClick={() => setSelectedLevel(level.id)}
-              className={`p-6 rounded-2xl border-2 transition-all text-left ${
+              className={`p-6 rounded-3xl transition-all text-left ${
                 isSelected
-                  ? "border-primary bg-primary/10 shadow-[0_0_20px_rgba(0,217,192,0.3)]"
-                  : "border-border bg-card hover:border-primary/50"
+                  ? "glass-card ring-2 ring-primary glow-primary"
+                  : "glass-card hover:shadow-elevated"
               }`}
             >
               <div className="font-semibold text-lg mb-1 text-foreground">
@@ -88,7 +88,7 @@ const Level = () => {
       <Button
         onClick={handleNext}
         disabled={!selectedLevel}
-        className="mt-8 w-full max-w-2xl mx-auto h-14 text-lg font-semibold rounded-2xl"
+        className="mt-8 w-full max-w-2xl mx-auto"
         size="lg"
       >
         Continue

@@ -17,43 +17,43 @@ export const AIBlob = ({ size = "large", className }: AIBlobProps) => {
       {/* Outer glow rings */}
       <div className="absolute inset-0 animate-pulse">
         <div
-          className="absolute inset-0 rounded-full bg-primary/20 blur-3xl"
+          className="absolute inset-0 rounded-full bg-[#FEAD63]/20 blur-3xl"
           style={{
             animation: "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
           }}
         />
         <div
-          className="absolute inset-4 rounded-full bg-primary/30 blur-2xl"
+          className="absolute inset-4 rounded-full bg-[#FEAD63]/30 blur-2xl"
           style={{
             animation: "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite 0.5s",
           }}
         />
       </div>
-      
+
       {/* Main blob */}
       <div
         className={cn(
-          "relative rounded-full bg-gradient-to-br from-primary via-primary to-accent",
+          "relative rounded-full bg-gradient-primary",
           sizeClasses[size],
-          "shadow-[0_0_60px_rgba(0,217,192,0.6)]"
+          "glow-primary"
         )}
         style={{
           animation: "breathe 4s ease-in-out infinite",
         }}
       >
         {/* Inner glow */}
-        <div className="absolute inset-8 rounded-full bg-primary/40 blur-xl" />
+        <div className="absolute inset-8 rounded-full bg-white/40 blur-xl" />
       </div>
 
       <style>{`
         @keyframes breathe {
           0%, 100% {
             transform: scale(1);
-            box-shadow: 0 0 60px rgba(0, 217, 192, 0.6);
+            opacity: 0.9;
           }
           50% {
             transform: scale(1.05);
-            box-shadow: 0 0 80px rgba(0, 217, 192, 0.8);
+            opacity: 1;
           }
         }
       `}</style>

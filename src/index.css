@@ -33,7 +33,7 @@ html, body, #root {
   position: relative;
 }
 
-/* HIIT Coach Design System - Dark Teal/Cyan Theme */
+/* HIIT Coach Design System - Warm Sunrise/Glassmorphic Theme */
 
 @layer base {
   :root {
@@ -41,69 +41,104 @@ html, body, #root {
     --safe-area-bottom: env(safe-area-inset-bottom, 0px);
     --safe-area-left: env(safe-area-inset-left, 0px);
     --safe-area-right: env(safe-area-inset-right, 0px);
-    
-    --background: 200 60% 8%;
-    --foreground: 0 0% 100%;
 
-    --card: 200 45% 12%;
-    --card-foreground: 0 0% 100%;
+    /* Background - Warm gradient (beige to soft peach) */
+    --background: 30 25% 95%; /* #F5F1EE */
+    --background-end: 30 65% 90%; /* #F8E0C8 */
+    --foreground: 210 10% 12%; /* #1F2124 - dark text */
 
-    --popover: 200 45% 12%;
-    --popover-foreground: 0 0% 100%;
+    /* Cards - Light glassmorphic with soft shadows */
+    --card: 0 0% 100%; /* rgba(255, 255, 255, 0.92) */
+    --card-foreground: 210 10% 12%;
+    --card-glass: 0 0% 100% / 0.92;
+    --card-border: 0 0% 100% / 0.65;
 
-    --primary: 174 100% 43%;
-    --primary-foreground: 200 60% 8%;
+    /* Popover - Light glass */
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 10% 12%;
 
-    --secondary: 200 40% 18%;
-    --secondary-foreground: 0 0% 100%;
+    /* Primary - Sunrise orange gradient */
+    --primary: 27 98% 69%; /* #FEAD63 */
+    --primary-end: 28 94% 77%; /* #FBCDA4 */
+    --primary-foreground: 0 0% 100%; /* white text on primary */
 
-    --muted: 200 30% 20%;
-    --muted-foreground: 200 10% 70%;
+    /* Secondary - Soft warm gray */
+    --secondary: 30 10% 85%;
+    --secondary-foreground: 210 10% 12%;
 
-    --accent: 174 100% 43%;
-    --accent-foreground: 200 60% 8%;
+    /* Muted - Warm gray for subtle elements */
+    --muted: 30 10% 90%;
+    --muted-foreground: 32 8% 54%; /* #8F8A84 */
 
-    --destructive: 0 84.2% 60.2%;
+    /* Accent - Sunrise orange (same as primary) */
+    --accent: 27 98% 69%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive - Soft pink/red */
+    --destructive: 350 89% 70%; /* #FB7185 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 200 30% 20%;
-    --input: 200 30% 20%;
-    --ring: 174 100% 43%;
+    /* Borders - Subtle white with transparency */
+    --border: 0 0% 100% / 0.55;
+    --input: 0 0% 100% / 0.75;
+    --ring: 27 98% 69%; /* Sunrise orange for focus */
 
-    --radius: 0.75rem;
-    
-    --glow-primary: 174 100% 43%;
-    --glow-intensity: 0.6;
+    /* Border radius - Softer, rounder */
+    --radius: 1.5rem; /* 24px for cards */
+
+    /* Glow effects - Warm orange glow */
+    --glow-primary: 27 98% 69%;
+    --glow-intensity: 0.65;
+
+    /* Glassmorphism blur */
+    --glass-blur: 18px;
+    --glass-blur-pill: 20px;
+    --glass-blur-nav: 24px;
+
+    /* Framework accent colors */
+    --accent-tabata: 184 69% 54%; /* #36D1DC - teal */
+    --accent-emom: 333 100% 69%; /* #FF6BB5 - pink */
+    --accent-amrap: 271 81% 61%; /* #A855F7 - purple */
+    --accent-circuit: 142 76% 59%; /* #4ADE80 - green */
+    --accent-yellow: 44 100% 64%; /* #FFC94A */
+
+    /* Dark navigation bar */
+    --nav-dark: 210 7% 11%; /* #2B2D2A / rgba(16, 17, 19, 0.98) */
+    --nav-icon-inactive: 0 0% 100% / 0.55;
+    --nav-icon-active: 0 0% 100%;
   }
 
   .dark {
-    --background: 200 60% 8%;
-    --foreground: 0 0% 100%;
+    /* Dark mode maintains warm theme */
+    --background: 30 25% 95%;
+    --background-end: 30 65% 90%;
+    --foreground: 210 10% 12%;
 
-    --card: 200 45% 12%;
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 100%;
+    --card-foreground: 210 10% 12%;
 
-    --popover: 200 45% 12%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 10% 12%;
 
-    --primary: 174 100% 43%;
-    --primary-foreground: 200 60% 8%;
+    --primary: 27 98% 69%;
+    --primary-end: 28 94% 77%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 200 40% 18%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 30 10% 85%;
+    --secondary-foreground: 210 10% 12%;
 
-    --muted: 200 30% 20%;
-    --muted-foreground: 200 10% 70%;
+    --muted: 30 10% 90%;
+    --muted-foreground: 32 8% 54%;
 
-    --accent: 174 100% 43%;
-    --accent-foreground: 200 60% 8%;
+    --accent: 27 98% 69%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 350 89% 70%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 200 30% 20%;
-    --input: 200 30% 20%;
-    --ring: 174 100% 43%;
+    --border: 0 0% 100% / 0.55;
+    --input: 0 0% 100% / 0.75;
+    --ring: 27 98% 69%;
   }
 }
 
@@ -122,10 +157,96 @@ html, body, #root {
 }
 
 @layer utilities {
+  /* Background gradients */
+  .bg-gradient-warm {
+    background: linear-gradient(90deg, hsl(var(--background)), hsl(var(--background-end)));
+  }
+
+  .bg-gradient-primary {
+    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary-end)));
+  }
+
+  /* Glassmorphism effects */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+  }
+
+  .glass-pill {
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 999px;
+  }
+
+  .glass-nav {
+    background: rgba(16, 17, 19, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  /* Glow effects */
+  .glow-primary {
+    box-shadow: 0 0 40px rgba(254, 173, 99, 0.65);
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 32px rgba(255, 255, 255, 0.8);
+  }
+
+  /* Soft shadows */
+  .shadow-soft {
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+  }
+
+  .shadow-elevated {
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.25);
+  }
+
+  /* Icon circles with gradients */
+  .icon-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary-end)));
+    color: white;
+  }
+
+  .icon-circle-lg {
+    width: 56px;
+    height: 56px;
+  }
+
+  /* Framework accent colors */
+  .bg-gradient-tabata {
+    background: linear-gradient(135deg, #36D1DC, #5B86E5);
+  }
+
+  .bg-gradient-emom {
+    background: linear-gradient(135deg, #FF6BB5, #FF8EC7);
+  }
+
+  .bg-gradient-amrap {
+    background: linear-gradient(135deg, #A855F7, #C084FC);
+  }
+
+  .bg-gradient-circuit {
+    background: linear-gradient(135deg, #4ADE80, #86EFAC);
+  }
+
+  /* Animations */
   .animate-fade-in {
     animation: fadeIn 0.6s ease-out;
   }
-  
+
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -161,5 +282,29 @@ html, body, #root {
       opacity: 1;
       transform: scale(1) rotate(0deg);
     }
+  }
+
+  .animate-breathe {
+    animation: breathe 3s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 0.9;
+    }
+    50% {
+      transform: scale(1.05);
+      opacity: 1;
+    }
+  }
+
+  /* Press states */
+  .active\:scale-97:active {
+    transform: scale(0.97);
+  }
+
+  .active\:opacity-90:active {
+    opacity: 0.9;
   }
 }
