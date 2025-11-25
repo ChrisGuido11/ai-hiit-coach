@@ -241,7 +241,7 @@ const Workout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A1F2E] flex flex-col">
+    <div className="min-h-screen bg-gradient-warm flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-6 pb-4">
         <Button
@@ -514,35 +514,23 @@ const Workout = () => {
       <div
         className="fixed bottom-0 left-0 right-0 p-6 pt-8 backdrop-blur-xl"
         style={{
-          background: 'linear-gradient(to top, rgba(10, 31, 46, 0.98) 60%, rgba(10, 31, 46, 0.8) 80%, transparent)',
+          background: 'linear-gradient(to top, rgba(245, 241, 238, 0.98) 60%, rgba(245, 241, 238, 0.8) 80%, transparent)',
           paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))',
-          borderTop: '1px solid rgba(255, 255, 255, 0.05)'
+          borderTop: '1px solid rgba(255, 255, 255, 0.3)'
         }}
       >
         <div className="max-w-2xl mx-auto space-y-3">
           <Button
             onClick={handleBeginWorkout}
-            className="w-full h-14 text-base font-bold bg-primary active:bg-primary/80 active:scale-[0.98] transition-transform text-primary-foreground rounded-xl"
-            style={{
-              boxShadow: '0 4px 20px rgba(0, 217, 192, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-            }}
+            size="lg"
+            className="w-full text-base font-bold rounded-3xl"
           >
             Begin Workout
           </Button>
           <Button
             onClick={handleSaveWorkout}
-            variant="outline"
-            className="w-full h-12 text-base font-medium transition-all duration-300 rounded-xl backdrop-blur-md active:scale-[0.98]"
-            style={{
-              background: isSaved
-                ? 'linear-gradient(135deg, rgba(0, 217, 192, 0.15) 0%, rgba(0, 217, 192, 0.05) 100%)'
-                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-              borderColor: isSaved ? 'rgba(0, 217, 192, 0.35)' : 'rgba(255, 255, 255, 0.12)',
-              color: isSaved ? '#00D9C0' : undefined,
-              boxShadow: isSaved
-                ? '0 4px 16px rgba(0, 217, 192, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-                : '0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.03)'
-            }}
+            variant="ghost"
+            className="w-full h-12 text-base font-medium transition-all duration-300 rounded-3xl active:scale-[0.98]"
           >
             {isSaved ? (
               <>
@@ -568,14 +556,7 @@ const Workout = () => {
 
       {/* Confirmation Dialog */}
       <AlertDialog open={confirmDialog.isOpen} onOpenChange={(open) => !open && cancelReplaceExercise()}>
-        <AlertDialogContent
-          className="rounded-2xl border backdrop-blur-xl max-w-sm mx-4"
-          style={{
-            background: 'linear-gradient(135deg, rgba(10, 31, 46, 0.98) 0%, rgba(15, 45, 65, 0.95) 100%)',
-            borderColor: 'rgba(0, 217, 192, 0.2)',
-            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-          }}
-        >
+        <AlertDialogContent className="rounded-3xl glass-card max-w-sm mx-4">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground text-lg font-bold">
               Replace Exercise?
@@ -587,13 +568,13 @@ const Workout = () => {
           <AlertDialogFooter className="flex-row gap-3 sm:gap-3">
             <AlertDialogCancel
               onClick={cancelReplaceExercise}
-              className="flex-1 h-11 rounded-xl border-slate-600 bg-transparent text-foreground hover:bg-slate-800/50"
+              className="flex-1 h-11 rounded-full glass-pill hover:opacity-80"
             >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmReplaceExercise}
-              className="flex-1 h-11 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+              className="flex-1 h-11 rounded-full bg-gradient-primary hover:opacity-90 text-primary-foreground font-semibold"
             >
               Replace
             </AlertDialogAction>

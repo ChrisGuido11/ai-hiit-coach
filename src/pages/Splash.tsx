@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { AIBlob } from "@/components/AIBlob";
+import { Dumbbell } from "lucide-react";
 
 const Splash = () => {
   const navigate = useNavigate();
@@ -48,9 +48,13 @@ const Splash = () => {
 
   return (
     <div className="min-h-screen bg-gradient-warm flex flex-col items-center justify-center p-8">
-      <div className="animate-fade-in">
-        <AIBlob size="large" />
-        <div className="mt-12 text-center">
+      <div className="animate-fade-in text-center">
+        <div className="flex justify-center mb-12">
+          <div className="w-24 h-24 rounded-full bg-gradient-primary flex items-center justify-center glow-primary animate-breathe">
+            <Dumbbell className="w-12 h-12 text-white" />
+          </div>
+        </div>
+        <div>
           <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-2">
             HIIT
           </h1>
