@@ -58,14 +58,14 @@ const Equipment = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col p-6 md:p-8">
+    <div className="min-h-screen bg-gradient-warm flex flex-col p-6 md:p-8">
       <div className="mb-8">
         <div className="flex gap-2 mb-8">
           {[1, 2, 3, 4].map((step) => (
             <div
               key={step}
-              className={`h-1 flex-1 rounded-full transition-colors ${
-                step <= 3 ? "bg-primary" : "bg-muted"
+              className={`h-2 flex-1 rounded-full transition-colors ${
+                step <= 3 ? "bg-gradient-primary" : "bg-white/50"
               }`}
             />
           ))}
@@ -81,19 +81,21 @@ const Equipment = () => {
         {equipment.map((item) => {
           const Icon = item.icon;
           const isSelected = selectedEquipment.includes(item.id);
-          
+
           return (
             <button
               key={item.id}
               onClick={() => toggleEquipment(item.id)}
-              className={`p-4 rounded-xl transition-all flex flex-col items-center justify-center gap-2 ${
+              className={`p-4 rounded-3xl transition-all flex flex-col items-center justify-center gap-2 ${
                 isSelected
-                  ? "border-2 border-primary bg-primary/5"
-                  : "border border-border/20 bg-card/5 hover:border-primary/30"
+                  ? "glass-card ring-2 ring-primary"
+                  : "glass-card hover:shadow-elevated"
               }`}
             >
-              <Icon className={`w-8 h-8 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
-              <span className={`text-sm text-center ${isSelected ? "text-foreground" : "text-muted-foreground"}`}>
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isSelected ? "bg-gradient-primary" : "bg-white/60"}`}>
+                <Icon className={`w-6 h-6 ${isSelected ? "text-white" : "text-muted-foreground"}`} />
+              </div>
+              <span className={`text-sm font-medium text-center ${isSelected ? "text-foreground" : "text-muted-foreground"}`}>
                 {item.label}
               </span>
             </button>
@@ -104,7 +106,7 @@ const Equipment = () => {
       <Button
         onClick={handleNext}
         disabled={selectedEquipment.length === 0}
-        className="mt-8 w-full max-w-2xl mx-auto h-14 text-lg font-semibold rounded-2xl"
+        className="mt-8 w-full max-w-2xl mx-auto"
         size="lg"
       >
         Continue

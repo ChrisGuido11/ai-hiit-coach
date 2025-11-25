@@ -15,13 +15,13 @@ const SuccessScreen = ({ onComplete }: SuccessScreenProps) => {
   }, [onComplete]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex items-center justify-center animate-fade-in">
+    <div className="fixed inset-0 z-50 bg-gradient-warm flex items-center justify-center animate-fade-in">
       <div className="flex flex-col items-center gap-4 px-6">
         {/* Animated Checkmark Circle */}
         <div className="relative animate-scale-in">
-          <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />
-          <div className="relative bg-primary rounded-full p-6 shadow-[0_0_40px_rgba(0,217,192,0.4)]">
-            <CheckCircle2 className="w-16 h-16 text-background animate-[draw-check_0.5s_ease-out]" />
+          <div className="absolute inset-0 bg-[#FEAD63]/20 rounded-full blur-xl animate-pulse" />
+          <div className="relative bg-gradient-primary rounded-full p-6 glow-primary">
+            <CheckCircle2 className="w-16 h-16 text-white animate-[draw-check_0.5s_ease-out]" />
           </div>
         </div>
 

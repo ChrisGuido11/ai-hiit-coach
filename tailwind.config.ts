@@ -21,7 +21,8 @@ export default {
   			foreground: 'hsl(var(--foreground))',
   			primary: {
   				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
+  				foreground: 'hsl(var(--primary-foreground))',
+  				end: 'hsl(var(--primary-end))'
   			},
   			secondary: {
   				DEFAULT: 'hsl(var(--secondary))',
@@ -37,7 +38,12 @@ export default {
   			},
   			accent: {
   				DEFAULT: 'hsl(var(--accent))',
-  				foreground: 'hsl(var(--accent-foreground))'
+  				foreground: 'hsl(var(--accent-foreground))',
+  				tabata: 'hsl(var(--accent-tabata))',
+  				emom: 'hsl(var(--accent-emom))',
+  				amrap: 'hsl(var(--accent-amrap))',
+  				circuit: 'hsl(var(--accent-circuit))',
+  				yellow: 'hsl(var(--accent-yellow))'
   			},
   			popover: {
   				DEFAULT: 'hsl(var(--popover))',
@@ -87,8 +93,8 @@ export default {
   		},
   		fontFamily: {
   			sans: [
-  				'Work Sans',
-  				'ui-sans-serif',
+  				'SF Pro Rounded',
+  				'SF Pro Text',
   				'system-ui',
   				'-apple-system',
   				'BlinkMacSystemFont',
@@ -96,7 +102,6 @@ export default {
   				'Roboto',
   				'Helvetica Neue',
   				'Arial',
-  				'Noto Sans',
   				'sans-serif'
   			],
   			serif: [
@@ -119,6 +124,11 @@ export default {
   				'Courier New',
   				'monospace'
   			]
+  		},
+  		backdropBlur: {
+  			glass: '18px',
+  			'glass-pill': '20px',
+  			'glass-nav': '24px'
   		}
   	}
   },

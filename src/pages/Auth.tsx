@@ -85,9 +85,9 @@ const Auth = () => {
   };
 
   return (
-    <div 
-      className="min-h-screen bg-background flex flex-col items-center justify-center p-6"
-      style={{ 
+    <div
+      className="min-h-screen bg-gradient-warm flex flex-col items-center justify-center p-6"
+      style={{
         paddingTop: 'calc(1.5rem + var(--safe-area-top))',
         paddingBottom: 'calc(1.5rem + var(--safe-area-bottom))'
       }}
@@ -98,7 +98,7 @@ const Auth = () => {
           <AIBlob size="small" className="mx-auto mb-4" />
           <h1 className="text-4xl font-bold mb-2">
             <span className="text-foreground">HIIT </span>
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <span className="bg-gradient-primary bg-clip-text text-transparent">
               Coach
             </span>
           </h1>
@@ -108,24 +108,24 @@ const Auth = () => {
         </div>
 
         {/* Auth Form */}
-        <div className="bg-card border border-border rounded-2xl p-6">
+        <div className="glass-card rounded-3xl p-6">
           <div className="flex gap-2 mb-6">
             <button
               onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2 px-4 rounded-xl font-medium transition-all ${
+              className={`flex-1 py-3 px-4 rounded-full font-semibold transition-all ${
                 isLogin
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
+                  ? "bg-gradient-primary text-primary-foreground shadow-soft"
+                  : "glass-pill text-muted-foreground"
               }`}
             >
               Login
             </button>
             <button
               onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2 px-4 rounded-xl font-medium transition-all ${
+              className={`flex-1 py-3 px-4 rounded-full font-semibold transition-all ${
                 !isLogin
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
+                  ? "bg-gradient-primary text-primary-foreground shadow-soft"
+                  : "glass-pill text-muted-foreground"
               }`}
             >
               Sign Up
@@ -134,7 +134,7 @@ const Auth = () => {
 
           <form onSubmit={handleAuth} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-foreground font-medium">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -142,12 +142,11 @@ const Auth = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-background"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-foreground font-medium">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -156,14 +155,14 @@ const Auth = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="bg-background"
               />
             </div>
 
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-12 text-base font-semibold rounded-xl"
+              size="lg"
+              className="w-full mt-6"
             >
               {loading ? "Loading..." : isLogin ? "Login" : "Sign Up"}
             </Button>

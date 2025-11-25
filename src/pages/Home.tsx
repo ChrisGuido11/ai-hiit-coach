@@ -65,11 +65,11 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-gradient-warm flex flex-col">
       {/* AI Blob */}
-      <div 
+      <div
         className="flex justify-center pt-6"
-        style={{ 
+        style={{
           paddingTop: 'calc(1.5rem + var(--safe-area-top))'
         }}
       >
@@ -80,7 +80,7 @@ const Home = () => {
       <div className="pt-6 text-center">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">
           <span className="text-foreground">HIIT </span>
-          <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          <span className="bg-gradient-primary bg-clip-text text-transparent">
             Coach
           </span>
         </h1>
@@ -98,12 +98,12 @@ const Home = () => {
               onChange={(e) => setGoal(e.target.value)}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              className="h-14 pr-14 rounded-2xl bg-card border-border text-foreground placeholder:text-muted-foreground"
+              className="h-14 pr-14"
             />
             <Button
               type="submit"
               size="icon"
-              className="absolute right-2 top-2 h-10 w-10 rounded-xl"
+              className="absolute right-2 top-2 h-10 w-10"
             >
               <ArrowRight className="w-5 h-5" />
             </Button>
@@ -112,9 +112,9 @@ const Home = () => {
       </div>
 
       {/* Framework Cards */}
-      <div 
+      <div
         className="flex-1 px-6"
-        style={{ 
+        style={{
           paddingBottom: 'calc(6rem + var(--safe-area-bottom))'
         }}
       >
@@ -122,20 +122,26 @@ const Home = () => {
           <h2 className="text-xl font-semibold text-foreground mb-6">
             Or try one of these:
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {frameworks.map((framework) => {
+            {frameworks.map((framework, index) => {
               const Icon = framework.icon;
-              
+              const gradientClasses = [
+                "bg-gradient-tabata",
+                "bg-gradient-emom",
+                "bg-gradient-amrap",
+                "bg-gradient-circuit"
+              ];
+
               return (
                 <button
                   key={framework.id}
                   onClick={() => handleFrameworkClick(framework.id)}
-                  className="p-6 rounded-2xl border-2 border-border bg-card hover:border-primary/50 hover:bg-primary/5 transition-all text-left group"
+                  className="p-6 rounded-3xl glass-card hover:shadow-elevated transition-all text-left group"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                      <Icon className="w-6 h-6 text-primary" />
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${gradientClasses[index]} group-hover:scale-110 transition-transform`}>
+                      <Icon className="w-6 h-6 text-white" />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-lg text-foreground mb-1">
@@ -154,22 +160,27 @@ const Home = () => {
       </div>
 
       {/* Bottom Navigation */}
-      <div 
-        className="fixed bottom-0 left-0 right-0 bg-card border-t border-border"
-        style={{ 
-          paddingBottom: 'var(--safe-area-bottom)',
-          minHeight: 'calc(4rem + var(--safe-area-bottom))'
+      <div
+        className="fixed bottom-0 left-0 right-0 glass-nav mx-auto max-w-md rounded-full mb-4"
+        style={{
+          marginBottom: 'calc(1rem + var(--safe-area-bottom))',
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          left: '1rem',
+          right: '1rem',
+          width: 'calc(100% - 2rem)',
+          maxWidth: '400px'
         }}
       >
-        <div className="flex items-center justify-around h-16 max-w-2xl mx-auto">
-          <button className="flex items-center justify-center p-3">
-            <Activity className="w-6 h-6 text-primary" />
+        <div className="flex items-center justify-around h-16 px-6">
+          <button className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-primary">
+            <Activity className="w-5 h-5 text-white" />
           </button>
           <button className="flex items-center justify-center p-3">
-            <Bookmark className="w-6 h-6 text-muted-foreground" />
+            <Bookmark className="w-5 h-5 text-white/55" />
           </button>
           <button className="flex items-center justify-center p-3">
-            <User className="w-6 h-6 text-muted-foreground" />
+            <User className="w-5 h-5 text-white/55" />
           </button>
         </div>
       </div>

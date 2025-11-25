@@ -79,13 +79,13 @@ const Duration = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col p-6 md:p-8">
+    <div className="min-h-screen bg-gradient-warm flex flex-col p-6 md:p-8">
       <div className="mb-8">
         <div className="flex gap-2 mb-8">
           {[1, 2, 3, 4].map((step) => (
             <div
               key={step}
-              className="h-1 flex-1 rounded-full bg-primary transition-colors"
+              className="h-2 flex-1 rounded-full bg-gradient-primary transition-colors"
             />
           ))}
         </div>
@@ -98,19 +98,19 @@ const Duration = () => {
       <div className="flex-1 flex flex-col gap-3 max-w-2xl mx-auto w-full">
         {durations.map((duration) => {
           const isSelected = selectedDuration === duration.id;
-          
+
           return (
             <button
               key={duration.id}
               onClick={() => setSelectedDuration(duration.id)}
-              className={`p-6 rounded-2xl border-2 transition-all text-left flex items-center gap-4 ${
+              className={`p-6 rounded-3xl transition-all text-left flex items-center gap-4 ${
                 isSelected
-                  ? "border-primary bg-primary/10 shadow-[0_0_20px_rgba(0,217,192,0.3)]"
-                  : "border-border bg-card hover:border-primary/50"
+                  ? "glass-card ring-2 ring-primary glow-primary"
+                  : "glass-card hover:shadow-elevated"
               }`}
             >
-              <div className={`p-3 rounded-xl ${isSelected ? "bg-primary/20" : "bg-muted"}`}>
-                <Clock className={`w-6 h-6 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isSelected ? "bg-gradient-primary" : "bg-white/60"}`}>
+                <Clock className={`w-6 h-6 ${isSelected ? "text-white" : "text-muted-foreground"}`} />
               </div>
               <div className="flex-1">
                 <div className="font-semibold text-lg mb-1 text-foreground">
@@ -128,7 +128,7 @@ const Duration = () => {
       <Button
         onClick={handleNext}
         disabled={!selectedDuration || loading}
-        className="mt-8 w-full max-w-2xl mx-auto h-14 text-lg font-semibold rounded-2xl"
+        className="mt-8 w-full max-w-2xl mx-auto"
         size="lg"
       >
         {loading ? "Saving..." : "Get Started"}
