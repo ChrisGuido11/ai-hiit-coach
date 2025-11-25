@@ -2033,32 +2033,47 @@ const EMOMTimer = () => {
         <div className="h-6" />
 
         {/* Action Buttons Row */}
-        <div className="flex justify-center items-center gap-6">
+        <div className="flex justify-center items-center gap-4">
           {/* Lesson Button */}
           <button
             onClick={handleLessonClick}
-            className="w-[60px] h-[60px] bg-slate-800/40 backdrop-blur-md border border-slate-400/40 rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+            className="w-16 h-16 rounded-2xl flex items-center justify-center active:scale-95 transition-all duration-200 hover:bg-white/40"
+            style={{
+              background: 'rgba(255, 255, 255, 0.25)',
+              border: '1px solid rgba(255, 255, 255, 0.4)',
+              backdropFilter: 'blur(10px)'
+            }}
             aria-label="View exercise tutorial"
           >
-            <Play className="w-[26px] h-[26px] text-slate-300" />
+            <Play className="w-6 h-6 text-white" />
           </button>
 
           {/* Pause Button */}
           <button
             onClick={handlePauseMenuOpen}
-            className="w-[60px] h-[60px] bg-slate-800/40 backdrop-blur-md border border-slate-400/40 rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+            className="w-16 h-16 rounded-2xl flex items-center justify-center active:scale-95 transition-all duration-200 hover:bg-white/40"
+            style={{
+              background: 'rgba(255, 255, 255, 0.25)',
+              border: '1px solid rgba(255, 255, 255, 0.4)',
+              backdropFilter: 'blur(10px)'
+            }}
             aria-label="Open pause menu"
           >
-            <Pause className="w-[26px] h-[26px] text-slate-300" />
+            <Pause className="w-6 h-6 text-white" />
           </button>
 
           {/* Refresh Button */}
           <button
             onClick={handleRefreshClick}
-            className="w-[60px] h-[60px] bg-slate-800/40 backdrop-blur-md border border-slate-400/40 rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+            className="w-12 h-12 rounded-xl flex items-center justify-center active:scale-95 transition-all duration-200 hover:bg-white/40"
+            style={{
+              background: 'rgba(255, 255, 255, 0.25)',
+              border: '1px solid rgba(255, 255, 255, 0.4)',
+              backdropFilter: 'blur(10px)'
+            }}
             aria-label="Replace exercise"
           >
-            <RefreshCw className="w-[26px] h-[26px] text-slate-300" />
+            <RefreshCw className="w-5 h-5 text-white" />
           </button>
         </div>
 
