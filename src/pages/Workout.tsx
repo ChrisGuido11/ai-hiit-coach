@@ -325,32 +325,32 @@ const Workout = () => {
                       </p>
                       <p className="text-sm text-muted-foreground">{exercise.instructions}</p>
                     </div>
-                    <div className="flex gap-2 flex-shrink-0">
+                    <div className="flex gap-3 flex-shrink-0">
                       <button
                         onClick={() => handlePlayTutorial(exercise.name)}
-                        className="w-11 h-11 rounded-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-transform"
+                        className="w-16 h-16 rounded-2xl flex items-center justify-center active:scale-95 transition-all duration-200 hover:bg-white/40"
                         style={{
-                          background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
-                          border: '1px solid rgba(148, 163, 184, 0.25)',
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                          background: 'rgba(255, 255, 255, 0.25)',
+                          border: '1px solid rgba(255, 255, 255, 0.4)',
+                          backdropFilter: 'blur(10px)'
                         }}
                       >
-                        <Play className="w-5 h-5" style={{ color: '#B8C4CE' }} />
+                        <Play className="w-6 h-6 text-white" />
                       </button>
                       <button
                         onClick={() => handleReplaceExercise(exercise, index, 'warmup')}
                         disabled={isExerciseLoading('warmup', index)}
-                        className="w-11 h-11 rounded-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-16 h-16 rounded-2xl flex items-center justify-center active:scale-95 transition-all duration-200 hover:bg-white/40 disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
-                          background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
-                          border: '1px solid rgba(148, 163, 184, 0.25)',
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                          background: 'rgba(255, 255, 255, 0.25)',
+                          border: '1px solid rgba(255, 255, 255, 0.4)',
+                          backdropFilter: 'blur(10px)'
                         }}
                       >
                         {isExerciseLoading('warmup', index) ? (
-                          <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#B8C4CE' }} />
+                          <Loader2 className="w-6 h-6 animate-spin text-white" />
                         ) : (
-                          <RefreshCw className="w-5 h-5" style={{ color: '#B8C4CE' }} />
+                          <RefreshCw className="w-6 h-6 text-white" />
                         )}
                       </button>
                     </div>
@@ -399,32 +399,32 @@ const Workout = () => {
                       </p>
                       <p className="text-sm text-muted-foreground">{exercise.instructions}</p>
                     </div>
-                    <div className="flex gap-2 flex-shrink-0">
+                    <div className="flex gap-3 flex-shrink-0">
                       <button
                         onClick={() => handlePlayTutorial(exercise.name)}
-                        className="w-11 h-11 rounded-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-transform"
+                        className="w-16 h-16 rounded-2xl flex items-center justify-center active:scale-95 transition-all duration-200 hover:bg-white/40"
                         style={{
-                          background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
-                          border: '1px solid rgba(148, 163, 184, 0.25)',
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                          background: 'rgba(255, 255, 255, 0.25)',
+                          border: '1px solid rgba(255, 255, 255, 0.4)',
+                          backdropFilter: 'blur(10px)'
                         }}
                       >
-                        <Play className="w-5 h-5" style={{ color: '#B8C4CE' }} />
+                        <Play className="w-6 h-6 text-white" />
                       </button>
                       <button
                         onClick={() => handleReplaceExercise(exercise, index, 'main')}
                         disabled={isExerciseLoading('main', index)}
-                        className="w-11 h-11 rounded-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-16 h-16 rounded-2xl flex items-center justify-center active:scale-95 transition-all duration-200 hover:bg-white/40 disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
-                          background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
-                          border: '1px solid rgba(148, 163, 184, 0.25)',
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                          background: 'rgba(255, 255, 255, 0.25)',
+                          border: '1px solid rgba(255, 255, 255, 0.4)',
+                          backdropFilter: 'blur(10px)'
                         }}
                       >
                         {isExerciseLoading('main', index) ? (
-                          <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#B8C4CE' }} />
+                          <Loader2 className="w-6 h-6 animate-spin text-white" />
                         ) : (
-                          <RefreshCw className="w-5 h-5" style={{ color: '#B8C4CE' }} />
+                          <RefreshCw className="w-6 h-6 text-white" />
                         )}
                       </button>
                     </div>
@@ -473,32 +473,32 @@ const Workout = () => {
                       </p>
                       <p className="text-sm text-muted-foreground">{exercise.instructions}</p>
                     </div>
-                    <div className="flex gap-2 flex-shrink-0">
+                    <div className="flex gap-3 flex-shrink-0">
                       <button
                         onClick={() => handlePlayTutorial(exercise.name)}
-                        className="w-11 h-11 rounded-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-transform"
+                        className="w-16 h-16 rounded-2xl flex items-center justify-center active:scale-95 transition-all duration-200 hover:bg-white/40"
                         style={{
-                          background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
-                          border: '1px solid rgba(148, 163, 184, 0.25)',
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                          background: 'rgba(255, 255, 255, 0.25)',
+                          border: '1px solid rgba(255, 255, 255, 0.4)',
+                          backdropFilter: 'blur(10px)'
                         }}
                       >
-                        <Play className="w-5 h-5" style={{ color: '#B8C4CE' }} />
+                        <Play className="w-6 h-6 text-white" />
                       </button>
                       <button
                         onClick={() => handleReplaceExercise(exercise, index, 'cooldown')}
                         disabled={isExerciseLoading('cooldown', index)}
-                        className="w-11 h-11 rounded-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-16 h-16 rounded-2xl flex items-center justify-center active:scale-95 transition-all duration-200 hover:bg-white/40 disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
-                          background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
-                          border: '1px solid rgba(148, 163, 184, 0.25)',
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                          background: 'rgba(255, 255, 255, 0.25)',
+                          border: '1px solid rgba(255, 255, 255, 0.4)',
+                          backdropFilter: 'blur(10px)'
                         }}
                       >
                         {isExerciseLoading('cooldown', index) ? (
-                          <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#B8C4CE' }} />
+                          <Loader2 className="w-6 h-6 animate-spin text-white" />
                         ) : (
-                          <RefreshCw className="w-5 h-5" style={{ color: '#B8C4CE' }} />
+                          <RefreshCw className="w-6 h-6 text-white" />
                         )}
                       </button>
                     </div>
