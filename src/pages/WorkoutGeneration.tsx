@@ -67,27 +67,50 @@ const defaultPreferences: UserPreferences = {
 
 /**
  * Intelligently select a framework based on workout duration
- * NEVER defaults to Tabata unless explicitly requested by user
+ * NEVER defaults to Tabata for text-generated workouts
  */
 function selectFrameworkForDuration(durationMinutes: number): string {
-  // Tabata is ONLY used when explicitly requested (handled elsewhere)
+  // Tabata is FORBIDDEN for text-generated workouts
   // For free-text input, choose from: EMOM, AMRAP, Ladder, Circuit
 
-  // Short workouts (5-12 min): EMOM or AMRAP
-  if (durationMinutes <= 12) {
+  // Short workouts (≤10 min): EMOM or AMRAP
+  if (durationMinutes <= 10) {
     const shortWorkoutOptions = ['emom', 'amrap'];
     return shortWorkoutOptions[Math.floor(Math.random() * shortWorkoutOptions.length)];
   }
 
-  // Medium workouts (12-20 min): AMRAP, Circuit, or occasionally Ladder
+  // Medium workouts (10-20 min): EMOM, AMRAP, Ladder, or Circuit
   if (durationMinutes <= 20) {
-    const mediumWorkoutOptions = ['amrap', 'circuit', 'amrap', 'ladder'];
+    const mediumWorkoutOptions = ['emom', 'amrap', 'ladder', 'circuit'];
     return mediumWorkoutOptions[Math.floor(Math.random() * mediumWorkoutOptions.length)];
   }
 
-  // Long workouts (20+ min): Circuit or AMRAP
-  const longWorkoutOptions = ['circuit', 'amrap', 'circuit'];
+  // Long workouts (20+ min): Circuit, AMRAP, or EMOM
+  const longWorkoutOptions = ['circuit', 'amrap', 'emom'];
   return longWorkoutOptions[Math.floor(Math.random() * longWorkoutOptions.length)];
+}
+
+/**
+ * Get a fallback framework to replace Tabata for text-generated workouts
+ * Returns a supported framework based on duration
+ */
+function getFallbackFrameworkForTabata(durationMinutes: number): string {
+  // Use the same logic as selectFrameworkForDuration
+  // Prioritize frameworks that work well for the given duration
+
+  if (durationMinutes <= 10) {
+    // Short workouts: prefer EMOM or AMRAP
+    return Math.random() < 0.5 ? 'emom' : 'amrap';
+  }
+
+  if (durationMinutes <= 20) {
+    // Medium workouts: prefer AMRAP, Circuit, or Ladder
+    const options = ['amrap', 'circuit', 'ladder'];
+    return options[Math.floor(Math.random() * options.length)];
+  }
+
+  // Long workouts: prefer Circuit or AMRAP
+  return Math.random() < 0.6 ? 'circuit' : 'amrap';
 }
 
 interface LocationState {
@@ -140,13 +163,24 @@ const WorkoutGeneration = () => {
         const workoutDuration = parsedRequest?.durationMinutes?.toString() || preferences.workout_duration;
 
         // Intelligent framework selection for free-text input
-        // ONLY use Tabata if explicitly requested
+        // Tabata is FORBIDDEN for text-generated workouts - only allowed for quick-start presets
         let selectedFramework = framework || parsedRequest?.explicitFramework;
 
         if (!selectedFramework) {
           // No explicit framework mentioned - choose based on duration
           selectedFramework = selectFrameworkForDuration(parseInt(workoutDuration));
           console.log(`Auto-selected framework: ${selectedFramework} for ${workoutDuration} min duration`);
+        }
+
+        // SAFETY CHECK: Forbid Tabata for text-generated workouts
+        // Tabata is only supported for quick-start preset cards, NOT text input
+        if (selectedFramework?.toLowerCase() === 'tabata' && (goal || parsedRequest)) {
+          const fallbackFramework = getFallbackFrameworkForTabata(parseInt(workoutDuration));
+          console.warn(
+            `⚠️ TABATA OVERRIDE: Tabata requested for text-generated workout, but runner not supported.`,
+            `Replacing with ${fallbackFramework.toUpperCase()} for ${workoutDuration} min workout.`
+          );
+          selectedFramework = fallbackFramework;
         }
 
         let { workout, usedFallback } = await generateWorkout({
