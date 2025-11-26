@@ -83,7 +83,7 @@ const SIDE_SWITCH_PATTERNS = [
 
 // Helper function to detect if exercise requires side switching
 const isSideSwitchingExercise = (exercise: Exercise | undefined, phase: TimerPhase): boolean => {
-  if (!exercise) return false;
+  if (!exercise || !exercise.duration) return false;
   // Only apply to warmup and cooldown phases
   if (phase !== "warmup" && phase !== "cooldown") return false;
 
@@ -97,6 +97,7 @@ const isSideSwitchingExercise = (exercise: Exercise | undefined, phase: TimerPha
 
 // Helper function to determine the body part term (leg, arm, side)
 const getBodyPartTerm = (exercise: Exercise): BodyPartType => {
+  if (!exercise || !exercise.duration) return "side";
   const durationLower = exercise.duration.toLowerCase();
   const instructionsLower = exercise.instructions?.toLowerCase() || "";
   const combined = durationLower + " " + instructionsLower;
@@ -213,6 +214,10 @@ const TabataTimer = () => {
     const warmupExercises = typedWorkout.warmup || [];
     if (warmupExercises.length > 0) {
       const firstExercise = warmupExercises[0];
+      if (!firstExercise || !firstExercise.duration) {
+        console.error('Invalid warmup exercise data', firstExercise);
+        return;
+      }
       const match = firstExercise.duration.match(/(\d+)/);
       const duration = match ? parseInt(match[1], 10) : 45;
 
@@ -379,7 +384,7 @@ const TabataTimer = () => {
     if (timerState.phase === "main") {
       return timerState.intervalType === "work" ? WORK_DURATION : REST_DURATION;
     }
-    if (currentExercise) {
+    if (currentExercise && currentExercise.duration) {
       return parseDuration(currentExercise.duration);
     }
     return 45;
@@ -484,6 +489,10 @@ const TabataTimer = () => {
       if (nextExerciseIndex < exercises.length) {
         // Next exercise in current round
         const nextExercise = exercises[nextExerciseIndex];
+        if (!nextExercise || !nextExercise.duration) {
+          console.error('Invalid next exercise data', nextExercise);
+          return prev;
+        }
         const nextDuration = parseDuration(nextExercise.duration);
 
         // Reset side state for new exercise
@@ -514,6 +523,10 @@ const TabataTimer = () => {
           // Start next round, back to first exercise
           const nextRound = prev.round + 1;
           const firstExercise = exercises[0];
+          if (!firstExercise || !firstExercise.duration) {
+            console.error('Invalid first exercise in next round', firstExercise);
+            return prev;
+          }
           const duration = parseDuration(firstExercise.duration);
 
           // Reset side state for new exercise
@@ -576,7 +589,7 @@ const TabataTimer = () => {
             let duration = WORK_DURATION;
             if (prev.nextPhase === "cooldown") {
               const cooldownExercise = typedWorkout?.cooldown?.[0];
-              if (cooldownExercise) {
+              if (cooldownExercise && cooldownExercise.duration) {
                 const match = cooldownExercise.duration.match(/(\d+)/);
                 duration = match ? parseInt(match[1], 10) : 45;
               }
@@ -697,7 +710,7 @@ const TabataTimer = () => {
     if (timerState.phase !== "warmup" && timerState.phase !== "cooldown") return;
     if (timerState.isPaused || transition) return;
     if (hasAnnouncedSwitch) return;
-    if (!currentExercise) return;
+    if (!currentExercise || !currentExercise.duration) return;
 
     // Check if this exercise requires side switching
     const needsSideSwitch = isSideSwitchingExercise(currentExercise, timerState.phase);
@@ -898,6 +911,10 @@ const TabataTimer = () => {
         }));
       } else {
         // Warmup/Cooldown: Parse duration from new exercise
+        if (!newExercise || !newExercise.duration) {
+          console.error('Invalid new exercise data', newExercise);
+          return;
+        }
         const match = newExercise.duration.match(/(\d+)/);
         const duration = match ? parseInt(match[1], 10) : 45;
         setTimerState(prev => ({
@@ -1027,6 +1044,10 @@ const TabataTimer = () => {
         }));
       } else {
         // Warmup/Cooldown: Parse duration from new exercise
+        if (!newExercise || !newExercise.duration) {
+          console.error('Invalid new exercise data', newExercise);
+          return;
+        }
         const match = newExercise.duration.match(/(\d+)/);
         const duration = match ? parseInt(match[1], 10) : 45;
         setTimerState(prev => ({
