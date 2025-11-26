@@ -360,7 +360,7 @@ Return ONLY the JSON object.`;
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.8,
-        max_tokens: 1500,
+        max_tokens: 4000,
       }),
     });
 
@@ -403,8 +403,16 @@ Return ONLY the JSON object.`;
     const data = await response.json();
     let generatedText = data.choices[0].message.content;
 
-    // Clean the response
+    console.log('Raw AI response length:', generatedText.length);
+
+    // Clean the response - remove markdown code blocks and any surrounding text
     generatedText = generatedText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    
+    // Try to extract JSON if it's embedded in other text
+    const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      generatedText = jsonMatch[0];
+    }
 
     try {
       const workout = JSON.parse(generatedText);
@@ -414,7 +422,10 @@ Return ONLY the JSON object.`;
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     } catch (parseError) {
-      console.error('Failed to parse OpenAI response:', parseError);
+      console.error('Failed to parse AI response:', parseError);
+      console.error('Response text (first 500 chars):', generatedText.substring(0, 500));
+      console.error('Response text (last 500 chars):', generatedText.substring(Math.max(0, generatedText.length - 500)));
+      
       return new Response(
         JSON.stringify({
           workout: fallbackWorkouts[framework] || fallbackWorkouts.tabata,

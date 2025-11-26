@@ -237,7 +237,7 @@ Return ONLY the JSON object.`;
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.95, // Increased for more creativity/variety
-        max_tokens: 200,
+        max_tokens: 500,
       }),
     });
 
@@ -280,8 +280,16 @@ Return ONLY the JSON object.`;
     const data = await response.json();
     let generatedText = data.choices[0].message.content;
 
-    // Clean the response
+    console.log('Raw AI response length:', generatedText.length);
+
+    // Clean the response - remove markdown code blocks and any surrounding text
     generatedText = generatedText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    
+    // Try to extract JSON if it's embedded in other text
+    const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      generatedText = jsonMatch[0];
+    }
 
     try {
       const exercise = JSON.parse(generatedText);
@@ -301,7 +309,9 @@ Return ONLY the JSON object.`;
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     } catch (parseError) {
-      console.error('Failed to parse OpenAI response:', parseError);
+      console.error('Failed to parse AI response:', parseError);
+      console.error('Response text (first 300 chars):', generatedText.substring(0, 300));
+      
       return new Response(
         JSON.stringify({
           exercise: getRandomFallback(),
