@@ -1969,18 +1969,21 @@ const TabataTimer = () => {
         {/* Gap */}
         <div className="h-6" />
 
-        {/* Exercise Name Card - Warm dark glass for contrast */}
+        {/* Exercise Name Card - Light glass to match warm design */}
         {currentExercise && (
           <div
-            className="max-w-md w-full mx-auto px-6 py-5 rounded-3xl"
+            className="max-w-[90%] w-full mx-auto rounded-3xl"
             style={{
-              background: 'linear-gradient(135deg, rgba(78, 72, 68, 0.95), rgba(62, 58, 56, 0.98))',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+              background: 'rgba(255, 255, 255, 0.92)',
+              border: '1px solid rgba(255, 255, 255, 0.65)',
+              borderRadius: '24px',
+              padding: '24px',
+              backdropFilter: 'blur(18px)',
+              WebkitBackdropFilter: 'blur(18px)',
+              boxShadow: '0 10px 30px rgba(15, 23, 42, 0.18)',
             }}
           >
-            <h3 className="text-xl font-semibold text-white mb-2 text-center">
+            <h3 className="text-2xl font-bold mb-2 text-center" style={{ color: '#1F2124', lineHeight: '1.2' }}>
               {currentExercise.name}
             </h3>
             {/* Side indicator for side-switching exercises */}
@@ -1989,16 +1992,16 @@ const TabataTimer = () => {
                 <span
                   className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide"
                   style={{
-                    background: 'rgba(255, 255, 255, 0.15)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    color: '#FFFFFF',
+                    background: 'rgba(254, 173, 99, 0.2)',
+                    border: '1px solid rgba(254, 173, 99, 0.3)',
+                    color: '#1F2124',
                   }}
                 >
                   {getSideAnnouncement(currentSide, getBodyPartTerm(currentExercise))}
                 </span>
               </div>
             )}
-            <p className="text-sm text-white/80 text-center leading-relaxed">
+            <p className="text-[15px] text-center" style={{ color: '#8F8A84', fontWeight: '400', lineHeight: '1.5', margin: 0 }}>
               {currentExercise.instructions}
             </p>
           </div>
