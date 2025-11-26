@@ -122,9 +122,6 @@ export type Database = {
           exercises: Json
           framework_type: string
           id: string
-          is_saved: boolean
-          name: string | null
-          order: number
           user_id: string
         }
         Insert: {
@@ -133,9 +130,6 @@ export type Database = {
           exercises: Json
           framework_type: string
           id?: string
-          is_saved?: boolean
-          name?: string | null
-          order?: number
           user_id: string
         }
         Update: {
@@ -144,9 +138,6 @@ export type Database = {
           exercises?: Json
           framework_type?: string
           id?: string
-          is_saved?: boolean
-          name?: string | null
-          order?: number
           user_id?: string
         }
         Relationships: [

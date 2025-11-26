@@ -117,23 +117,11 @@ const Workout = () => {
   );
   const [workoutId, setWorkoutId] = useState<string | null>(locationState?.workoutId || null);
 
-  // Check if workout is already saved
+  // Check if workout is already saved (always consider saved if it exists)
   useEffect(() => {
-    const checkIfSaved = async () => {
-      if (workoutId) {
-        const { data } = await supabase
-          .from('workouts')
-          .select('is_saved')
-          .eq('id', workoutId)
-          .single();
-
-        if (data?.is_saved) {
-          setIsSaved(true);
-        }
-      }
-    };
-
-    checkIfSaved();
+    if (workoutId) {
+      setIsSaved(true);
+    }
   }, [workoutId]);
 
   // State for exercise replacement
@@ -312,19 +300,10 @@ const Workout = () => {
 
   const handleSaveWorkout = async () => {
     try {
-      // If workout was already saved during generation, mark it as explicitly saved
+      // If workout was already saved during generation, no need to do anything
       if (workoutId) {
-        const { error } = await supabase
-          .from('workouts')
-          .update({ is_saved: true })
-          .eq('id', workoutId);
-
-        if (error) {
-          console.error("Failed to save workout:", error);
-        } else {
-          console.log("Workout marked as saved:", workoutId);
-          setIsSaved(true);
-        }
+        console.log("Workout already saved:", workoutId);
+        setIsSaved(true);
       } else {
         // If no workoutId, create a new saved workout
         const { data: { user } } = await supabase.auth.getUser();
@@ -340,9 +319,7 @@ const Workout = () => {
             user_id: user.id,
             framework_type: frameworkKey,
             exercises: currentWorkout as any,
-            completed: false,
-            is_saved: true,
-            order: 0
+            completed: false
           }])
           .select("id")
           .single();
