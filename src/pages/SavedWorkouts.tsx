@@ -368,8 +368,8 @@ const SavedWorkouts = () => {
         {/* Empty State */}
         <div className="flex-1 flex items-center justify-center px-6">
           <div className="text-center max-w-[280px]">
-            <div className="w-[120px] h-[120px] mx-auto mb-6 rounded-3xl bg-muted/30 flex items-center justify-center">
-              <Bookmark className="w-12 h-12 text-muted-foreground opacity-30" />
+            <div className="w-[120px] h-[120px] mx-auto mb-6 rounded-[28px] bg-gradient-to-br from-orange-400/20 to-pink-400/20 backdrop-blur-sm border-2 border-white/20 flex items-center justify-center shadow-[0_8px_32px_rgba(251,146,60,0.15)]">
+              <Zap className="w-14 h-14 text-orange-500" />
             </div>
             <h2 className="text-[22px] font-semibold text-foreground mb-3">
               No Saved Workouts Yet
@@ -379,7 +379,7 @@ const SavedWorkouts = () => {
             </p>
             <Button
               onClick={handleGenerateNew}
-              className="rounded-full h-12 px-8 bg-gradient-primary text-white font-semibold shadow-[0_10px_30px_rgba(254,173,99,0.3)]"
+              className="rounded-full h-12 px-8 bg-gradient-primary text-white font-semibold shadow-[0_10px_30px_rgba(254,173,99,0.3)] active:scale-95 transition-transform"
             >
               Generate Workout
             </Button>
