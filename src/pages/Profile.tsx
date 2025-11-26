@@ -30,6 +30,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import BottomNav from "@/components/BottomNav";
 
 interface UserProfile {
   id: string;
@@ -267,7 +268,12 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-warm pb-8">
+    <div
+      className="min-h-screen bg-gradient-warm"
+      style={{
+        paddingBottom: 'calc(6rem + var(--safe-area-bottom))'
+      }}
+    >
       {/* Header */}
       <div
         className="px-6 pt-4 pb-4 flex items-center justify-between"
@@ -614,6 +620,9 @@ const Profile = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Bottom Navigation */}
+      <BottomNav />
     </div>
   );
 };
