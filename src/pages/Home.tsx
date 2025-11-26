@@ -94,7 +94,7 @@ const Home = () => {
 
       {/* Hero Icon Circle */}
       <div className="flex justify-center pt-8 mb-8">
-        <div className="relative w-20 h-20 rounded-full bg-gradient-primary flex items-center justify-center glow-primary">
+        <div className="relative w-20 h-20 rounded-full bg-gradient-primary flex items-center justify-center animate-hero-breathe">
           <Dumbbell className="w-10 h-10 text-white" />
         </div>
       </div>

@@ -315,6 +315,22 @@ html, body, #root {
     }
   }
 
+  /* Breathing animation for home hero icon with synced glow */
+  .animate-hero-breathe {
+    animation: heroBreath 2.5s ease-in-out infinite;
+  }
+
+  @keyframes heroBreath {
+    0%, 100% {
+      transform: scale(0.96);
+      box-shadow: 0 0 35px rgba(254, 173, 99, 0.55);
+    }
+    50% {
+      transform: scale(1.04);
+      box-shadow: 0 0 55px rgba(254, 173, 99, 0.85);
+    }
+  }
+
   /* Press states */
   .active\:scale-97:active {
     transform: scale(0.97);
