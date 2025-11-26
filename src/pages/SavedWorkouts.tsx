@@ -372,16 +372,16 @@ const SavedWorkouts = () => {
               <Bookmark className="w-12 h-12 text-muted-foreground opacity-30" />
             </div>
             <h2 className="text-[22px] font-semibold text-foreground mb-3">
-              No Saved Workouts
+              No Saved Workouts Yet
             </h2>
             <p className="text-[15px] text-muted-foreground mb-8 leading-relaxed">
-              Save workouts from the details screen to see them here
+              Start generating your first workout and save it for quick access.
             </p>
             <Button
               onClick={handleGenerateNew}
               className="rounded-full h-12 px-8 bg-gradient-primary text-white font-semibold shadow-[0_10px_30px_rgba(254,173,99,0.3)]"
             >
-              Generate New Workout
+              Generate Workout
             </Button>
           </div>
         </div>

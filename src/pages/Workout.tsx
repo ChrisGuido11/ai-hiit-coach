@@ -73,7 +73,7 @@ const Workout = () => {
   const [currentWorkout, setCurrentWorkout] = useState<GeneratedWorkout>(
     locationState?.workout || mockWorkout
   );
-  const workoutId = locationState?.workoutId;
+  const [workoutId, setWorkoutId] = useState<string | null>(locationState?.workoutId || null);
 
   // Check if workout is already saved
   useEffect(() => {
@@ -308,6 +308,7 @@ const Workout = () => {
           console.error("Failed to save workout:", error);
         } else {
           console.log("New workout saved with ID:", data?.id);
+          setWorkoutId(data?.id || null);
           setIsSaved(true);
         }
       }
