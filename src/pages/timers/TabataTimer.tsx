@@ -1107,20 +1107,22 @@ const TabataTimer = () => {
     // Close the confirmation modal
     setShowSkipWarmupConfirm(false);
 
-    // Unpause the timer so the transition countdown can run
-    setTimerState((prev) => ({ ...prev, isPaused: false }));
+    // Immediately start main workout - no countdown needed!
+    const mainExercises = typedWorkout?.main || [];
+    if (mainExercises.length > 0) {
+      setTimerState({
+        phase: "main",
+        exerciseIndex: 0,
+        round: 1,
+        intervalType: "work",
+        timeRemaining: WORK_DURATION,
+        isPaused: false,
+      });
 
-    // Start transition to main workout with GET READY countdown
-    setTransition({
-      type: "phase",
-      countdown: 3, // 3-second "GET READY" transition
-      nextPhase: "main",
-      nextExerciseName: typedWorkout?.main?.[0]?.name,
-    });
-
-    // Announce the skip
-    speak("Main workout starting", true);
-    vibrate([100, 50, 100]);
+      // Announce the first main exercise
+      speak(`Main workout! ${mainExercises[0].name}`, true);
+      vibrate([100, 50, 100]);
+    }
   };
 
   const handleComplete = () => {
@@ -1434,38 +1436,81 @@ const TabataTimer = () => {
       {showExitConfirm && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-6 fade-in"
-          style={{ background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(8px)' }}
+          style={{ background: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(8px)' }}
         >
           <div
-            className="w-full max-w-sm rounded-2xl p-6 slide-up"
+            className="w-full max-w-[400px] rounded-3xl slide-up"
             style={{
-              background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
-              border: '1px solid rgba(148, 163, 184, 0.2)',
-              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.5)',
+              background: 'rgba(255, 255, 255, 0.98)',
+              backdropFilter: 'blur(20px)',
+              padding: '32px 24px',
+              boxShadow: '0 20px 60px rgba(15, 23, 42, 0.3)',
             }}
           >
-            <h3 className="text-xl font-bold text-white text-center mb-2">Exit Workout?</h3>
-            <p className="text-[#B0B8C1] text-center mb-6">
+            {/* Icon Circle */}
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
+              style={{
+                background: 'rgba(251, 113, 133, 0.15)',
+                border: '2px solid rgba(251, 113, 133, 0.3)',
+              }}
+            >
+              <X className="w-7 h-7" style={{ color: '#FB7185' }} />
+            </div>
+
+            {/* Title */}
+            <h3
+              className="text-center mb-4"
+              style={{
+                color: '#1F2124',
+                fontSize: '28px',
+                fontWeight: '700',
+              }}
+            >
+              Exit Workout?
+            </h3>
+
+            {/* Description */}
+            <p
+              className="text-center mb-6"
+              style={{
+                color: '#8F8A84',
+                fontSize: '16px',
+                lineHeight: '1.5',
+              }}
+            >
               Your progress will be lost. Are you sure you want to exit?
             </p>
+
+            {/* Buttons */}
             <div className="flex gap-3">
               <button
                 onClick={handleExitCancel}
-                className="flex-1 py-3 rounded-xl font-semibold transition-all active:scale-95"
+                className="flex-1 transition-all active:scale-95"
                 style={{
-                  background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
-                  border: '1px solid rgba(148, 163, 184, 0.25)',
-                  color: '#FFFFFF',
+                  height: '52px',
+                  background: 'transparent',
+                  border: '2px solid rgba(31, 33, 36, 0.15)',
+                  borderRadius: '999px',
+                  color: '#1F2124',
+                  fontSize: '16px',
+                  fontWeight: '600',
                 }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleExitConfirm}
-                className="flex-1 py-3 rounded-xl font-semibold transition-all active:scale-95"
+                className="flex-1 transition-all active:scale-95"
                 style={{
-                  background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                  height: '52px',
+                  background: 'linear-gradient(90deg, #FB7185, #FDA4AF)',
+                  border: 'none',
+                  borderRadius: '999px',
                   color: '#FFFFFF',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  boxShadow: '0 10px 30px rgba(251, 113, 133, 0.3)',
                 }}
               >
                 Exit Workout
@@ -1547,55 +1592,103 @@ const TabataTimer = () => {
       {showSkipWarmupConfirm && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-6 fade-in"
-          style={{ background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(8px)' }}
+          style={{ background: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(8px)' }}
         >
           <div
-            className="w-full max-w-sm rounded-2xl p-6 slide-up"
+            className="w-full max-w-[400px] rounded-3xl slide-up"
             style={{
-              background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
-              border: '1px solid rgba(148, 163, 184, 0.2)',
-              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.5)',
+              background: 'rgba(255, 255, 255, 0.98)',
+              backdropFilter: 'blur(20px)',
+              padding: '32px 24px',
+              boxShadow: '0 20px 60px rgba(15, 23, 42, 0.3)',
             }}
           >
-            {/* Icon */}
+            {/* Icon Circle */}
             <div
-              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
               style={{
-                background: 'linear-gradient(135deg, rgba(255, 149, 0, 0.2) 0%, rgba(255, 149, 0, 0.1) 100%)',
-                border: '1px solid rgba(255, 149, 0, 0.3)',
+                background: 'rgba(254, 173, 99, 0.15)',
+                border: '2px solid rgba(254, 173, 99, 0.3)',
               }}
             >
-              <SkipForward className="w-7 h-7 text-[#FF9500]" />
+              <SkipForward className="w-7 h-7" style={{ color: '#FEAD63' }} />
             </div>
 
-            <h3 className="text-xl font-bold text-white text-center mb-2">
+            {/* Title */}
+            <h3
+              className="text-center mb-4"
+              style={{
+                color: '#1F2124',
+                fontSize: '28px',
+                fontWeight: '700',
+              }}
+            >
               Skip Warm-up?
             </h3>
-            <p className="text-[#B0B8C1] text-center mb-4">
+
+            {/* Description */}
+            <p
+              className="text-center mb-4"
+              style={{
+                color: '#8F8A84',
+                fontSize: '16px',
+                lineHeight: '1.5',
+              }}
+            >
               Are you sure you want to skip the warm-up and start the main workout?
             </p>
-            <p className="text-[#94A3B8] text-xs text-center mb-6 italic">
-              ⚠️ Skipping warm-up may increase injury risk
-            </p>
 
+            {/* Warning */}
+            <div
+              className="mb-6"
+              style={{
+                background: 'rgba(245, 158, 11, 0.1)',
+                borderRadius: '12px',
+                padding: '12px',
+              }}
+            >
+              <p
+                className="text-center"
+                style={{
+                  color: '#F59E0B',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  margin: 0,
+                }}
+              >
+                ⚠️ Skipping warm-up may increase injury risk
+              </p>
+            </div>
+
+            {/* Buttons */}
             <div className="flex gap-3">
               <button
                 onClick={handleSkipWarmupCancel}
-                className="flex-1 py-3 rounded-xl font-semibold transition-all active:scale-95"
+                className="flex-1 transition-all active:scale-95"
                 style={{
-                  background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
-                  border: '1px solid rgba(148, 163, 184, 0.25)',
-                  color: '#FFFFFF',
+                  height: '52px',
+                  background: 'transparent',
+                  border: '2px solid rgba(31, 33, 36, 0.15)',
+                  borderRadius: '999px',
+                  color: '#1F2124',
+                  fontSize: '16px',
+                  fontWeight: '600',
                 }}
               >
                 Continue Warm-up
               </button>
               <button
                 onClick={handleSkipWarmupConfirm}
-                className="flex-1 py-3 rounded-xl font-semibold transition-all active:scale-95"
+                className="flex-1 transition-all active:scale-95"
                 style={{
-                  background: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
+                  height: '52px',
+                  background: 'linear-gradient(90deg, #FEAD63, #FBCDA4)',
+                  border: 'none',
+                  borderRadius: '999px',
                   color: '#FFFFFF',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  boxShadow: '0 10px 30px rgba(254, 173, 99, 0.3)',
                 }}
               >
                 Skip Warm-up
