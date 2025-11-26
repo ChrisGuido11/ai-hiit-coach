@@ -226,7 +226,13 @@ serve(async (req) => {
       );
     }
 
-    const systemPrompt = `You are a fitness AI generating ${framework.toUpperCase()} workouts.
+    const systemPrompt = `You are an expert fitness coach who interprets natural language workout requests and generates precise, effective workouts.
+
+ALWAYS FOLLOW THESE STEPS:
+1. PARSE the user's request to extract: duration, target muscles, intensity level, equipment
+2. CHOOSE the best protocol BASED ON THE REQUEST (consider user preference AND duration)
+3. GENERATE exercises that DIRECTLY match the target muscles
+4. ENSURE total workout time matches the requested duration
 
 ${frameworkRules[framework] || ''}
 
@@ -253,6 +259,12 @@ CRITICAL FORMATTING RULES:
    WRONG: "Perform high knees for 20 seconds, followed by 10 seconds rest. Repeat for 8 rounds."
    CORRECT: "Drive knees to hip height while pumping arms vigorously"
 
+3. EXERCISE SELECTION - CRITICAL:
+   - If user specifies target muscles (e.g., "abs and core"), prioritize exercises that work those areas
+   - Do NOT generate unrelated exercises
+   - Match exercise intensity to user's fitness level
+   - If no equipment is specified, DO NOT include exercises requiring equipment
+
 Return ONLY valid JSON (no markdown):
 {
   "warmup": [{"name": "Exercise", "duration": "60 seconds", "instructions": "One sentence form cue"}],
@@ -260,13 +272,19 @@ Return ONLY valid JSON (no markdown):
   "cooldown": [{"name": "Exercise", "duration": "30 seconds", "instructions": "One sentence form cue"}]
 }`;
 
-    const userPrompt = `Generate a ${framework.toUpperCase()} workout:
+    const userPrompt = `Generate a ${framework.toUpperCase()} workout with these parameters:
 - Fitness Level: ${fitnessLevel}
-- Equipment: ${equipment?.join(', ') || 'bodyweight only'}
-- Duration: ${duration} minutes total
-${goal ? `- Goal: ${goal}` : ''}
+- Equipment Available: ${equipment?.join(', ') || 'bodyweight only'}
+- Total Duration: ${duration} minutes
+${goal ? `- User's Request: "${goal}"` : '- User Request: Generic workout'}
 
-Create 2-3 warmup exercises, 4-6 main exercises, 2-3 cooldown stretches.
+REQUIREMENTS:
+1. If user specified a body part/goal (e.g., "abs and core", "legs"), ALL main exercises must target that area
+2. If user specified duration, structure the workout to fit that timeframe
+3. If user has no equipment restrictions, use only bodyweight
+4. Exercise selection must align with the user's specific request - NO unrelated exercises
+5. Create 2-3 warmup exercises, 4-6 main exercises, 2-3 cooldown stretches
+
 Return ONLY the JSON object.`;
 
     console.log('Calling OpenAI API...');

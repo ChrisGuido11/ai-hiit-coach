@@ -62,6 +62,46 @@ interface LocationState {
   framework?: string;
 }
 
+// Helper function to shorten user input while preserving meaning
+const shortenGoal = (goal: string): string => {
+  if (!goal) return '';
+
+  // Replace common patterns with shortened versions
+  let shortened = goal
+    // Duration replacements
+    .replace(/\bminutes?\b/gi, 'min')
+    .replace(/\bseconds?\b/gi, 'sec')
+    // Common words
+    .replace(/\band\b/gi, '&')
+    .replace(/\bcore\b/gi, 'core')
+    .replace(/\babs\b/gi, 'abs')
+    .replace(/\bupper\s+body\b/gi, 'upper')
+    .replace(/\blower\s+body\b/gi, 'lower')
+    .replace(/\bfull\s+body\b/gi, 'full body')
+    .replace(/\bcardio\b/gi, 'cardio')
+    .replace(/\bstrength\b/gi, 'strength')
+    .replace(/\bendurance\b/gi, 'endurance')
+    // Clean up extra spaces
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // If still too long (>40 chars), try more aggressive shortening
+  if (shortened.length > 40) {
+    // Remove less important words
+    shortened = shortened
+      .replace(/\b(a|an|the|for|to|with|without)\b/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  // Truncate if needed, keeping up to ~35 characters
+  if (shortened.length > 35) {
+    shortened = shortened.substring(0, 32) + '...';
+  }
+
+  return shortened;
+};
+
 const Workout = () => {
   const { framework } = useParams();
   const navigate = useNavigate();
@@ -330,7 +370,7 @@ const Workout = () => {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <h1 className="text-2xl font-bold text-foreground capitalize">
-          {frameworkKey}
+          {locationState?.goal ? shortenGoal(locationState.goal) : frameworkKey}
         </h1>
         <div className="w-10" />
       </div>
