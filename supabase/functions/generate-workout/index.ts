@@ -238,9 +238,9 @@ serve(async (req) => {
   try {
     const { framework, goal, parsedRequest, fitnessLevel, equipment, duration } = await req.json();
 
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      console.error('OPENAI_API_KEY not configured, using fallback');
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    if (!lovableApiKey) {
+      console.error('LOVABLE_API_KEY not configured, using fallback');
       return new Response(
         JSON.stringify({
           workout: fallbackWorkouts[framework] || fallbackWorkouts.tabata,
@@ -346,15 +346,15 @@ CRITICAL REQUIREMENTS:
 
 Return ONLY the JSON object.`;
 
-    console.log('Calling OpenAI API...');
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    console.log('Calling Lovable AI Gateway with Gemini 2.5 Flash...');
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -366,7 +366,31 @@ Return ONLY the JSON object.`;
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
+      console.error('Lovable AI Gateway error:', response.status, errorText);
+      
+      // Handle rate limiting and payment errors
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Rate limit exceeded. Please try again in a moment.',
+            workout: fallbackWorkouts[framework] || fallbackWorkouts.tabata,
+            usedFallback: true 
+          }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'AI credits depleted. Please add credits in Settings → Workspace → Usage.',
+            workout: fallbackWorkouts[framework] || fallbackWorkouts.tabata,
+            usedFallback: true 
+          }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
       return new Response(
         JSON.stringify({
           workout: fallbackWorkouts[framework] || fallbackWorkouts.tabata,
