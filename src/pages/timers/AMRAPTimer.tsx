@@ -79,7 +79,7 @@ const getSideAnnouncement = (side: SideType, bodyPart: BodyPartType): string => 
 const AMRAPTimer = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { workout, workoutId } = location.state || {};
+  const { workout, workoutId, workoutDuration } = location.state || {};
 
   const [timerState, setTimerState] = useState<TimerState>({
     phase: "warmup",
@@ -121,7 +121,12 @@ const AMRAPTimer = () => {
   const hasAnnouncedInitialRef = useRef<boolean>(false);
 
   // AMRAP duration in seconds (get from workout metadata or default to 10 minutes)
-  const amrapDuration = DEFAULT_AMRAP_DURATION; // TODO: Could be configurable from workout generation
+  const amrapDuration = workoutDuration
+    ? parseInt(workoutDuration) * 60
+    : DEFAULT_AMRAP_DURATION;
+
+  // Log the duration for debugging
+  console.log('AMRAP Timer - workoutDuration:', workoutDuration, 'amrapDuration (seconds):', amrapDuration);
 
   // Use workoutData if available (for exercise replacements), otherwise use passed workout
   const typedWorkout = workoutData || (workout as GeneratedWorkout | undefined);

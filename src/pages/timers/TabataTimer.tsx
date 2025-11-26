@@ -118,7 +118,7 @@ const getSideAnnouncement = (side: SideType, bodyPart: BodyPartType): string => 
 const TabataTimer = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { workout, workoutId } = location.state || {};
+  const { workout, workoutId, workoutDuration } = location.state || {};
 
   const [timerState, setTimerState] = useState<TimerState>({
     phase: "warmup",
@@ -161,6 +161,23 @@ const TabataTimer = () => {
 
   // Use workoutData if available (for exercise replacements), otherwise use passed workout
   const typedWorkout = workoutData || (workout as GeneratedWorkout | undefined);
+
+  // Calculate main rounds based on workoutDuration if provided
+  const mainRounds = (() => {
+    if (workoutDuration && typedWorkout?.main) {
+      // Time per exercise = WORK_DURATION + REST_DURATION = 30 seconds
+      const timePerExercise = WORK_DURATION + REST_DURATION;
+      const numExercises = typedWorkout.main.length;
+      // Time for one full round through all exercises
+      const timePerRound = numExercises * timePerExercise;
+      // Calculate number of rounds based on requested duration
+      const calculatedRounds = Math.floor((parseInt(workoutDuration) * 60) / timePerRound);
+      const rounds = Math.max(1, calculatedRounds); // At least 1 round
+      console.log('Tabata Timer - workoutDuration:', workoutDuration, 'mainRounds:', rounds);
+      return rounds;
+    }
+    return MAIN_ROUNDS; // Default to 8 rounds
+  })();
 
   // Initialize workoutData from passed workout
   useEffect(() => {
@@ -331,13 +348,13 @@ const TabataTimer = () => {
       case "warmup":
         return WARMUP_ROUNDS;
       case "main":
-        return MAIN_ROUNDS;
+        return mainRounds;
       case "cooldown":
         return COOLDOWN_ROUNDS;
       default:
-        return MAIN_ROUNDS;
+        return mainRounds;
     }
-  }, [timerState.phase]);
+  }, [timerState.phase, mainRounds]);
 
   const maxRounds = getMaxRounds();
 

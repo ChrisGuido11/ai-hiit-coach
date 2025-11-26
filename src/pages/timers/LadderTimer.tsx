@@ -178,10 +178,17 @@ const parseLadderMetadata = (workout: GeneratedWorkout): LadderMetadata => {
 const LadderTimer = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { workout, workoutId } = location.state || {};
+  const { workout, workoutId, workoutDuration } = location.state || {};
 
   const typedWorkout = workout as GeneratedWorkout | undefined;
   const ladderMeta = typedWorkout ? parseLadderMetadata(typedWorkout) : null;
+
+  // Override duration with workoutDuration if provided by user
+  if (ladderMeta && workoutDuration && ladderMeta.timerMode === 'amrap') {
+    const userDuration = parseInt(workoutDuration) * 60;
+    console.log('Ladder Timer - overriding parsed duration:', ladderMeta.duration, 'with user duration:', userDuration);
+    ladderMeta.duration = userDuration;
+  }
 
   const [timerState, setTimerState] = useState<TimerState>({
     phase: "warmup",
