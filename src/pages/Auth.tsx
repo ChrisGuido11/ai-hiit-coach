@@ -96,15 +96,12 @@ const Auth = () => {
         {/* Logo and Icon */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center glow-primary">
+            <div className="w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center animate-logo-breathe">
               <Dumbbell className="w-8 h-8 text-white" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold mb-2">
-            <span className="text-foreground">HIIT </span>
-            <span className="bg-gradient-primary bg-clip-text text-transparent">
-              Coach
-            </span>
+          <h1 className="text-4xl font-bold mb-2 text-foreground">
+            AI HIIT Coach
           </h1>
           <p className="text-muted-foreground">
             Your AI-powered fitness companion
