@@ -349,7 +349,9 @@ const Profile = () => {
           onClick={() => navigate("/profile/workout-history")}
           className="w-full glass-card p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
         >
-          <div className="text-xl">📊</div>
+          <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gradient-tabata shadow-[0_0_32px_rgba(54,209,220,0.5)]">
+            <BarChart3 className="w-5 h-5 text-white" />
+          </div>
           <div className="flex-1 text-left">
             <div className="text-base font-semibold text-foreground">
               Workout History
@@ -363,7 +365,9 @@ const Profile = () => {
           onClick={() => navigate("/profile/stats")}
           className="w-full glass-card p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
         >
-          <div className="text-xl">⚡</div>
+          <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gradient-emom shadow-[0_0_32px_rgba(255,107,181,0.5)]">
+            <TrendingUp className="w-5 h-5 text-white" />
+          </div>
           <div className="flex-1 text-left">
             <div className="text-base font-semibold text-foreground">
               My Stats
@@ -386,7 +390,9 @@ const Profile = () => {
           onClick={() => navigate("/profile/fitness-level")}
           className="w-full glass-card p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
         >
-          <div className="text-xl">🎯</div>
+          <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gradient-amrap shadow-[0_0_32px_rgba(168,85,247,0.5)]">
+            <Target className="w-5 h-5 text-white" />
+          </div>
           <div className="flex-1 text-left">
             <div className="text-base font-semibold text-foreground">
               Fitness Level
@@ -403,7 +409,9 @@ const Profile = () => {
           onClick={() => navigate("/profile/fitness-goals")}
           className="w-full glass-card p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
         >
-          <div className="text-xl">🏆</div>
+          <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gradient-circuit shadow-[0_0_32px_rgba(74,222,128,0.5)]">
+            <Trophy className="w-5 h-5 text-white" />
+          </div>
           <div className="flex-1 text-left">
             <div className="text-base font-semibold text-foreground">
               Fitness Goals
@@ -420,7 +428,9 @@ const Profile = () => {
           onClick={() => navigate("/profile/equipment")}
           className="w-full glass-card p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
         >
-          <div className="text-xl">🏋️</div>
+          <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gradient-primary shadow-[0_0_40px_rgba(254,173,99,0.5)]">
+            <Dumbbell className="w-5 h-5 text-white" />
+          </div>
           <div className="flex-1 text-left">
             <div className="text-base font-semibold text-foreground">
               Available Equipment
@@ -446,7 +456,9 @@ const Profile = () => {
           onClick={() => navigate("/profile/voice-coaching")}
           className="w-full glass-card p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
         >
-          <div className="text-xl">🔊</div>
+          <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gradient-tabata shadow-[0_0_32px_rgba(54,209,220,0.5)]">
+            <Volume2 className="w-5 h-5 text-white" />
+          </div>
           <div className="flex-1 text-left">
             <div className="text-base font-semibold text-foreground">
               Voice Coaching
@@ -461,7 +473,9 @@ const Profile = () => {
           onClick={() => navigate("/profile/notifications")}
           className="w-full glass-card p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
         >
-          <div className="text-xl">🔔</div>
+          <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gradient-emom shadow-[0_0_32px_rgba(255,107,181,0.5)]">
+            <Bell className="w-5 h-5 text-white" />
+          </div>
           <div className="flex-1 text-left">
             <div className="text-base font-semibold text-foreground">
               Notifications
@@ -476,7 +490,9 @@ const Profile = () => {
           onClick={() => navigate("/profile/about")}
           className="w-full glass-card p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
         >
-          <div className="text-xl">ℹ️</div>
+          <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gradient-amrap shadow-[0_0_32px_rgba(168,85,247,0.5)]">
+            <Info className="w-5 h-5 text-white" />
+          </div>
           <div className="flex-1 text-left">
             <div className="text-base font-semibold text-foreground">
               About & Support
@@ -499,7 +515,9 @@ const Profile = () => {
           onClick={() => setShowLogoutDialog(true)}
           className="w-full glass-card p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
         >
-          <div className="text-xl">🚪</div>
+          <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gradient-circuit shadow-[0_0_32px_rgba(74,222,128,0.5)]">
+            <LogOut className="w-5 h-5 text-white" />
+          </div>
           <div className="flex-1 text-left">
             <div className="text-base font-semibold text-foreground">Log Out</div>
           </div>
@@ -510,7 +528,9 @@ const Profile = () => {
           onClick={() => setShowDeleteDialog(true)}
           className="w-full glass-card p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
         >
-          <div className="text-xl text-destructive">🗑️</div>
+          <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gradient-to-br from-red-400 to-red-500 shadow-[0_0_32px_rgba(248,113,113,0.5)]">
+            <Trash2 className="w-5 h-5 text-white" />
+          </div>
           <div className="flex-1 text-left">
             <div className="text-base font-semibold text-destructive">
               Delete Account
