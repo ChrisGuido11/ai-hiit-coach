@@ -194,7 +194,10 @@ const Home = () => {
           >
             <Bookmark className="w-5 h-5 text-white/55" />
           </button>
-          <button className="flex items-center justify-center p-3">
+          <button
+            onClick={() => navigate('/profile')}
+            className="flex items-center justify-center p-3 active:scale-95 transition-transform"
+          >
             <User className="w-5 h-5 text-white/55" />
           </button>
         </div>
