@@ -65,6 +65,31 @@ const defaultPreferences: UserPreferences = {
   workout_duration: "20"
 };
 
+/**
+ * Intelligently select a framework based on workout duration
+ * NEVER defaults to Tabata unless explicitly requested by user
+ */
+function selectFrameworkForDuration(durationMinutes: number): string {
+  // Tabata is ONLY used when explicitly requested (handled elsewhere)
+  // For free-text input, choose from: EMOM, AMRAP, Ladder, Circuit
+
+  // Short workouts (5-12 min): EMOM or AMRAP
+  if (durationMinutes <= 12) {
+    const shortWorkoutOptions = ['emom', 'amrap'];
+    return shortWorkoutOptions[Math.floor(Math.random() * shortWorkoutOptions.length)];
+  }
+
+  // Medium workouts (12-20 min): AMRAP, Circuit, or occasionally Ladder
+  if (durationMinutes <= 20) {
+    const mediumWorkoutOptions = ['amrap', 'circuit', 'amrap', 'ladder'];
+    return mediumWorkoutOptions[Math.floor(Math.random() * mediumWorkoutOptions.length)];
+  }
+
+  // Long workouts (20+ min): Circuit or AMRAP
+  const longWorkoutOptions = ['circuit', 'amrap', 'circuit'];
+  return longWorkoutOptions[Math.floor(Math.random() * longWorkoutOptions.length)];
+}
+
 interface LocationState {
   framework?: string;
   goal?: string;
@@ -113,7 +138,16 @@ const WorkoutGeneration = () => {
         // Step 3: Generate workout using AI
         // Use parsed request duration if available, otherwise use user preferences
         const workoutDuration = parsedRequest?.durationMinutes?.toString() || preferences.workout_duration;
-        const selectedFramework = framework || parsedRequest?.explicitFramework || "custom";
+
+        // Intelligent framework selection for free-text input
+        // ONLY use Tabata if explicitly requested
+        let selectedFramework = framework || parsedRequest?.explicitFramework;
+
+        if (!selectedFramework) {
+          // No explicit framework mentioned - choose based on duration
+          selectedFramework = selectFrameworkForDuration(parseInt(workoutDuration));
+          console.log(`Auto-selected framework: ${selectedFramework} for ${workoutDuration} min duration`);
+        }
 
         let { workout, usedFallback } = await generateWorkout({
           framework: selectedFramework,
