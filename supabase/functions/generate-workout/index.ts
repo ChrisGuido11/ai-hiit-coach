@@ -25,6 +25,17 @@ const frameworkRules: Record<string, string> = {
 - DURATION FORMAT: Must be "X reps" (e.g., "10 reps", "15 reps")
 - Mix upper/lower body and cardio`,
 
+  ladder: `Ladder Workout:
+- Progressive rep scheme: ascending (1→10), descending (10→1), or pyramid (1→5→1)
+- All exercises use same rep count per round
+- Can be "For Time" (stopwatch) or "AMRAP" (time limit)
+- DURATION FORMAT: Must be "Ladder: [start]→[end] [type], [mode] [duration if AMRAP]"
+  Examples: "Ladder: 1→10 ascending, For Time"
+            "Ladder: 10→1 descending, AMRAP 10:00"
+            "Ladder: 1→5→1 pyramid, For Time"
+- Choose exercises suitable for high reps (bodyweight preferred)
+- Round count auto-calculated from rep range`,
+
   hiit: `HIIT Format:
 - High intensity intervals
 - Work 30-45 seconds, rest 15-30 seconds
@@ -91,6 +102,22 @@ const fallbackWorkouts: Record<string, any> = {
       { name: "Cat-Cow Stretch", duration: "60 seconds", instructions: "On all fours, alternate between arching and rounding spine" },
       { name: "Figure Four Stretch", duration: "45 seconds each side", instructions: "On back, cross ankle over knee, pull thigh toward chest" },
       { name: "Chest Opener", duration: "45 seconds", instructions: "Clasp hands behind back, lift chest, squeeze shoulder blades" }
+    ]
+  },
+  ladder: {
+    warmup: [
+      { name: "Arm Circles", duration: "30 seconds each direction", instructions: "Extend arms and rotate in controlled circular motions" },
+      { name: "Leg Swings", duration: "30 seconds each leg", instructions: "Swing leg forward and back, hold wall for balance" },
+      { name: "Jumping Jacks", duration: "45 seconds", instructions: "Jump feet wide while swinging arms overhead" }
+    ],
+    main: [
+      { name: "Push-ups", duration: "Ladder: 1→10 ascending, For Time", instructions: "Lower chest to floor, push up with full arm extension" },
+      { name: "Squats", duration: "Ladder: 1→10 ascending, For Time", instructions: "Feet shoulder-width apart, squat down until thighs parallel to ground" }
+    ],
+    cooldown: [
+      { name: "Child's Pose", duration: "60 seconds", instructions: "Kneel and sit back on heels, extend arms forward on floor" },
+      { name: "Quad Stretch", duration: "30 seconds each leg", instructions: "Stand on one leg, pull heel to glutes, keep knees together" },
+      { name: "Hamstring Stretch", duration: "30 seconds each leg", instructions: "Sit with legs extended, reach forward toward toes" }
     ]
   },
   hiit: {
@@ -160,12 +187,13 @@ CRITICAL FORMATTING RULES:
    - Tabata: "20s work / 10s rest"
    - EMOM: "10 reps" or "12 reps"
    - AMRAP: "10 reps" or "15 reps"
+   - Ladder: "Ladder: 1→10 ascending, For Time" or "Ladder: 10→1 descending, AMRAP 10:00"
    - HIIT: "40s work / 20s rest"
    - Circuit: "45 seconds" or "30 seconds"
    - Warm-up/Cool-down: "60 seconds" or "30 seconds each side"
 
    WRONG: "4 minutes", "8 rounds (20s work, 10s rest)", "2 minutes"
-   CORRECT: "20s work / 10s rest", "45 seconds", "10 reps"
+   CORRECT: "20s work / 10s rest", "45 seconds", "10 reps", "Ladder: 1→10 ascending, For Time"
 
 2. INSTRUCTIONS - Must be ONE short sentence about form only:
    - Describe body positioning and movement technique
