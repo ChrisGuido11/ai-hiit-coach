@@ -299,6 +299,22 @@ html, body, #root {
     }
   }
 
+  /* Breathing animation for logo with synced glow */
+  .animate-logo-breathe {
+    animation: logoBreath 2.5s ease-in-out infinite;
+  }
+
+  @keyframes logoBreath {
+    0%, 100% {
+      transform: scale(0.95);
+      box-shadow: 0 0 30px rgba(254, 173, 99, 0.5);
+    }
+    50% {
+      transform: scale(1.05);
+      box-shadow: 0 0 50px rgba(254, 173, 99, 0.8);
+    }
+  }
+
   /* Press states */
   .active\:scale-97:active {
     transform: scale(0.97);
