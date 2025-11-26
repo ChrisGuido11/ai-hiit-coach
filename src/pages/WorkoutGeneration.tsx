@@ -6,6 +6,52 @@ import { generateWorkout, GeneratedWorkout } from "@/lib/generateWorkout";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+// Validation function for ladder workouts
+const validateLadderWorkout = (workout: GeneratedWorkout): {
+  isValid: boolean;
+  errors: string[]
+} => {
+  const errors: string[] = [];
+
+  // Extract ladder patterns from all main exercises
+  const ladderPatterns = workout.main.map(exercise => {
+    // Extract pattern from duration like "Ladder: 1→10 ascending, For Time"
+    const match = exercise.duration.match(/Ladder:\s*(\d+→\d+(?:→\d+)?)/);
+    return match ? match[1] : null;
+  });
+
+  // Check 1: All exercises should have ladder patterns
+  if (ladderPatterns.some(p => p === null)) {
+    errors.push("Some exercises are missing ladder pattern");
+  }
+
+  // Check 2: All exercises must have the SAME ladder pattern
+  const uniquePatterns = [...new Set(ladderPatterns.filter(p => p !== null))];
+  if (uniquePatterns.length > 1) {
+    errors.push(`Mixed ladder patterns detected: ${uniquePatterns.join(', ')}`);
+    console.error('Ladder validation failed: Mixed patterns', uniquePatterns);
+  }
+
+  // Check 3: Description should include exercise name (warning only)
+  const invalidDescriptions = workout.main.filter(exercise => {
+    const nameInDescription = exercise.instructions
+      .toLowerCase()
+      .includes(exercise.name.toLowerCase());
+    return !nameInDescription;
+  });
+
+  if (invalidDescriptions.length > 0) {
+    console.warn('Some descriptions missing exercise name:',
+      invalidDescriptions.map(e => e.name));
+    // Not a critical error, just log it
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
 interface UserPreferences {
   fitness_level: string;
   available_equipment: string[];
@@ -58,7 +104,7 @@ const WorkoutGeneration = () => {
         console.log("Using preferences:", preferences);
 
         // Step 3: Generate workout using AI
-        const { workout, usedFallback } = await generateWorkout({
+        let { workout, usedFallback } = await generateWorkout({
           framework: framework || "custom",
           goal,
           fitnessLevel: preferences.fitness_level,
@@ -67,6 +113,41 @@ const WorkoutGeneration = () => {
         });
 
         if (!isMounted) return;
+
+        // Step 3.5: Validate ladder workouts
+        if (framework?.toLowerCase() === 'ladder' && !usedFallback) {
+          const validation = validateLadderWorkout(workout);
+
+          if (!validation.isValid) {
+            console.error('Ladder workout validation failed:', validation.errors);
+
+            // Regenerate once more
+            console.log('Attempting to regenerate ladder workout...');
+            const regenerated = await generateWorkout({
+              framework: framework || "custom",
+              goal,
+              fitnessLevel: preferences.fitness_level,
+              equipment: preferences.available_equipment,
+              duration: preferences.workout_duration
+            });
+
+            // Validate regenerated workout
+            const revalidation = validateLadderWorkout(regenerated.workout);
+
+            if (revalidation.isValid) {
+              console.log('Regenerated ladder workout passed validation');
+              workout = regenerated.workout;
+              usedFallback = regenerated.usedFallback;
+            } else {
+              console.error('Regenerated workout also failed validation, using fallback');
+              // Use fallback from the regeneration attempt
+              workout = regenerated.workout;
+              usedFallback = true;
+            }
+          } else {
+            console.log('Ladder workout validation passed ✓');
+          }
+        }
 
         // Show toast if using fallback
         if (usedFallback) {

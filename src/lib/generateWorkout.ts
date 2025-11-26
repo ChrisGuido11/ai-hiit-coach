@@ -80,18 +80,18 @@ const fallbackWorkouts: Record<string, GeneratedWorkout> = {
   },
   ladder: {
     warmup: [
-      { name: "Arm Circles", duration: "30 seconds each direction", instructions: "Extend arms and rotate in controlled circular motions" },
-      { name: "Leg Swings", duration: "30 seconds each leg", instructions: "Swing leg forward and back, hold wall for balance" },
-      { name: "Jumping Jacks", duration: "45 seconds", instructions: "Jump feet wide while swinging arms overhead" }
+      { name: "Arm Circles", duration: "30 seconds each direction", instructions: "Arm Circles: Extend arms, rotate in controlled circles" },
+      { name: "Leg Swings", duration: "30 seconds each leg", instructions: "Leg Swings: Forward and back, hold wall for balance" },
+      { name: "Jumping Jacks", duration: "45 seconds", instructions: "Jumping Jacks: Jump feet wide, arms overhead" }
     ],
     main: [
-      { name: "Push-ups", duration: "Ladder: 1→10 ascending, For Time", instructions: "Lower chest to floor, push up with full arm extension" },
-      { name: "Squats", duration: "Ladder: 1→10 ascending, For Time", instructions: "Feet shoulder-width apart, squat down until thighs parallel to ground" }
+      { name: "Push-ups", duration: "Ladder: 1→10 ascending, For Time", instructions: "Push-ups: Chest to ground, elbows 45°, controlled" },
+      { name: "Squats", duration: "Ladder: 1→10 ascending, For Time", instructions: "Squats: Feet shoulder-width, depth to parallel" }
     ],
     cooldown: [
-      { name: "Child's Pose", duration: "60 seconds", instructions: "Kneel and sit back on heels, extend arms forward on floor" },
-      { name: "Quad Stretch", duration: "30 seconds each leg", instructions: "Stand on one leg, pull heel to glutes, keep knees together" },
-      { name: "Hamstring Stretch", duration: "30 seconds each leg", instructions: "Sit with legs extended, reach forward toward toes" }
+      { name: "Child's Pose", duration: "60 seconds", instructions: "Child's Pose: Kneel back on heels, arms forward" },
+      { name: "Quad Stretch", duration: "30 seconds each leg", instructions: "Quad Stretch: Pull heel to glutes, knees together" },
+      { name: "Hamstring Stretch", duration: "30 seconds each leg", instructions: "Hamstring Stretch: Legs extended, reach toward toes" }
     ]
   },
   custom: {
