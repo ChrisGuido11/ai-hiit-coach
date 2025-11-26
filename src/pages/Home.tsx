@@ -52,12 +52,8 @@ const Home = () => {
 
 
   const handleFrameworkClick = (frameworkId: string) => {
-    // Ladder goes directly to config, others go to AI generation
-    if (frameworkId === 'ladder') {
-      navigate('/workout/ladder/config');
-    } else {
-      navigate('/workout/generate', { state: { framework: frameworkId } });
-    }
+    // All frameworks go to AI generation
+    navigate('/workout/generate', { state: { framework: frameworkId } });
   };
 
   const handleGoalSubmit = (e: React.FormEvent) => {
