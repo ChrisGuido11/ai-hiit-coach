@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowRight, Zap, Clock, Repeat, TrendingUp, Bookmark, User, Dumbbell, Sparkles, Send, Activity } from "lucide-react";
 import { useTypingAnimation } from "@/hooks/useTypingAnimation";
+import { parseWorkoutRequest, formatParsedRequest } from "@/lib/parseWorkoutRequest";
 
 const frameworks = [
   {
@@ -59,7 +60,19 @@ const Home = () => {
   const handleGoalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (goal.trim()) {
-      navigate('/workout/generate', { state: { goal } });
+      // Parse the user's natural language request into structured parameters
+      const parsed = parseWorkoutRequest(goal);
+      console.log(`Parsed: ${formatParsedRequest(parsed)}`);
+
+      // Navigate to generation with structured parameters
+      navigate('/workout/generate', {
+        state: {
+          goal,
+          parsedRequest: parsed,
+          // If user explicitly mentioned a framework, use it
+          framework: parsed.explicitFramework,
+        },
+      });
       setGoal('');
     }
   };

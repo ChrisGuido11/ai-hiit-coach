@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { generateWorkout, GeneratedWorkout } from "@/lib/generateWorkout";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ParsedWorkoutRequest } from "@/lib/parseWorkoutRequest";
 
 // Validation function for ladder workouts
 const validateLadderWorkout = (workout: GeneratedWorkout): {
@@ -64,11 +65,17 @@ const defaultPreferences: UserPreferences = {
   workout_duration: "20"
 };
 
+interface LocationState {
+  framework?: string;
+  goal?: string;
+  parsedRequest?: ParsedWorkoutRequest;
+}
+
 const WorkoutGeneration = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { framework, goal } = location.state || {};
+  const { framework, goal, parsedRequest } = (location.state as LocationState) || {};
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -104,18 +111,23 @@ const WorkoutGeneration = () => {
         console.log("Using preferences:", preferences);
 
         // Step 3: Generate workout using AI
+        // Use parsed request duration if available, otherwise use user preferences
+        const workoutDuration = parsedRequest?.durationMinutes?.toString() || preferences.workout_duration;
+        const selectedFramework = framework || parsedRequest?.explicitFramework || "custom";
+
         let { workout, usedFallback } = await generateWorkout({
-          framework: framework || "custom",
+          framework: selectedFramework,
           goal,
+          parsedRequest,
           fitnessLevel: preferences.fitness_level,
           equipment: preferences.available_equipment,
-          duration: preferences.workout_duration
+          duration: workoutDuration
         });
 
         if (!isMounted) return;
 
         // Step 3.5: Validate ladder workouts
-        if (framework?.toLowerCase() === 'ladder' && !usedFallback) {
+        if (selectedFramework?.toLowerCase() === 'ladder' && !usedFallback) {
           const validation = validateLadderWorkout(workout);
 
           if (!validation.isValid) {
@@ -124,11 +136,12 @@ const WorkoutGeneration = () => {
             // Regenerate once more
             console.log('Attempting to regenerate ladder workout...');
             const regenerated = await generateWorkout({
-              framework: framework || "custom",
+              framework: selectedFramework,
               goal,
+              parsedRequest,
               fitnessLevel: preferences.fitness_level,
               equipment: preferences.available_equipment,
-              duration: preferences.workout_duration
+              duration: workoutDuration
             });
 
             // Validate regenerated workout
@@ -166,7 +179,7 @@ const WorkoutGeneration = () => {
             .from("workouts")
             .insert([{
               user_id: user.id,
-              framework_type: framework || "custom",
+              framework_type: selectedFramework,
               exercises: workout as any,
               completed: false
             }])
@@ -183,13 +196,13 @@ const WorkoutGeneration = () => {
         }
 
         // Step 5: Navigate to workout details screen
-        navigate(`/workout/${framework || 'custom'}`, {
+        navigate(`/workout/${selectedFramework}`, {
           state: {
             workout,
             workoutId: savedWorkoutId,
             goal,
-            framework,
-            workoutDuration: preferences.workout_duration
+            framework: selectedFramework,
+            workoutDuration: workoutDuration
           },
           replace: true
         });

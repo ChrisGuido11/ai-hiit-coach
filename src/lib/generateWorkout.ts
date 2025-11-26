@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { ParsedWorkoutRequest } from "./parseWorkoutRequest";
 
 // Types for workout structure
 export interface Exercise {
@@ -16,6 +17,7 @@ export interface GeneratedWorkout {
 export interface GenerateWorkoutParams {
   framework: string;
   goal?: string;
+  parsedRequest?: ParsedWorkoutRequest;
   fitnessLevel: string;
   equipment: string[];
   duration: string;
@@ -117,7 +119,7 @@ export async function generateWorkout(params: GenerateWorkoutParams): Promise<{
   workout: GeneratedWorkout;
   usedFallback: boolean;
 }> {
-  const { framework, goal, fitnessLevel, equipment, duration } = params;
+  const { framework, goal, parsedRequest, fitnessLevel, equipment, duration } = params;
   const frameworkKey = framework.toLowerCase();
 
   try {
@@ -127,6 +129,7 @@ export async function generateWorkout(params: GenerateWorkoutParams): Promise<{
       body: {
         framework: frameworkKey,
         goal,
+        parsedRequest,
         fitnessLevel,
         equipment,
         duration
