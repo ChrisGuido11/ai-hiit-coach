@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, RefreshCw, Check, Loader2 } from "lucide-react";
 import { GeneratedWorkout, Exercise, generateReplacementExercise } from "@/lib/generateWorkout";
+import { extractWorkoutMetadata } from "@/lib/workoutMetadata";
 import { supabase } from "@/integrations/supabase/client";
 import {
   AlertDialog,
@@ -60,6 +61,7 @@ interface LocationState {
   workoutId?: string | null;
   goal?: string;
   framework?: string;
+  workoutDuration?: string;
 }
 
 // Helper function to shorten user input while preserving meaning
@@ -153,6 +155,7 @@ const Workout = () => {
 
   const frameworkKey = framework?.toLowerCase() || "tabata";
   const details = frameworkDetails[frameworkKey] || frameworkDetails.tabata;
+  const metadata = extractWorkoutMetadata(currentWorkout, frameworkKey, locationState?.workoutDuration);
 
   const handlePlayTutorial = (exerciseName: string) => {
     // Format the exercise name for URL (replace spaces with +)
@@ -369,9 +372,14 @@ const Workout = () => {
         >
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-2xl font-bold text-foreground capitalize">
-          {locationState?.goal ? shortenGoal(locationState.goal) : frameworkKey}
-        </h1>
+        <div className="flex flex-col items-center gap-1">
+          <h1 className="text-2xl font-bold text-foreground capitalize">
+            {locationState?.goal ? shortenGoal(locationState.goal) : frameworkKey}
+          </h1>
+          <p className="text-sm text-muted-foreground font-medium">
+            {metadata.duration} • {metadata.rounds}
+          </p>
+        </div>
         <div className="w-10" />
       </div>
 
