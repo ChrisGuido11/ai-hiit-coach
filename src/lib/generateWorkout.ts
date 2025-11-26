@@ -12,9 +12,6 @@ export interface GeneratedWorkout {
   warmup: Exercise[];
   main: Exercise[];
   cooldown: Exercise[];
-  mainDurationMinutes?: number; // Main workout duration in minutes (excluding warmup/cooldown)
-  frameworkType?: string;
-  muscleTargets?: string[];
 }
 
 export interface GenerateWorkoutParams {

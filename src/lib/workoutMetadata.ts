@@ -16,15 +16,9 @@ export function extractWorkoutMetadata(
 ): WorkoutMetadata {
   const frameworkLower = framework?.toLowerCase() || "custom";
 
-  // CRITICAL: If mainDurationMinutes is set in the workout object, use that
-  // This ensures we always show the MAIN workout duration (excluding warmup/cooldown)
-  if (workout.mainDurationMinutes) {
-    workoutDuration = workout.mainDurationMinutes.toString();
-  }
-
   switch (frameworkLower) {
     case "tabata":
-      return extractTabataMetadata(workout, workoutDuration);
+      return extractTabataMetadata(workout);
     case "emom":
       return extractEMOMMetadata(workout, workoutDuration);
     case "amrap":
@@ -42,27 +36,31 @@ export function extractWorkoutMetadata(
   }
 }
 
-function extractTabataMetadata(workout: GeneratedWorkout, workoutDuration?: string): WorkoutMetadata {
+function extractTabataMetadata(workout: GeneratedWorkout): WorkoutMetadata {
   // Tabata: 20s work / 10s rest = 30s per round, 8 rounds per exercise
   // Each exercise = 30s × 8 = 240s = 4 minutes per exercise
-  
-  // CRITICAL: Show ONLY main workout duration (exclude warmup/cooldown)
-  // If workoutDuration is provided, use it (for free-text generated workouts)
-  if (workoutDuration) {
-    const durationMinutes = parseInt(workoutDuration);
-    return {
-      duration: `${durationMinutes} minutes`,
-      rounds: "8 rounds • Tabata"
-    };
+  // Plus warmup and cooldown (approximate each as ~90s-120s)
+
+  const mainExerciseCount = workout.main.length;
+  const mainDuration = mainExerciseCount * 30 * 8; // 30s per round, 8 rounds per exercise
+
+  // Estimate warmup duration (sum of exercise durations)
+  let warmupDuration = 0;
+  for (const ex of workout.warmup) {
+    warmupDuration += estimateExerciseDuration(ex.duration);
   }
 
-  // For preset workouts, calculate from exercise count
-  const mainExerciseCount = workout.main.length;
-  const mainDurationSeconds = mainExerciseCount * 30 * 8; // 30s per round, 8 rounds per exercise
-  const mainDurationMinutes = Math.round(mainDurationSeconds / 60);
+  // Estimate cooldown duration
+  let cooldownDuration = 0;
+  for (const ex of workout.cooldown) {
+    cooldownDuration += estimateExerciseDuration(ex.duration);
+  }
+
+  const totalSeconds = warmupDuration + mainDuration + cooldownDuration;
+  const totalMinutes = Math.round(totalSeconds / 60);
 
   return {
-    duration: `${mainDurationMinutes} minutes`,
+    duration: `${totalMinutes} minutes`,
     rounds: "8 rounds • Tabata"
   };
 }

@@ -29,13 +29,14 @@ interface SavedWorkout {
   id: string;
   user_id: string;
   framework_type: string;
+  name: string | null;
   created_at: string;
+  order: number;
   exercises: {
     warmup: Exercise[];
     main: Exercise[];
     cooldown: Exercise[];
   };
-  completed: boolean;
 }
 
 interface Exercise {
@@ -149,12 +150,13 @@ const SavedWorkouts = () => {
         .from("workouts")
         .select("*")
         .eq("user_id", user.id)
-        .eq("completed", false)
+        .eq("is_saved", true)
+        .order("order", { ascending: true })
         .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;
 
-      setWorkouts((data as any[]) || []);
+      setWorkouts((data as SavedWorkout[]) || []);
     } catch (err) {
       console.error("Failed to fetch saved workouts:", err);
       setError(true);
@@ -230,7 +232,22 @@ const SavedWorkouts = () => {
 
     setDraggedIndex(null);
 
-    // Note: order column doesn't exist in database, so we just maintain local state
+    // Save new order to database
+    try {
+      const updates = workouts.map((workout, index) => ({
+        id: workout.id,
+        order: index,
+      }));
+
+      for (const update of updates) {
+        await supabase
+          .from("workouts")
+          .update({ order: update.order })
+          .eq("id", update.id);
+      }
+    } catch (err) {
+      console.error("Failed to save workout order:", err);
+    }
   };
 
   const handleGenerateNew = () => {
@@ -446,7 +463,7 @@ const SavedWorkouts = () => {
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <h3 className="text-[18px] font-bold text-foreground mb-1 capitalize">
-                    {workout.framework_type}
+                    {workout.name || workout.framework_type}
                   </h3>
                   <p className="text-[14px] font-medium text-muted-foreground mb-1">
                     {getWorkoutDetails(workout)}
