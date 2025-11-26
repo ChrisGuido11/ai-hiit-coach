@@ -19,15 +19,21 @@ function getFrameworkRules(framework: string, duration: string): string {
 - Rest for remainder of minute
 - DURATION FORMAT: Must be "X reps" (e.g., "10 reps", "12 reps")
 - Reps achievable in 30-40 seconds
-- IMPORTANT: For a ${duration}-minute EMOM, generate exactly ${duration} rounds
-- Example: 10-min EMOM = 10 rounds (1 minute per round)`,
+- CRITICAL DURATION RULE: For a ${duration}-minute EMOM, you MUST generate exactly ${duration} main exercises (1 exercise per minute)
+- Example: 15-min EMOM = 15 main exercises (one per round)
+- Example: 7-min EMOM = 7 main exercises (one per round)
+- The number of main exercises MUST EQUAL the requested duration in minutes
+- Do NOT generate fewer exercises and expect multiple rounds`,
 
     amrap: `AMRAP (As Many Rounds As Possible):
 - Complete as many rounds as possible in ${duration} minutes
 - Minimal rest between exercises
 - DURATION FORMAT: Must be "X reps" (e.g., "10 reps", "15 reps")
 - Mix upper/lower body and cardio
-- Choose rep counts that allow 4-6 complete rounds in ${duration} minutes`,
+- CRITICAL DURATION RULE: The workout timer will count down for exactly ${duration} minutes
+- Generate 4-6 main exercises that users will cycle through repeatedly
+- Choose rep counts that allow users to complete 4-6 full rounds within ${duration} minutes
+- Example: For 15 minutes with 5 exercises, choose reps that take ~2.5-3.75 min per round`,
 
     ladder: `Ladder Workout:
 
@@ -36,20 +42,30 @@ CRITICAL RULES FOR LADDER WORKOUTS:
 2. ALL exercises must use the SAME ladder pattern
 3. DO NOT mix ascending, descending, and pyramid in one workout
 
+CRITICAL DURATION RULE:
+- The ladder pattern and number of exercises must scale to fit ${duration} minutes
+- Calculate total rounds based on the ladder pattern:
+  * Ascending 1→10 = 10 rounds per exercise
+  * Descending 10→1 = 10 rounds per exercise
+  * Pyramid 1→5→1 = 11 rounds per exercise (1,2,3,4,5,4,3,2,1 = 9 steps + repeats)
+- Adjust the ladder range (max reps) and number of exercises to match the duration
+- Example: For 15 minutes with 2 exercises using 1→8 ascending = 16 total rounds, ~56 seconds per round
+- Example: For 7 minutes with 2 exercises using 1→5→1 pyramid = 18 total rounds, ~23 seconds per round
+
 Select ONE of these patterns for the ENTIRE workout:
 
 OPTION A - ASCENDING LADDER:
-- All exercises: 1 → X reps (where X is 5-10 depending on fitness level)
+- All exercises: 1 → X reps (where X is 5-10 depending on fitness level and duration)
 - Example: Exercise 1: 1→8, Exercise 2: 1→8, Exercise 3: 1→8
 - Progressively harder as reps increase
 
 OPTION B - DESCENDING LADDER:
-- All exercises: X → 1 reps (where X is 5-15 depending on fitness level)
+- All exercises: X → 1 reps (where X is 5-15 depending on fitness level and duration)
 - Example: Exercise 1: 10→1, Exercise 2: 10→1, Exercise 3: 10→1
 - Start hard, get easier
 
 OPTION C - PYRAMID LADDER:
-- All exercises: 1 → X → 1 reps (where X is 5-10 depending on fitness level)
+- All exercises: 1 → X → 1 reps (where X is 5-10 depending on fitness level and duration)
 - Example: Exercise 1: 1→5→1, Exercise 2: 1→5→1, Exercise 3: 1→5→1
 - Build up then back down
 
@@ -57,6 +73,7 @@ Choose appropriate pattern based on:
 - Beginner: Shorter range (1→5, 5→1, or 1→3→1)
 - Intermediate: Medium range (1→8, 10→1, or 1→5→1)
 - Advanced: Longer range (1→10, 15→1, or 1→8→1)
+- ADJUST RANGE TO FIT ${duration} minutes total duration
 
 Timer Mode:
 - For Time: Stopwatch counts up, complete entire ladder
@@ -96,10 +113,14 @@ Generate 2-3 exercises that:
 
     circuit: `Circuit Training:
 - Move through exercises with minimal rest
-- Complete multiple rounds in ${duration} minutes
 - DURATION FORMAT: Must be "X seconds" (e.g., "45 seconds", "30 seconds")
 - Balance push/pull and upper/lower movements
-- Choose exercise durations to allow 3-5 complete rounds in ${duration} minutes`,
+- CRITICAL DURATION RULE: The workout timer will run for exactly ${duration} minutes
+- Generate 4-6 main exercises that users will cycle through repeatedly
+- Choose work intervals (30-60 seconds per exercise) that allow 3-5 complete rounds in ${duration} minutes
+- Example: For 15 minutes with 5 exercises at 45s each = ~3.75 min per round = 4 complete rounds
+- Example: For 20 minutes with 6 exercises at 40s each = 4 min per round = 5 complete rounds
+- Calculate: (duration × 60) / (number of exercises × seconds per exercise) = rounds`,
   };
 
   return rules[framework] || '';
@@ -242,10 +263,14 @@ CRITICAL RULES - READ CAREFULLY:
    - The framework has been selected: ${framework.toUpperCase()}
    - Follow the rules for this framework EXACTLY
 
-2. DURATION CALCULATION (THIS IS NON-NEGOTIABLE):
+2. DURATION MATCHING (THIS IS NON-NEGOTIABLE):
    - User requested duration: ${duration} minutes = ${parseInt(duration) * 60} seconds
-   - The generated workout MUST fit within this time frame
-   - Calculate intervals and rounds to match this exact duration
+   - The generated workout MUST EXACTLY match this duration
+   - DO NOT override the user's requested duration for any reason
+   - For EMOM: Generate exactly ${duration} main exercises (one per minute)
+   - For AMRAP/Circuit: Choose work intervals so the total workout = ${duration} minutes
+   - For Ladder: Scale the ladder range and exercise count to fit ${duration} minutes
+   - The framework must adapt TO the duration, NOT the other way around
 
 3. MUSCLE GROUP MATCHING:
    - If user specified muscle groups (e.g., "legs", "abs & core"), ALL main exercises MUST target those areas
@@ -317,10 +342,15 @@ ${muscleGroupRequirement}
 ${constraintNote}
 
 CRITICAL REQUIREMENTS:
-1. ${muscleGroupRequirement} - DO NOT include unrelated exercises
-2. Structure exercises so the total workout time = ${duration} minutes (including warmup/cooldown estimates of ~3-4 min total)
+1. DURATION MUST BE EXACTLY ${duration} MINUTES - This is the user's explicit request and cannot be changed
+   - For EMOM: Generate ${duration} main exercises (one per minute = ${duration} rounds)
+   - For AMRAP: Timer runs for ${duration} minutes, generate 4-6 exercises users cycle through
+   - For Circuit: Timer runs for ${duration} minutes, choose intervals allowing 3-5 rounds
+   - For Ladder: Scale pattern and exercise count to complete in ${duration} minutes
+   - Warmup/cooldown should be ~3-4 minutes total, main workout fills remaining time
+2. ${muscleGroupRequirement} - DO NOT include unrelated exercises
 3. If bodyweight only, do NOT include exercises requiring equipment
-4. Create 2-3 warmup exercises, 4-6 main exercises, 2-3 cooldown stretches
+4. Create 2-3 warmup exercises, appropriate number of main exercises (see framework rules), 2-3 cooldown stretches
 5. All exercises must be safe and achievable for "${fitnessLevel}" fitness level
 6. MATCH THE REQUESTED MUSCLE GROUPS EXACTLY
 

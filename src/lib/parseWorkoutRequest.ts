@@ -72,11 +72,19 @@ export function parseWorkoutRequest(input: string): ParsedWorkoutRequest {
  * Default to 10 minutes if not found
  */
 function extractDuration(text: string): number {
-  // Match patterns like "10 minutes", "10-min", "10min", "for 10 mins"
-  const match = text.match(/(?:for\s+)?(\d+)\s*(?:-)?(?:minutes?|mins?|min)/i);
+  // Match patterns like:
+  // - "10 minutes", "10 min", "10mins", "10min"
+  // - "10-minute", "10-min"
+  // - "for 10 minutes", "for 10 min"
+  // - "10 minute workout"
+  const match = text.match(/(?:for\s+)?(\d+)\s*-?\s*(?:minutes?|mins?|min)(?:\s+workout)?/i);
 
   if (match && match[1]) {
-    return parseInt(match[1], 10);
+    const duration = parseInt(match[1], 10);
+    // Sanity check: duration should be between 1 and 120 minutes
+    if (duration > 0 && duration <= 120) {
+      return duration;
+    }
   }
 
   // Default to 10 minutes
