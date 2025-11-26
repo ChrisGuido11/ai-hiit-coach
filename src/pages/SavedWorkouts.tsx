@@ -24,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import BottomNav from "@/components/BottomNav";
 
 interface SavedWorkout {
   id: string;
@@ -289,6 +290,9 @@ const SavedWorkouts = () => {
             ))}
           </div>
         </div>
+
+        {/* Bottom Navigation */}
+        <BottomNav />
       </div>
     );
   }
@@ -337,6 +341,9 @@ const SavedWorkouts = () => {
             </Button>
           </div>
         </div>
+
+        {/* Bottom Navigation */}
+        <BottomNav />
       </div>
     );
   }
@@ -385,6 +392,9 @@ const SavedWorkouts = () => {
             </Button>
           </div>
         </div>
+
+        {/* Bottom Navigation */}
+        <BottomNav />
       </div>
     );
   }
@@ -542,6 +552,9 @@ const SavedWorkouts = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Bottom Navigation */}
+      <BottomNav />
     </div>
   );
 };
