@@ -55,13 +55,13 @@ const Splash = () => {
           </div>
         </div>
         <div>
-          <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-2">
-            HIIT
+          <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6">
+            AI HIIT Coach
           </h1>
-          <h2 className="text-5xl md:text-6xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            Coach
-          </h2>
-          <p className="text-muted-foreground mt-4 text-sm md:text-base">
+          <div className="flex justify-center mb-6">
+            <div className="h-1.5 w-48 bg-gradient-primary rounded-full"></div>
+          </div>
+          <p className="text-muted-foreground text-sm md:text-base">
             AI-powered HIIT training for any level
           </p>
         </div>
