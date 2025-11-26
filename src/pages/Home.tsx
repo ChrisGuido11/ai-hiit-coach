@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Zap, Clock, Repeat, TrendingUp, Bookmark, User, Dumbbell, Sparkles, Send } from "lucide-react";
+import { ArrowRight, Zap, Clock, Repeat, TrendingUp, Bookmark, User, Dumbbell, Sparkles, Send, Activity } from "lucide-react";
 import { useTypingAnimation } from "@/hooks/useTypingAnimation";
 
 const frameworks = [
