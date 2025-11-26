@@ -31,10 +31,10 @@ const frameworkDetails: Record<string, { fullName: string; description: string; 
     description: "Complete as many rounds of the exercise circuit as possible within the time limit, maintaining good form throughout.",
     benefits: "Maximizes workout density, improves work capacity, and provides measurable progress tracking session to session."
   },
-  circuit: {
-    fullName: "Circuit Training",
-    description: "Move through a series of exercises with minimal rest between stations, completing multiple rounds of the full circuit.",
-    benefits: "Provides full-body conditioning, keeps heart rate elevated, and efficiently combines strength and cardio training."
+  ladder: {
+    fullName: "Ladder Workout",
+    description: "Progressive rep scheme where you increase or decrease reps each round. Complete all exercises at the same rep count before moving to the next round.",
+    benefits: "Tests muscular endurance and mental toughness while providing built-in rest as difficulty changes. Great for tracking progress."
   }
 };
 
@@ -228,6 +228,14 @@ const Workout = () => {
       });
     } else if (frameworkKey === "amrap") {
       navigate("/workout/amrap/timer", {
+        state: {
+          workout: currentWorkout,
+          workoutId,
+          framework: frameworkKey,
+        },
+      });
+    } else if (frameworkKey === "ladder") {
+      navigate("/workout/ladder/timer", {
         state: {
           workout: currentWorkout,
           workoutId,
