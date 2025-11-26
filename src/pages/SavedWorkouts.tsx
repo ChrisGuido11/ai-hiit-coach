@@ -156,7 +156,7 @@ const SavedWorkouts = () => {
 
       if (fetchError) throw fetchError;
 
-      setWorkouts((data as SavedWorkout[]) || []);
+      setWorkouts((data as unknown as SavedWorkout[]) || []);
     } catch (err) {
       console.error("Failed to fetch saved workouts:", err);
       setError(true);
