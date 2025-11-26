@@ -24,7 +24,7 @@ export function extractWorkoutMetadata(
     case "amrap":
       return extractAMRAPMetadata(workout, workoutDuration);
     case "ladder":
-      return extractLadderMetadata(workout);
+      return extractLadderMetadata(workout, workoutDuration);
     case "circuit":
       return extractCircuitMetadata(workout, workoutDuration);
     case "hiit":
@@ -61,82 +61,108 @@ function extractTabataMetadata(workout: GeneratedWorkout): WorkoutMetadata {
 
   return {
     duration: `${totalMinutes} minutes`,
-    rounds: "8 rounds (Tabata)"
+    rounds: "8 rounds • Tabata"
   };
 }
 
 function extractEMOMMetadata(workout: GeneratedWorkout, workoutDuration?: string): WorkoutMetadata {
-  // EMOM: Complete reps at start of each minute, repeat for duration
-  // Each exercise is typically 10 reps or similar
-  // Display duration and reps-based structure
+  // EMOM: Every Minute On the Minute
+  // Number of rounds = number of minutes (1 round per minute)
 
-  const duration = workoutDuration ? `${workoutDuration} minutes` : "Custom duration";
-  const exerciseCount = workout.main.length;
+  const durationMinutes = workoutDuration ? parseInt(workoutDuration) : 10;
+  const duration = `${durationMinutes} minutes`;
 
-  return {
-    duration,
-    rounds: `${exerciseCount}-exercise circuit (EMOM)`
-  };
+  // For EMOM, each minute is 1 round
+  const rounds = `${durationMinutes} rounds • EMOM`;
+
+  return { duration, rounds };
 }
 
 function extractAMRAPMetadata(workout: GeneratedWorkout, workoutDuration?: string): WorkoutMetadata {
   // AMRAP: As many rounds as possible in the time limit
-  // The actual duration comes from user preferences
+  // Rounds are unknown ahead of time
 
-  const duration = workoutDuration ? `${workoutDuration} minutes` : "Custom duration";
-  const exerciseCount = workout.main.length;
+  const durationMinutes = workoutDuration ? parseInt(workoutDuration) : 10;
+  const duration = `${durationMinutes} minutes`;
+  const rounds = "AMRAP circuit";
 
-  return {
-    duration,
-    rounds: `${exerciseCount}-exercise circuit (AMRAP)`
-  };
+  return { duration, rounds };
 }
 
-function extractLadderMetadata(workout: GeneratedWorkout): WorkoutMetadata {
+function extractLadderMetadata(workout: GeneratedWorkout, workoutDuration?: string): WorkoutMetadata {
   // Ladder: Progressive rep scheme
   // Extract the ladder pattern from the duration string
   // e.g., "Ladder: 1→10 ascending, For Time" → "10 rounds"
 
   if (workout.main.length === 0) {
-    return { duration: "Custom duration", rounds: "Ladder" };
+    const duration = workoutDuration ? `${workoutDuration} minutes` : "Custom duration";
+    return { duration, rounds: "Ladder" };
   }
 
   const durationStr = workout.main[0].duration;
-  const match = durationStr.match(/Ladder:\s*(\d+)→(\d+)/);
+  const match = durationStr.match(/Ladder:\s*(\d+)→(\d+)(?:→(\d+))?/);
+
+  const durationMinutes = workoutDuration ? parseInt(workoutDuration) : 12;
+  const duration = `${durationMinutes} minutes`;
 
   if (match) {
     const start = parseInt(match[1]);
     const end = parseInt(match[2]);
-    const rounds = end - start + 1;
+    const third = match[3] ? parseInt(match[3]) : null;
+
+    // For pyramid (1→5→1), count total rounds
+    let roundCount;
+    if (third !== null) {
+      // Pyramid: 1→5→1 = 9 rounds (1,2,3,4,5,4,3,2,1)
+      roundCount = (end - start) * 2 + 1;
+    } else {
+      // Ascending or descending: just the difference + 1
+      roundCount = Math.abs(end - start) + 1;
+    }
 
     return {
-      duration: "Custom duration",
-      rounds: `${rounds} rounds (Ladder)`
+      duration,
+      rounds: `${roundCount} rounds • Ladder`
     };
   }
 
-  return { duration: "Custom duration", rounds: "Ladder" };
+  return { duration, rounds: "Ladder" };
 }
 
 function extractCircuitMetadata(workout: GeneratedWorkout, workoutDuration?: string): WorkoutMetadata {
   // Circuit: Multiple exercises with minimal rest
-  const duration = workoutDuration ? `${workoutDuration} minutes` : "Custom duration";
+  // Calculate estimated rounds based on exercise count and duration
+
+  const durationMinutes = workoutDuration ? parseInt(workoutDuration) : 15;
+  const duration = `${durationMinutes} minutes`;
   const exerciseCount = workout.main.length;
+
+  // Estimate: If each exercise is ~30-45 seconds, plus transitions
+  // Approximate time per round = exerciseCount * 40 seconds
+  const secondsPerRound = exerciseCount * 40;
+  const estimatedRounds = Math.round((durationMinutes * 60) / secondsPerRound);
 
   return {
     duration,
-    rounds: `${exerciseCount}-exercise circuit`
+    rounds: `${estimatedRounds} rounds • Circuit`
   };
 }
 
 function extractHIITMetadata(workout: GeneratedWorkout, workoutDuration?: string): WorkoutMetadata {
   // HIIT: High-intensity intervals
-  const duration = workoutDuration ? `${workoutDuration} minutes` : "Custom duration";
+  // Typically 40s work / 20s rest = 60s per exercise
+
+  const durationMinutes = workoutDuration ? parseInt(workoutDuration) : 15;
+  const duration = `${durationMinutes} minutes`;
   const exerciseCount = workout.main.length;
+
+  // Estimate rounds: if 60s per exercise, how many complete rounds in duration?
+  const secondsPerRound = exerciseCount * 60;
+  const estimatedRounds = Math.round((durationMinutes * 60) / secondsPerRound);
 
   return {
     duration,
-    rounds: `${exerciseCount}-exercise HIIT`
+    rounds: `${estimatedRounds} rounds • HIIT`
   };
 }
 

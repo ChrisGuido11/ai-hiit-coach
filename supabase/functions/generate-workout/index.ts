@@ -6,26 +6,30 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const frameworkRules: Record<string, string> = {
-  tabata: `Tabata Protocol:
+function getFrameworkRules(framework: string, duration: string): string {
+  const rules: Record<string, string> = {
+    tabata: `Tabata Protocol:
 - 20 seconds work, 10 seconds rest
 - 8 rounds per exercise (4 minutes total)
 - DURATION FORMAT: Must be exactly "20s work / 10s rest"
 - Choose explosive, high-intensity exercises`,
 
-  emom: `EMOM (Every Minute On the Minute):
+    emom: `EMOM (Every Minute On the Minute):
 - Complete reps at start of each minute
 - Rest for remainder of minute
 - DURATION FORMAT: Must be "X reps" (e.g., "10 reps", "12 reps")
-- Reps achievable in 30-40 seconds`,
+- Reps achievable in 30-40 seconds
+- IMPORTANT: For a ${duration}-minute EMOM, generate exactly ${duration} rounds
+- Example: 10-min EMOM = 10 rounds (1 minute per round)`,
 
-  amrap: `AMRAP (As Many Rounds As Possible):
-- Complete as many rounds as possible
+    amrap: `AMRAP (As Many Rounds As Possible):
+- Complete as many rounds as possible in ${duration} minutes
 - Minimal rest between exercises
 - DURATION FORMAT: Must be "X reps" (e.g., "10 reps", "15 reps")
-- Mix upper/lower body and cardio`,
+- Mix upper/lower body and cardio
+- Choose rep counts that allow 4-6 complete rounds in ${duration} minutes`,
 
-  ladder: `Ladder Workout:
+    ladder: `Ladder Workout:
 
 CRITICAL RULES FOR LADDER WORKOUTS:
 1. Choose ONLY ONE ladder type for the entire workout
@@ -85,17 +89,21 @@ Generate 2-3 exercises that:
 - Are safe at the rep ranges chosen
 - ALL use the SAME ladder pattern (CRITICAL!)`,
 
-  hiit: `HIIT Format:
+    hiit: `HIIT Format:
 - High intensity intervals
 - Work 30-45 seconds, rest 15-30 seconds
 - DURATION FORMAT: Must be "Xs work / Xs rest" (e.g., "40s work / 20s rest")`,
 
-  circuit: `Circuit Training:
+    circuit: `Circuit Training:
 - Move through exercises with minimal rest
-- Complete multiple rounds
+- Complete multiple rounds in ${duration} minutes
 - DURATION FORMAT: Must be "X seconds" (e.g., "45 seconds", "30 seconds")
-- Balance push/pull and upper/lower movements`
-};
+- Balance push/pull and upper/lower movements
+- Choose exercise durations to allow 3-5 complete rounds in ${duration} minutes`,
+  };
+
+  return rules[framework] || '';
+}
 
 const fallbackWorkouts: Record<string, any> = {
   tabata: {
@@ -231,9 +239,8 @@ serve(async (req) => {
 CRITICAL RULES - READ CAREFULLY:
 
 1. FRAMEWORK SELECTION:
-   - If user EXPLICITLY mentioned a framework (e.g., "tabata", "EMOM", "AMRAP", "ladder"), USE THAT FRAMEWORK
-   - If NO explicit framework was mentioned, CHOOSE the framework that best fits the requested duration and style
-   - NEVER default to Tabata or any framework unless requested
+   - The framework has been selected: ${framework.toUpperCase()}
+   - Follow the rules for this framework EXACTLY
 
 2. DURATION CALCULATION (THIS IS NON-NEGOTIABLE):
    - User requested duration: ${duration} minutes = ${parseInt(duration) * 60} seconds
@@ -246,7 +253,7 @@ CRITICAL RULES - READ CAREFULLY:
    - Example: If user says "10 minutes abs & core", generate ONLY core exercises (crunches, planks, bicycle crunches, etc.)
    - NEVER include unrelated exercises
 
-${frameworkRules[framework] || ''}
+${getFrameworkRules(framework, duration)}
 
 CRITICAL FORMATTING RULES:
 
