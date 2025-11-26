@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, RefreshCw, Check, Loader2 } from "lucide-react";
 import { GeneratedWorkout, Exercise, generateReplacementExercise } from "@/lib/generateWorkout";
 import { extractWorkoutMetadata } from "@/lib/workoutMetadata";
+import { parseWorkoutRequest } from "@/lib/parseWorkoutRequest";
 import { supabase } from "@/integrations/supabase/client";
 import {
   AlertDialog,
@@ -102,6 +103,47 @@ const shortenGoal = (goal: string): string => {
   }
 
   return shortened;
+};
+
+// Helper function to extract workout focus (muscle groups) from user input
+// Removes duration and returns only the focus area
+const extractWorkoutFocus = (goal: string): string => {
+  if (!goal) return 'HIIT Workout';
+
+  // Parse the request to extract muscle groups
+  const parsed = parseWorkoutRequest(goal);
+
+  // If we have muscle groups, format them nicely
+  if (parsed.muscleGroups.length > 0) {
+    // Capitalize each muscle group properly
+    const formatted = parsed.muscleGroups
+      .map(group => {
+        // Capitalize each word in the group
+        return group.split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+      })
+      .join(' & ');
+
+    return formatted;
+  }
+
+  // Fallback: try to extract focus from the original goal by removing duration
+  // Remove common duration patterns
+  let focus = goal
+    .replace(/\b\d+\s*-?\s*(?:minute|minutes|min|mins)\b/gi, '')
+    .replace(/\bfor\s+/gi, '')
+    .replace(/\band\b/gi, '&')
+    .trim();
+
+  if (focus) {
+    // Capitalize first letter of each word
+    return focus.split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  return 'HIIT Workout';
 };
 
 const Workout = () => {
@@ -379,7 +421,7 @@ const Workout = () => {
         </Button>
         <div className="flex flex-col items-center gap-1">
           <h1 className="text-2xl font-bold text-foreground capitalize">
-            {locationState?.goal ? shortenGoal(locationState.goal) : frameworkKey}
+            {locationState?.goal ? extractWorkoutFocus(locationState.goal) : frameworkKey}
           </h1>
           <p className="text-sm text-muted-foreground font-medium">
             {metadata.duration} • {metadata.rounds}
