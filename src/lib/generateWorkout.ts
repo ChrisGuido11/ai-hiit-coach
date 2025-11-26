@@ -85,8 +85,8 @@ const fallbackWorkouts: Record<string, GeneratedWorkout> = {
       { name: "Jumping Jacks", duration: "45 seconds", instructions: "Jump feet wide while swinging arms overhead" }
     ],
     main: [
-      { name: "Push-ups", duration: "Variable reps", instructions: "Lower chest to floor, push up with full arm extension" },
-      { name: "Squats", duration: "Variable reps", instructions: "Feet shoulder-width apart, squat down until thighs parallel to ground" }
+      { name: "Push-ups", duration: "Ladder: 1→10 ascending, For Time", instructions: "Lower chest to floor, push up with full arm extension" },
+      { name: "Squats", duration: "Ladder: 1→10 ascending, For Time", instructions: "Feet shoulder-width apart, squat down until thighs parallel to ground" }
     ],
     cooldown: [
       { name: "Child's Pose", duration: "60 seconds", instructions: "Kneel and sit back on heels, extend arms forward on floor" },

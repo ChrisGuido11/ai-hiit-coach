@@ -78,15 +78,71 @@ const getSideAnnouncement = (side: SideType, bodyPart: BodyPartType): string => 
 };
 
 // Parse ladder metadata from AI-generated workout
-// For now, use default ascending 1-10, For Time mode
-// TODO: Eventually AI will provide this metadata in workout object
+// Parses duration field from first main exercise
+// Expected format: "Ladder: 1→10 ascending, For Time" or "Ladder: 10→1 descending, AMRAP 10:00"
 const parseLadderMetadata = (workout: GeneratedWorkout): LadderMetadata => {
-  // Default ladder configuration
-  const ladderType: LadderType = "ascending";
-  const startReps = 1;
-  const endReps = 10;
-  const timerMode: TimerMode = "forTime";
-  const duration = 600; // 10 minutes for AMRAP
+  // Default values
+  let ladderType: LadderType = "ascending";
+  let startReps = 1;
+  let endReps = 10;
+  let timerMode: TimerMode = "forTime";
+  let duration = 600; // 10 minutes for AMRAP
+
+  // Try to parse from first main exercise duration
+  if (workout.main && workout.main.length > 0) {
+    const firstExercise = workout.main[0];
+    const durationStr = firstExercise.duration || "";
+
+    console.log('Parsing ladder metadata from:', durationStr);
+
+    // Pattern: "Ladder: 1→10 ascending, For Time"
+    // Pattern: "Ladder: 10→1 descending, AMRAP 10:00"
+    // Pattern: "Ladder: 1→5→1 pyramid, For Time"
+
+    if (durationStr.includes('Ladder:')) {
+      // Extract ladder type
+      if (durationStr.toLowerCase().includes('ascending')) {
+        ladderType = "ascending";
+      } else if (durationStr.toLowerCase().includes('descending')) {
+        ladderType = "descending";
+      } else if (durationStr.toLowerCase().includes('pyramid')) {
+        ladderType = "pyramid";
+      }
+
+      // Extract rep range
+      // Look for pattern like "1→10" or "1→5→1"
+      const arrowMatch = durationStr.match(/(\d+)→(\d+)(?:→(\d+))?/);
+      if (arrowMatch) {
+        startReps = parseInt(arrowMatch[1], 10);
+        endReps = parseInt(arrowMatch[2], 10);
+
+        // If pyramid has explicit return (1→5→1), use it
+        if (arrowMatch[3]) {
+          ladderType = "pyramid";
+        }
+      }
+
+      // Extract timer mode
+      if (durationStr.toLowerCase().includes('amrap')) {
+        timerMode = "amrap";
+
+        // Extract duration if present (format: "10:00" or "10 min")
+        const timeMatch = durationStr.match(/(\d+):(\d+)/);
+        if (timeMatch) {
+          const mins = parseInt(timeMatch[1], 10);
+          const secs = parseInt(timeMatch[2], 10);
+          duration = mins * 60 + secs;
+        } else {
+          const minMatch = durationStr.match(/(\d+)\s*min/i);
+          if (minMatch) {
+            duration = parseInt(minMatch[1], 10) * 60;
+          }
+        }
+      } else if (durationStr.toLowerCase().includes('for time')) {
+        timerMode = "forTime";
+      }
+    }
+  }
 
   // Generate sequence based on type
   const sequence: number[] = [];
@@ -108,6 +164,8 @@ const parseLadderMetadata = (workout: GeneratedWorkout): LadderMetadata => {
       sequence.push(i);
     }
   }
+
+  console.log('Parsed ladder metadata:', { ladderType, sequence, timerMode, duration });
 
   return {
     ladderType,
