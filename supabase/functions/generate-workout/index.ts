@@ -212,7 +212,7 @@ serve(async (req) => {
   }
 
   try {
-    const { framework, goal, fitnessLevel, equipment, duration } = await req.json();
+    const { framework, goal, parsedRequest, fitnessLevel, equipment, duration } = await req.json();
 
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
@@ -226,13 +226,25 @@ serve(async (req) => {
       );
     }
 
-    const systemPrompt = `You are an expert fitness coach who interprets natural language workout requests and generates precise, effective workouts.
+    const systemPrompt = `You are an expert fitness coach who interprets natural language workout requests and generates precise, effective workouts that EXACTLY match the user's request.
 
-ALWAYS FOLLOW THESE STEPS:
-1. PARSE the user's request to extract: duration, target muscles, intensity level, equipment
-2. CHOOSE the best protocol BASED ON THE REQUEST (consider user preference AND duration)
-3. GENERATE exercises that DIRECTLY match the target muscles
-4. ENSURE total workout time matches the requested duration
+CRITICAL RULES - READ CAREFULLY:
+
+1. FRAMEWORK SELECTION:
+   - If user EXPLICITLY mentioned a framework (e.g., "tabata", "EMOM", "AMRAP", "ladder"), USE THAT FRAMEWORK
+   - If NO explicit framework was mentioned, CHOOSE the framework that best fits the requested duration and style
+   - NEVER default to Tabata or any framework unless requested
+
+2. DURATION CALCULATION (THIS IS NON-NEGOTIABLE):
+   - User requested duration: ${duration} minutes = ${parseInt(duration) * 60} seconds
+   - The generated workout MUST fit within this time frame
+   - Calculate intervals and rounds to match this exact duration
+
+3. MUSCLE GROUP MATCHING:
+   - If user specified muscle groups (e.g., "legs", "abs & core"), ALL main exercises MUST target those areas
+   - Example: If user says "10 minutes legs", generate ONLY leg exercises (squats, lunges, step-ups, etc.)
+   - Example: If user says "10 minutes abs & core", generate ONLY core exercises (crunches, planks, bicycle crunches, etc.)
+   - NEVER include unrelated exercises
 
 ${frameworkRules[framework] || ''}
 
@@ -272,18 +284,38 @@ Return ONLY valid JSON (no markdown):
   "cooldown": [{"name": "Exercise", "duration": "30 seconds", "instructions": "One sentence form cue"}]
 }`;
 
-    const userPrompt = `Generate a ${framework.toUpperCase()} workout with these parameters:
+    // Build requirements from parsed request
+    const muscleGroupRequirement = parsedRequest?.muscleGroups?.length > 0
+      ? `ALL main exercises MUST target: ${parsedRequest.muscleGroups.join(', ')}`
+      : 'Generate a balanced full-body workout';
+
+    const frameworkRequirement = parsedRequest?.explicitFramework
+      ? `User explicitly requested: ${parsedRequest.explicitFramework.toUpperCase()}`
+      : `Choose the best framework that fits ${duration}-minute duration`;
+
+    const constraintNote = parsedRequest?.constraints?.length > 0
+      ? `Constraints: ${parsedRequest.constraints.join(', ')}`
+      : '';
+
+    const userPrompt = `Generate a ${framework.toUpperCase()} workout with these EXACT parameters:
+
+USER'S REQUEST: "${goal}"
+
+PARAMETERS:
+- Total Duration: ${duration} minutes (EXACT - the workout must fit this duration)
 - Fitness Level: ${fitnessLevel}
 - Equipment Available: ${equipment?.join(', ') || 'bodyweight only'}
-- Total Duration: ${duration} minutes
-${goal ? `- User's Request: "${goal}"` : '- User Request: Generic workout'}
+${frameworkRequirement}
+${muscleGroupRequirement}
+${constraintNote}
 
-REQUIREMENTS:
-1. If user specified a body part/goal (e.g., "abs and core", "legs"), ALL main exercises must target that area
-2. If user specified duration, structure the workout to fit that timeframe
-3. If user has no equipment restrictions, use only bodyweight
-4. Exercise selection must align with the user's specific request - NO unrelated exercises
-5. Create 2-3 warmup exercises, 4-6 main exercises, 2-3 cooldown stretches
+CRITICAL REQUIREMENTS:
+1. ${muscleGroupRequirement} - DO NOT include unrelated exercises
+2. Structure exercises so the total workout time = ${duration} minutes (including warmup/cooldown estimates of ~3-4 min total)
+3. If bodyweight only, do NOT include exercises requiring equipment
+4. Create 2-3 warmup exercises, 4-6 main exercises, 2-3 cooldown stretches
+5. All exercises must be safe and achievable for "${fitnessLevel}" fitness level
+6. MATCH THE REQUESTED MUSCLE GROUPS EXACTLY
 
 Return ONLY the JSON object.`;
 
