@@ -188,7 +188,10 @@ const Home = () => {
           <button className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-primary">
             <Activity className="w-5 h-5 text-white" />
           </button>
-          <button className="flex items-center justify-center p-3">
+          <button
+            onClick={() => navigate('/saved-workouts')}
+            className="flex items-center justify-center p-3 active:scale-95 transition-transform"
+          >
             <Bookmark className="w-5 h-5 text-white/55" />
           </button>
           <button className="flex items-center justify-center p-3">

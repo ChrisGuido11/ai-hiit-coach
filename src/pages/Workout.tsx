@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, RefreshCw, Check, Loader2 } from "lucide-react";
@@ -74,6 +74,25 @@ const Workout = () => {
     locationState?.workout || mockWorkout
   );
   const workoutId = locationState?.workoutId;
+
+  // Check if workout is already saved
+  useEffect(() => {
+    const checkIfSaved = async () => {
+      if (workoutId) {
+        const { data } = await supabase
+          .from('workouts')
+          .select('is_saved')
+          .eq('id', workoutId)
+          .single();
+
+        if (data?.is_saved) {
+          setIsSaved(true);
+        }
+      }
+    };
+
+    checkIfSaved();
+  }, [workoutId]);
 
   // State for exercise replacement
   const [loadingExerciseIndex, setLoadingExerciseIndex] = useState<{
@@ -248,12 +267,53 @@ const Workout = () => {
     }
   };
 
-  const handleSaveWorkout = () => {
-    // If workout was already saved during generation, just update UI
-    if (workoutId) {
-      console.log("Workout already saved with ID:", workoutId);
+  const handleSaveWorkout = async () => {
+    try {
+      // If workout was already saved during generation, mark it as explicitly saved
+      if (workoutId) {
+        const { error } = await supabase
+          .from('workouts')
+          .update({ is_saved: true })
+          .eq('id', workoutId);
+
+        if (error) {
+          console.error("Failed to save workout:", error);
+        } else {
+          console.log("Workout marked as saved:", workoutId);
+          setIsSaved(true);
+        }
+      } else {
+        // If no workoutId, create a new saved workout
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          console.error("No user logged in");
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('workouts')
+          .insert([{
+            user_id: user.id,
+            framework_type: frameworkKey,
+            exercises: currentWorkout as any,
+            completed: false,
+            is_saved: true,
+            order: 0
+          }])
+          .select("id")
+          .single();
+
+        if (error) {
+          console.error("Failed to save workout:", error);
+        } else {
+          console.log("New workout saved with ID:", data?.id);
+          setIsSaved(true);
+        }
+      }
+    } catch (err) {
+      console.error("Error saving workout:", err);
     }
-    setIsSaved(true);
   };
 
   return (
