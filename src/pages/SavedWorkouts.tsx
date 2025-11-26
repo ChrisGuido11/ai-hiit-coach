@@ -29,13 +29,14 @@ interface SavedWorkout {
   id: string;
   user_id: string;
   framework_type: string;
+  name: string | null;
   created_at: string;
+  order: number;
   exercises: {
     warmup: Exercise[];
     main: Exercise[];
     cooldown: Exercise[];
   };
-  completed: boolean;
 }
 
 interface Exercise {
@@ -149,12 +150,13 @@ const SavedWorkouts = () => {
         .from("workouts")
         .select("*")
         .eq("user_id", user.id)
-        .eq("completed", false)
+        .eq("is_saved", true)
+        .order("order", { ascending: true })
         .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;
 
-      setWorkouts((data as any[]) || []);
+      setWorkouts((data as SavedWorkout[]) || []);
     } catch (err) {
       console.error("Failed to fetch saved workouts:", err);
       setError(true);
@@ -230,7 +232,22 @@ const SavedWorkouts = () => {
 
     setDraggedIndex(null);
 
-    // Note: order column doesn't exist in database, so we just maintain local state
+    // Save new order to database
+    try {
+      const updates = workouts.map((workout, index) => ({
+        id: workout.id,
+        order: index,
+      }));
+
+      for (const update of updates) {
+        await supabase
+          .from("workouts")
+          .update({ order: update.order })
+          .eq("id", update.id);
+      }
+    } catch (err) {
+      console.error("Failed to save workout order:", err);
+    }
   };
 
   const handleGenerateNew = () => {
@@ -351,8 +368,8 @@ const SavedWorkouts = () => {
         {/* Empty State */}
         <div className="flex-1 flex items-center justify-center px-6">
           <div className="text-center max-w-[280px]">
-            <div className="w-[120px] h-[120px] mx-auto mb-6 rounded-[28px] bg-gradient-to-br from-orange-400/20 to-pink-400/20 backdrop-blur-sm border-2 border-white/20 flex items-center justify-center shadow-[0_8px_32px_rgba(251,146,60,0.15)]">
-              <Zap className="w-14 h-14 text-orange-500" />
+            <div className="w-[120px] h-[120px] mx-auto mb-6 rounded-3xl bg-muted/30 flex items-center justify-center">
+              <Bookmark className="w-12 h-12 text-muted-foreground opacity-30" />
             </div>
             <h2 className="text-[22px] font-semibold text-foreground mb-3">
               No Saved Workouts Yet
@@ -362,7 +379,7 @@ const SavedWorkouts = () => {
             </p>
             <Button
               onClick={handleGenerateNew}
-              className="rounded-full h-12 px-8 bg-gradient-primary text-white font-semibold shadow-[0_10px_30px_rgba(254,173,99,0.3)] active:scale-95 transition-transform"
+              className="rounded-full h-12 px-8 bg-gradient-primary text-white font-semibold shadow-[0_10px_30px_rgba(254,173,99,0.3)]"
             >
               Generate Workout
             </Button>
@@ -446,7 +463,7 @@ const SavedWorkouts = () => {
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <h3 className="text-[18px] font-bold text-foreground mb-1 capitalize">
-                    {workout.framework_type}
+                    {workout.name || workout.framework_type}
                   </h3>
                   <p className="text-[14px] font-medium text-muted-foreground mb-1">
                     {getWorkoutDetails(workout)}

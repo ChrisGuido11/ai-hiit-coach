@@ -14,17 +14,15 @@ function getFrameworkRules(framework: string, duration: string): string {
 - DURATION FORMAT: Must be exactly "20s work / 10s rest"
 - Choose explosive, high-intensity exercises`,
 
-emom: `EMOM (Every Minute On the Minute):
+    emom: `EMOM (Every Minute On the Minute):
 - Complete reps at start of each minute
 - Rest for remainder of minute
 - DURATION FORMAT: Must be "X reps" (e.g., "10 reps", "12 reps")
 - Reps achievable in 30-40 seconds
-- ABSOLUTE REQUIREMENT: For a ${duration}-minute EMOM, generate EXACTLY ${duration} main exercises
-- EXAMPLE: 15-min EMOM = EXACTLY 15 exercises in the main section (one exercise per minute)
-- EXAMPLE: 10-min EMOM = EXACTLY 10 exercises in the main section (one exercise per minute)
-- EXAMPLE: 7-min EMOM = EXACTLY 7 exercises in the main section (one exercise per minute)
-- DO NOT reduce the number of exercises - ${duration} minutes MUST equal ${duration} exercises
-- Each exercise takes 1 minute (reps + rest), so ${duration} minutes = ${duration} exercises`,
+- CRITICAL: For a ${duration}-minute EMOM, generate EXACTLY ${duration} main exercises (rounds)
+- Example: 15-min EMOM = 15 exercises in the main section (1 minute per exercise)
+- Example: 7-min EMOM = 7 exercises in the main section
+- DO NOT reduce the number of exercises - ${duration} minutes means ${duration} exercises`,
 
     amrap: `AMRAP (As Many Rounds As Possible):
 - Complete as many rounds of the circuit as possible in ${duration} minutes
@@ -261,16 +259,12 @@ CRITICAL RULES - READ CAREFULLY:
    - Follow the rules for this framework EXACTLY
 
 2. DURATION CALCULATION (THIS IS NON-NEGOTIABLE):
-   - User requested MAIN workout duration: ${duration} minutes EXACTLY
-   - THIS ${duration} MINUTES IS FOR THE MAIN WORKOUT SECTION ONLY
-   - Warmup exercises are ADDITIONAL (~2 minutes, NOT counted toward ${duration} minutes)
-   - Cooldown stretches are ADDITIONAL (~2 minutes, NOT counted toward ${duration} minutes)
-   - CRITICAL EXAMPLE: If user wants 15 minutes, generate:
-     * Warmup: ~2 minutes (separate)
-     * MAIN WORKOUT: EXACTLY 15 minutes (THIS is what user requested)
-     * Cooldown: ~2 minutes (separate)
-   - NEVER reduce the main workout duration to fit warmup/cooldown
-   - The MAIN section MUST be ${duration} minutes, warmup and cooldown are extras on top
+   - User requested MAIN workout duration: ${duration} minutes = ${parseInt(duration) * 60} seconds
+   - This ${duration} minutes refers to the MAIN workout section ONLY (not including warmup or cooldown)
+   - Generate warmup exercises (~2-3 minutes total)
+   - Generate MAIN workout that lasts EXACTLY ${duration} minutes
+   - Generate cooldown stretches (~2-3 minutes total)
+   - CRITICAL: The MAIN section must be ${duration} minutes, warmup and cooldown are ADDITIONAL
 
 3. MUSCLE GROUP MATCHING:
    - If user specified muscle groups (e.g., "legs", "abs & core"), ALL main exercises MUST target those areas
@@ -390,12 +384,6 @@ Return ONLY the JSON object.`;
 
     try {
       const workout = JSON.parse(generatedText);
-      
-      // Add metadata to the workout object
-      workout.mainDurationMinutes = parseInt(duration);
-      workout.frameworkType = framework;
-      workout.muscleTargets = parsedRequest?.muscleGroups || [];
-      
       console.log('Successfully generated workout');
       return new Response(
         JSON.stringify({ workout, usedFallback: false }),
