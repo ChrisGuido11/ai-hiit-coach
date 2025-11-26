@@ -15,6 +15,8 @@ import WorkoutGeneration from "./pages/WorkoutGeneration";
 import TabataTimer from "./pages/timers/TabataTimer";
 import EMOMTimer from "./pages/timers/EMOMTimer";
 import AMRAPTimer from "./pages/timers/AMRAPTimer";
+import LadderConfig from "./pages/timers/LadderConfig";
+import LadderTimer from "./pages/timers/LadderTimer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +39,8 @@ const App = () => (
           <Route path="/workout/tabata/timer" element={<TabataTimer />} />
           <Route path="/workout/emom/timer" element={<EMOMTimer />} />
           <Route path="/workout/amrap/timer" element={<AMRAPTimer />} />
+          <Route path="/workout/ladder/config" element={<LadderConfig />} />
+          <Route path="/workout/ladder/timer" element={<LadderTimer />} />
           <Route path="/workout/:framework" element={<Workout />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

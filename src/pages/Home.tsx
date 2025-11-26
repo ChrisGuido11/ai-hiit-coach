@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Zap, Clock, Repeat, Activity, Bookmark, User, Dumbbell, Sparkles, Send } from "lucide-react";
+import { ArrowRight, Zap, Clock, Repeat, TrendingUp, Bookmark, User, Dumbbell, Sparkles, Send } from "lucide-react";
 import { useTypingAnimation } from "@/hooks/useTypingAnimation";
 
 const frameworks = [
@@ -26,10 +26,10 @@ const frameworks = [
     icon: Repeat,
   },
   {
-    id: "circuit",
-    name: "Circuit",
-    description: "Multiple exercises in sequence",
-    icon: Activity,
+    id: "ladder",
+    name: "Ladder",
+    description: "Progressive reps",
+    icon: TrendingUp,
   },
 ];
 
@@ -52,7 +52,12 @@ const Home = () => {
 
 
   const handleFrameworkClick = (frameworkId: string) => {
-    navigate('/workout/generate', { state: { framework: frameworkId } });
+    // Ladder goes directly to config, others go to AI generation
+    if (frameworkId === 'ladder') {
+      navigate('/workout/ladder/config');
+    } else {
+      navigate('/workout/generate', { state: { framework: frameworkId } });
+    }
   };
 
   const handleGoalSubmit = (e: React.FormEvent) => {
@@ -137,7 +142,7 @@ const Home = () => {
                 "bg-gradient-tabata",
                 "bg-gradient-emom",
                 "bg-gradient-amrap",
-                "bg-gradient-circuit"
+                "bg-gradient-to-br from-green-400 to-green-500"
               ];
               const glowClasses = [
                 "shadow-[0_0_32px_rgba(54,209,220,0.5)]",
