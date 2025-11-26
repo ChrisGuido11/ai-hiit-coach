@@ -18,6 +18,15 @@ import EMOMTimer from "./pages/timers/EMOMTimer";
 import AMRAPTimer from "./pages/timers/AMRAPTimer";
 import LadderConfig from "./pages/timers/LadderConfig";
 import LadderTimer from "./pages/timers/LadderTimer";
+import Profile from "./pages/Profile";
+import WorkoutHistory from "./pages/profile/WorkoutHistory";
+import MyStats from "./pages/profile/MyStats";
+import EditFitnessLevel from "./pages/profile/EditFitnessLevel";
+import EditFitnessGoals from "./pages/profile/EditFitnessGoals";
+import EditEquipment from "./pages/profile/EditEquipment";
+import VoiceCoaching from "./pages/profile/VoiceCoaching";
+import Notifications from "./pages/profile/Notifications";
+import About from "./pages/profile/About";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +53,15 @@ const App = () => (
           <Route path="/workout/ladder/config" element={<LadderConfig />} />
           <Route path="/workout/ladder/timer" element={<LadderTimer />} />
           <Route path="/workout/:framework" element={<Workout />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/workout-history" element={<WorkoutHistory />} />
+          <Route path="/profile/stats" element={<MyStats />} />
+          <Route path="/profile/fitness-level" element={<EditFitnessLevel />} />
+          <Route path="/profile/fitness-goals" element={<EditFitnessGoals />} />
+          <Route path="/profile/equipment" element={<EditEquipment />} />
+          <Route path="/profile/voice-coaching" element={<VoiceCoaching />} />
+          <Route path="/profile/notifications" element={<Notifications />} />
+          <Route path="/profile/about" element={<About />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
