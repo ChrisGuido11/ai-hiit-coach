@@ -188,7 +188,8 @@ const WorkoutGeneration = () => {
             workout,
             workoutId: savedWorkoutId,
             goal,
-            framework
+            framework,
+            workoutDuration: preferences.workout_duration
           },
           replace: true
         });
