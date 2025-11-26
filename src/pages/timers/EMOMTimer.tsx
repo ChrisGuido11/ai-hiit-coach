@@ -1861,41 +1861,41 @@ const EMOMTimer = () => {
         {/* Timer Display Area */}
         <div className="flex justify-center">
           <div className="relative flex flex-col items-center">
-            {/* Optional subtle progress ring behind timer */}
+            {/* Bold progress ring for visibility */}
             <svg
               width={ringSize}
               height={ringSize}
               className="absolute transform -rotate-90"
-              style={{ opacity: 0.3 }}
             >
-              {/* Very subtle background ring */}
+              {/* Background ring - more visible */}
               <circle
                 cx={ringSize / 2}
                 cy={ringSize / 2}
                 r={ringRadius}
                 fill="none"
                 stroke="rgba(254, 173, 99, 0.15)"
-                strokeWidth={8}
+                strokeWidth={12}
               />
-              {/* Very subtle progress ring */}
+              {/* Progress ring - bold and visible with glow */}
               <circle
                 cx={ringSize / 2}
                 cy={ringSize / 2}
                 r={ringRadius}
                 fill="none"
                 stroke="url(#progressGradient)"
-                strokeWidth={8}
+                strokeWidth={12}
                 strokeLinecap="round"
                 strokeDasharray={ringCircumference}
                 strokeDashoffset={ringStrokeDashoffset}
                 style={{
                   transition: 'stroke-dashoffset 0.3s ease-out',
+                  filter: 'drop-shadow(0 0 12px rgba(254, 173, 99, 0.4))',
                 }}
               />
               <defs>
                 <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stopColor="#FEAD63" />
-                  <stop offset="100%" stopColor="#FBCDA4" />
+                  <stop offset="100%" stopColor="#FF8C42" />
                 </linearGradient>
               </defs>
             </svg>
@@ -1925,15 +1925,15 @@ const EMOMTimer = () => {
         {/* Gap */}
         <div className="h-6" />
 
-        {/* Exercise Name Card - Dark glass for contrast */}
+        {/* Exercise Name Card - Warm dark glass for contrast */}
         {currentExercise && (
           <div
             className="max-w-md w-full mx-auto px-6 py-5 rounded-3xl"
             style={{
-              background: 'rgba(43, 45, 58, 0.95)',
+              background: 'linear-gradient(135deg, rgba(78, 72, 68, 0.95), rgba(62, 58, 56, 0.98))',
               backdropFilter: 'blur(10px)',
               WebkitBackdropFilter: 'blur(10px)',
-              boxShadow: '0 4px 24px rgba(0, 0, 0, 0.15)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.05)',
             }}
           >
             <h3 className="text-xl font-semibold text-white mb-2 text-center">
@@ -2032,13 +2032,13 @@ const EMOMTimer = () => {
           </button>
         </div>
 
-        {/* Skip Warm-up Button (conditional) - Minimal style */}
+        {/* Skip Warm-up Button (conditional) - Orange for visibility */}
         {timerState.phase === "warmup" && (
           <div className="mt-6">
             <button
               onClick={handleSkipWarmupClick}
-              className="text-sm font-medium active:opacity-70 transition-opacity"
-              style={{ color: '#8F8A84' }}
+              className="text-sm font-semibold active:opacity-70 transition-opacity"
+              style={{ color: '#FEAD63' }}
               aria-label="Skip warm-up and start main workout"
             >
               Skip Warm-up →
