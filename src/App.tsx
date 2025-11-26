@@ -12,6 +12,7 @@ import Duration from "./pages/onboarding/Duration";
 import Home from "./pages/Home";
 import Workout from "./pages/Workout";
 import WorkoutGeneration from "./pages/WorkoutGeneration";
+import SavedWorkouts from "./pages/SavedWorkouts";
 import TabataTimer from "./pages/timers/TabataTimer";
 import EMOMTimer from "./pages/timers/EMOMTimer";
 import AMRAPTimer from "./pages/timers/AMRAPTimer";
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/onboarding/duration" element={<Duration />} />
           <Route path="/home" element={<Home />} />
           <Route path="/workout/generate" element={<WorkoutGeneration />} />
+          <Route path="/saved-workouts" element={<SavedWorkouts />} />
           <Route path="/workout/tabata/timer" element={<TabataTimer />} />
           <Route path="/workout/emom/timer" element={<EMOMTimer />} />
           <Route path="/workout/amrap/timer" element={<AMRAPTimer />} />
