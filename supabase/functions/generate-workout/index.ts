@@ -19,15 +19,20 @@ function getFrameworkRules(framework: string, duration: string): string {
 - Rest for remainder of minute
 - DURATION FORMAT: Must be "X reps" (e.g., "10 reps", "12 reps")
 - Reps achievable in 30-40 seconds
-- IMPORTANT: For a ${duration}-minute EMOM, generate exactly ${duration} rounds
-- Example: 10-min EMOM = 10 rounds (1 minute per round)`,
+- CRITICAL: For a ${duration}-minute EMOM, generate EXACTLY ${duration} main exercises (rounds)
+- Example: 15-min EMOM = 15 exercises in the main section (1 minute per exercise)
+- Example: 7-min EMOM = 7 exercises in the main section
+- DO NOT reduce the number of exercises - ${duration} minutes means ${duration} exercises`,
 
     amrap: `AMRAP (As Many Rounds As Possible):
-- Complete as many rounds as possible in ${duration} minutes
+- Complete as many rounds of the circuit as possible in ${duration} minutes
 - Minimal rest between exercises
 - DURATION FORMAT: Must be "X reps" (e.g., "10 reps", "15 reps")
 - Mix upper/lower body and cardio
-- Choose rep counts that allow 4-6 complete rounds in ${duration} minutes`,
+- CRITICAL: The entire AMRAP timer runs for ${duration} minutes
+- Choose rep counts that allow 4-6 complete rounds in ${duration} minutes
+- Example: 15-min AMRAP = timer counts down from 15:00 to 0:00
+- Example: 20-min AMRAP = timer counts down from 20:00 to 0:00`,
 
     ladder: `Ladder Workout:
 
@@ -58,9 +63,17 @@ Choose appropriate pattern based on:
 - Intermediate: Medium range (1→8, 10→1, or 1→5→1)
 - Advanced: Longer range (1→10, 15→1, or 1→8→1)
 
+DURATION GUIDANCE:
+- CRITICAL: Scale the ladder pattern to fit ${duration} minutes
+- Larger ladder ranges (e.g., 1→10) take longer than smaller ranges (e.g., 1→5)
+- Adjust the ladder range and number of exercises to match ${duration} minutes
+- Example: 7-min ladder = shorter range or fewer exercises
+- Example: 15-min ladder = longer range or more exercises
+- Example: 20-min ladder = long range (1→10 or 1→8→1) with multiple exercises
+
 Timer Mode:
 - For Time: Stopwatch counts up, complete entire ladder
-- AMRAP: Countdown timer, get as far as possible
+- AMRAP: Countdown timer from ${duration} minutes, get as far as possible
 - Choose based on ladder complexity and fitness level
 
 DURATION FORMAT: Must be "Ladder: [start]→[end] [type], [mode] [duration if AMRAP]"
@@ -99,7 +112,10 @@ Generate 2-3 exercises that:
 - Complete multiple rounds in ${duration} minutes
 - DURATION FORMAT: Must be "X seconds" (e.g., "45 seconds", "30 seconds")
 - Balance push/pull and upper/lower movements
-- Choose exercise durations to allow 3-5 complete rounds in ${duration} minutes`,
+- CRITICAL: The entire circuit timer runs for ${duration} minutes
+- Choose exercise durations to allow 3-5 complete rounds in ${duration} minutes
+- Example: 15-min circuit with 5 exercises at 45s each = ~5 complete rounds
+- Example: 20-min circuit = timer counts down from 20:00 to 0:00`,
   };
 
   return rules[framework] || '';
@@ -243,9 +259,12 @@ CRITICAL RULES - READ CAREFULLY:
    - Follow the rules for this framework EXACTLY
 
 2. DURATION CALCULATION (THIS IS NON-NEGOTIABLE):
-   - User requested duration: ${duration} minutes = ${parseInt(duration) * 60} seconds
-   - The generated workout MUST fit within this time frame
-   - Calculate intervals and rounds to match this exact duration
+   - User requested MAIN workout duration: ${duration} minutes = ${parseInt(duration) * 60} seconds
+   - This ${duration} minutes refers to the MAIN workout section ONLY (not including warmup or cooldown)
+   - Generate warmup exercises (~2-3 minutes total)
+   - Generate MAIN workout that lasts EXACTLY ${duration} minutes
+   - Generate cooldown stretches (~2-3 minutes total)
+   - CRITICAL: The MAIN section must be ${duration} minutes, warmup and cooldown are ADDITIONAL
 
 3. MUSCLE GROUP MATCHING:
    - If user specified muscle groups (e.g., "legs", "abs & core"), ALL main exercises MUST target those areas
@@ -318,11 +337,12 @@ ${constraintNote}
 
 CRITICAL REQUIREMENTS:
 1. ${muscleGroupRequirement} - DO NOT include unrelated exercises
-2. Structure exercises so the total workout time = ${duration} minutes (including warmup/cooldown estimates of ~3-4 min total)
-3. If bodyweight only, do NOT include exercises requiring equipment
-4. Create 2-3 warmup exercises, 4-6 main exercises, 2-3 cooldown stretches
-5. All exercises must be safe and achievable for "${fitnessLevel}" fitness level
-6. MATCH THE REQUESTED MUSCLE GROUPS EXACTLY
+2. The MAIN workout section must be EXACTLY ${duration} minutes (warmup and cooldown are additional, ~2-3 min each)
+3. For ${framework.toUpperCase()}, ensure the main exercises fill the full ${duration} minutes
+4. If bodyweight only, do NOT include exercises requiring equipment
+5. Create 2-3 warmup exercises, 4-6 main exercises, 2-3 cooldown stretches
+6. All exercises must be safe and achievable for "${fitnessLevel}" fitness level
+7. MATCH THE REQUESTED MUSCLE GROUPS EXACTLY
 
 Return ONLY the JSON object.`;
 
