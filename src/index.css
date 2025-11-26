@@ -184,8 +184,8 @@ html, body, #root {
   }
 
   .glass-nav {
-    background: rgba(16, 17, 19, 0.98);
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(0, 0, 0, 0.40);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
   }

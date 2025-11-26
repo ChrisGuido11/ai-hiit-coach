@@ -198,20 +198,20 @@ const Home = () => {
         }}
       >
         <div className="flex items-center justify-around h-16 px-6">
-          <button className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-primary">
+          <button className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-primary shadow-[0_0_32px_rgba(254,173,99,0.5)]">
             <Activity className="w-5 h-5 text-white" />
           </button>
           <button
             onClick={() => navigate('/saved-workouts')}
             className="flex items-center justify-center p-3 active:scale-95 transition-transform"
           >
-            <Bookmark className="w-5 h-5 text-white/55" />
+            <Bookmark className="w-5 h-5 text-white/70" />
           </button>
           <button
             onClick={() => navigate('/profile')}
             className="flex items-center justify-center p-3 active:scale-95 transition-transform"
           >
-            <User className="w-5 h-5 text-white/55" />
+            <User className="w-5 h-5 text-white/70" />
           </button>
         </div>
       </div>
