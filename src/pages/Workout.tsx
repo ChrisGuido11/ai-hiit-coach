@@ -116,6 +116,7 @@ const Workout = () => {
     locationState?.workout || mockWorkout
   );
   const [workoutId, setWorkoutId] = useState<string | null>(locationState?.workoutId || null);
+  const workoutDuration = locationState?.workoutDuration;
 
   // Check if workout is already saved
   useEffect(() => {
@@ -278,6 +279,7 @@ const Workout = () => {
           workout: currentWorkout,
           workoutId,
           framework: frameworkKey,
+          workoutDuration,
         },
       });
     } else if (frameworkKey === "emom") {
@@ -286,6 +288,7 @@ const Workout = () => {
           workout: currentWorkout,
           workoutId,
           framework: frameworkKey,
+          workoutDuration,
         },
       });
     } else if (frameworkKey === "amrap") {
@@ -294,6 +297,7 @@ const Workout = () => {
           workout: currentWorkout,
           workoutId,
           framework: frameworkKey,
+          workoutDuration,
         },
       });
     } else if (frameworkKey === "ladder") {
@@ -302,6 +306,7 @@ const Workout = () => {
           workout: currentWorkout,
           workoutId,
           framework: frameworkKey,
+          workoutDuration,
         },
       });
     } else {

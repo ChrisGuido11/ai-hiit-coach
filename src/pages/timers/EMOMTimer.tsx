@@ -116,7 +116,7 @@ const calculateEMOMMinutes = (mainExerciseCount: number): number => {
 const EMOMTimer = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { workout, workoutId } = location.state || {};
+  const { workout, workoutId, workoutDuration } = location.state || {};
 
   const [timerState, setTimerState] = useState<TimerState>({
     phase: "warmup",
@@ -167,13 +167,20 @@ const EMOMTimer = () => {
     }
   }, [workout, workoutData]);
 
-  // Calculate total EMOM minutes based on number of exercises
+  // Calculate total EMOM minutes based on workoutDuration or number of exercises
   useEffect(() => {
-    if (typedWorkout?.main && typedWorkout.main.length > 0) {
+    if (workoutDuration) {
+      // Use user-requested duration if provided
+      const minutes = parseInt(workoutDuration);
+      setTotalMainMinutes(minutes);
+      console.log('EMOM Timer - workoutDuration:', workoutDuration, 'totalMainMinutes:', minutes);
+    } else if (typedWorkout?.main && typedWorkout.main.length > 0) {
+      // Fall back to calculated duration based on exercise count
       const calculatedMinutes = calculateEMOMMinutes(typedWorkout.main.length);
       setTotalMainMinutes(calculatedMinutes);
+      console.log('EMOM Timer - calculated totalMainMinutes:', calculatedMinutes);
     }
-  }, [typedWorkout?.main?.length]);
+  }, [workoutDuration, typedWorkout?.main?.length]);
 
   // Wake Lock API to prevent screen sleep
   useEffect(() => {
