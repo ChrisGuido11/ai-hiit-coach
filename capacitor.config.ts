@@ -5,14 +5,22 @@ const config: CapacitorConfig = {
   appName: 'HIIT Coach',
   webDir: 'dist',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    iosScheme: 'https'
   },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
       backgroundColor: '#0A1F2E',
       showSpinner: false
+    },
+    StatusBar: {
+      style: 'dark',
+      backgroundColor: '#0A1F2E'
     }
+  },
+  ios: {
+    contentInset: 'automatic'
   }
 };
 
