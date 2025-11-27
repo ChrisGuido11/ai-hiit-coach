@@ -32,42 +32,44 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Splash />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/onboarding/goal" element={<Goal />} />
-          <Route path="/onboarding/level" element={<Level />} />
-          <Route path="/onboarding/equipment" element={<Equipment />} />
-          <Route path="/onboarding/duration" element={<Duration />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/workout/generate" element={<WorkoutGeneration />} />
-          <Route path="/saved-workouts" element={<SavedWorkouts />} />
-          <Route path="/workout/tabata/timer" element={<TabataTimer />} />
-          <Route path="/workout/emom/timer" element={<EMOMTimer />} />
-          <Route path="/workout/amrap/timer" element={<AMRAPTimer />} />
-          <Route path="/workout/ladder/config" element={<LadderConfig />} />
-          <Route path="/workout/ladder/timer" element={<LadderTimer />} />
-          <Route path="/workout/:framework" element={<Workout />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/profile/workout-history" element={<WorkoutHistory />} />
-          <Route path="/profile/stats" element={<MyStats />} />
-          <Route path="/profile/fitness-level" element={<EditFitnessLevel />} />
-          <Route path="/profile/fitness-goals" element={<EditFitnessGoals />} />
-          <Route path="/profile/equipment" element={<EditEquipment />} />
-          <Route path="/profile/voice-coaching" element={<VoiceCoaching />} />
-          <Route path="/profile/notifications" element={<Notifications />} />
-          <Route path="/profile/about" element={<About />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <div className="min-h-screen h-full bg-gradient-warm flex flex-col">
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Splash />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/onboarding/goal" element={<Goal />} />
+            <Route path="/onboarding/level" element={<Level />} />
+            <Route path="/onboarding/equipment" element={<Equipment />} />
+            <Route path="/onboarding/duration" element={<Duration />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/workout/generate" element={<WorkoutGeneration />} />
+            <Route path="/saved-workouts" element={<SavedWorkouts />} />
+            <Route path="/workout/tabata/timer" element={<TabataTimer />} />
+            <Route path="/workout/emom/timer" element={<EMOMTimer />} />
+            <Route path="/workout/amrap/timer" element={<AMRAPTimer />} />
+            <Route path="/workout/ladder/config" element={<LadderConfig />} />
+            <Route path="/workout/ladder/timer" element={<LadderTimer />} />
+            <Route path="/workout/:framework" element={<Workout />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/workout-history" element={<WorkoutHistory />} />
+            <Route path="/profile/stats" element={<MyStats />} />
+            <Route path="/profile/fitness-level" element={<EditFitnessLevel />} />
+            <Route path="/profile/fitness-goals" element={<EditFitnessGoals />} />
+            <Route path="/profile/equipment" element={<EditEquipment />} />
+            <Route path="/profile/voice-coaching" element={<VoiceCoaching />} />
+            <Route path="/profile/notifications" element={<Notifications />} />
+            <Route path="/profile/about" element={<About />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </div>
 );
 
 export default App;
