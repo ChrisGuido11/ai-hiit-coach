@@ -1,3 +1,9 @@
+// LEGACY FILE - NO LONGER USED IN ONBOARDING FLOW
+// This file has been removed from the onboarding flow.
+// Onboarding is now: Goal → Level → Equipment (3 steps)
+// workout_duration is auto-filled in Equipment.tsx based on fitness level
+// Keep this file for reference only - it is not routed in App.tsx
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
