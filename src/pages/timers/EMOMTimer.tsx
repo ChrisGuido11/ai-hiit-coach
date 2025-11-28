@@ -161,14 +161,15 @@ const EMOMTimer = () => {
   const typedWorkout = workoutData || (workout as GeneratedWorkout | undefined);
 
   // Initialize workoutData from passed workout
+  // Always update when workout changes (e.g., after exercise replacement)
   useEffect(() => {
-    if (workout && !workoutData) {
+    if (workout) {
       console.log("=== EMOM TIMER RECEIVED WORKOUT ===");
       console.log("First warmup exercise:", (workout as GeneratedWorkout).warmup[0]?.name);
       console.log("Workout ID:", workoutId);
       setWorkoutData(workout as GeneratedWorkout);
     }
-  }, [workout, workoutData, workoutId]);
+  }, [workout, workoutId]);
 
   // Calculate total EMOM minutes based on workoutDuration or number of exercises
   useEffect(() => {
