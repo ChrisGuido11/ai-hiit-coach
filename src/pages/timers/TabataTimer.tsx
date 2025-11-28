@@ -777,10 +777,11 @@ const TabataTimer = () => {
 
   // Check for timer completion
   useEffect(() => {
-    if (timerState.timeRemaining <= 0 && timerState.phase !== "complete" && !transition) {
+    // Only advance if initialized to prevent skipping first exercise on mount
+    if (isInitialized && timerState.timeRemaining <= 0 && timerState.phase !== "complete" && !transition) {
       advanceTimer();
     }
-  }, [timerState.timeRemaining, timerState.phase, transition, advanceTimer]);
+  }, [isInitialized, timerState.timeRemaining, timerState.phase, transition, advanceTimer]);
 
   // Halfway side switch announcement for warmup/cooldown exercises
   useEffect(() => {
