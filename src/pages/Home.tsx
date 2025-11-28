@@ -84,7 +84,7 @@ const Home = () => {
       <div
         className="px-6 pt-4 flex items-center justify-between"
         style={{
-          paddingTop: 'calc(1rem + var(--safe-area-top))'
+          paddingTop: 'calc(1.5rem + var(--safe-area-top))'
         }}
       >
         {/* Future: Add close/back button if needed */}
@@ -97,7 +97,7 @@ const Home = () => {
       <div
         className="flex justify-center mb-8"
         style={{
-          paddingTop: 'calc(2rem + var(--safe-area-top) * 0.5)'
+          paddingTop: '1rem'
         }}
       >
         <div className="relative w-20 h-20 rounded-full bg-gradient-primary flex items-center justify-center animate-hero-breathe">

@@ -1432,7 +1432,7 @@ const LadderTimer = () => {
       )}
 
       {/* TOP SAFE AREA SPACER */}
-      <div style={{ height: 'var(--safe-area-top)' }} />
+      <div style={{ height: 'calc(1rem + var(--safe-area-top))' }} />
 
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col px-4 overflow-hidden">
