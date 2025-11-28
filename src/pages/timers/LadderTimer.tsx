@@ -226,14 +226,15 @@ const LadderTimer = () => {
   const hasAnnouncedInitialRef = useRef<boolean>(false);
 
   // Initialize workoutData from passed workout
+  // Always update when workout changes (e.g., after exercise replacement)
   useEffect(() => {
-    if (workout && !workoutData) {
+    if (workout) {
       console.log("=== LADDER TIMER RECEIVED WORKOUT ===");
       console.log("First warmup exercise:", (workout as GeneratedWorkout).warmup[0]?.name);
       console.log("Workout ID:", workoutId);
       setWorkoutData(workout as GeneratedWorkout);
     }
-  }, [workout, workoutData, workoutId]);
+  }, [workout, workoutId]);
 
   // Wake Lock API to prevent screen sleep
   useEffect(() => {
