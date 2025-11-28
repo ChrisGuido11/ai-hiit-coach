@@ -46,7 +46,7 @@ const Level = () => {
       className="min-h-screen bg-gradient-warm flex flex-col px-6 md:px-8"
       style={{
         paddingTop: 'calc(1.5rem + var(--safe-area-top))',
-        paddingBottom: 'calc(1.5rem + var(--safe-area-bottom))'
+        paddingBottom: 'calc(3rem + var(--safe-area-bottom))'
       }}
     >
       <div className="mb-8">
@@ -66,7 +66,7 @@ const Level = () => {
         <p className="text-muted-foreground">This helps us personalize your workouts</p>
       </div>
 
-      <div className="flex-1 flex flex-col gap-3 max-w-2xl mx-auto w-full">
+      <div className="flex-1 flex flex-col gap-3 max-w-2xl mx-auto w-full overflow-y-auto">
         {levels.map((level) => {
           const isSelected = selectedLevel === level.id;
 
@@ -94,7 +94,7 @@ const Level = () => {
       <Button
         onClick={handleNext}
         disabled={!selectedLevel}
-        className="mt-8 w-full max-w-2xl mx-auto"
+        className="mt-6 mb-2 w-full max-w-2xl mx-auto shrink-0"
         size="lg"
       >
         Continue
