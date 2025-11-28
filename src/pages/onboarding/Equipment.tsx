@@ -120,11 +120,11 @@ const Equipment = () => {
     <div
       className="min-h-screen bg-gradient-warm flex flex-col px-6 md:px-8"
       style={{
-        paddingTop: 'calc(1.5rem + var(--safe-area-top))',
+        paddingTop: 'calc(2rem + var(--safe-area-top))',
         paddingBottom: 'calc(2rem + var(--safe-area-bottom))'
       }}
     >
-      <div className="mb-4">
+      <div className="mb-8">
         <div className="flex gap-2 mb-8">
           {[1, 2, 3].map((step) => (
             <div
@@ -133,14 +133,14 @@ const Equipment = () => {
             />
           ))}
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
           Your Equipment
         </h1>
-        <p className="text-muted-foreground mb-1">What equipment do you have access to?</p>
+        <p className="text-muted-foreground mb-2">What equipment do you have access to?</p>
         <p className="text-muted-foreground text-sm italic">Select all that apply</p>
       </div>
 
-      <div className="flex-1 grid grid-cols-2 gap-2 max-w-2xl mx-auto w-full mt-6">
+      <div className="flex-1 grid grid-cols-2 gap-4 max-w-2xl mx-auto w-full">
         {equipment.map((item) => {
           const Icon = item.icon;
           const isSelected = selectedEquipment.includes(item.id);
@@ -169,7 +169,7 @@ const Equipment = () => {
       <Button
         onClick={handleNext}
         disabled={selectedEquipment.length === 0 || loading}
-        className="mt-auto pt-4 w-full max-w-2xl mx-auto shrink-0"
+        className="mt-8 w-full max-w-2xl mx-auto shrink-0"
         size="lg"
       >
         {loading ? "Saving..." : "Get Started"}
