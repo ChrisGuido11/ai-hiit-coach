@@ -12,7 +12,7 @@ const frameworks = [
   {
     id: "tabata",
     name: "Tabata",
-    description: "20s work, 10s rest",
+    description: "4 min • 20s work, 10s rest",
     icon: Zap,
   },
   {
