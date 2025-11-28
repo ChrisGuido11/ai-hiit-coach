@@ -427,7 +427,6 @@ const TabataTimer = () => {
 
         if (prev.intervalType === "work") {
           // Work -> Rest
-          speak("Rest", true);
           vibrate([50]);
           return {
             ...prev,
@@ -442,7 +441,6 @@ const TabataTimer = () => {
 
           if (nextExerciseIndex < mainExercises.length) {
             // Move to next exercise in the current round
-            speak(`${mainExercises[nextExerciseIndex].name}!`, true);
             vibrate([100]);
             return {
               ...prev,
@@ -457,8 +455,6 @@ const TabataTimer = () => {
             if (prev.round < phaseMaxRounds) {
               // Start next round, back to first exercise
               const nextRound = prev.round + 1;
-              // Announce exercise name for first work interval of the new round
-              speak(mainExercises[0].name, true);
               vibrate([100, 50, 100]);
               return {
                 ...prev,
@@ -502,16 +498,6 @@ const TabataTimer = () => {
         setCurrentSide("right");
         setHasAnnouncedSwitch(false);
 
-        // Announce with side information if applicable
-        const needsSideSwitch = isSideSwitchingExercise(nextExercise, prev.phase);
-        if (needsSideSwitch) {
-          const bodyPart = getBodyPartTerm(nextExercise);
-          const sideText = getSideAnnouncement("right", bodyPart);
-          speak(`${nextExercise.name}, ${sideText}`, true);
-        } else {
-          speak(`${nextExercise.name}`, true);
-        }
-
         vibrate([50]);
         return {
           ...prev,
@@ -536,16 +522,6 @@ const TabataTimer = () => {
           setCurrentSide("right");
           setHasAnnouncedSwitch(false);
 
-          // Announce with side information if applicable
-          const needsSideSwitch = isSideSwitchingExercise(firstExercise, prev.phase);
-          if (needsSideSwitch) {
-            const bodyPart = getBodyPartTerm(firstExercise);
-            const sideText = getSideAnnouncement("right", bodyPart);
-            speak(`Round ${nextRound}! ${firstExercise.name}, ${sideText}`, true);
-          } else {
-            speak(`Round ${nextRound}! ${firstExercise.name}`, true);
-          }
-
           vibrate([100, 50, 100]);
           return {
             ...prev,
@@ -566,7 +542,97 @@ const TabataTimer = () => {
         }
       }
     });
-  }, [typedWorkout, speak, vibrate, startPhaseTransition]);
+  }, [typedWorkout, vibrate, startPhaseTransition]);
+
+  // Track previous values for voice announcements
+  const prevExerciseNameRef = useRef<string | null>(null);
+  const prevIntervalTypeRef = useRef<IntervalType | null>(null);
+  const prevRoundRef = useRef<number>(1);
+
+  // Voice announcement for exercise changes (warmup/cooldown and main phase)
+  useEffect(() => {
+    if (!currentExercise || !voiceEnabled || transition || timerState.isPaused) return;
+
+    const currentExerciseName = currentExercise.name;
+
+    // Main phase: Announce exercise name when switching to work interval
+    if (timerState.phase === "main" && timerState.intervalType === "work") {
+      // Only announce if exercise changed OR if we just switched from rest to work
+      if (currentExerciseName !== prevExerciseNameRef.current || prevIntervalTypeRef.current === "rest") {
+        const needsRoundAnnouncement = timerState.round !== prevRoundRef.current && timerState.exerciseIndex === 0;
+
+        if (needsRoundAnnouncement) {
+          // New round starting - don't announce here, will be handled by round effect
+        } else {
+          speak(currentExerciseName, true);
+        }
+        prevExerciseNameRef.current = currentExerciseName;
+      }
+    }
+
+    // Warmup/Cooldown: Announce exercise name when exercise changes
+    if ((timerState.phase === "warmup" || timerState.phase === "cooldown") && timerState.intervalType === "exercise") {
+      if (currentExerciseName !== prevExerciseNameRef.current) {
+        const needsSideSwitch = isSideSwitchingExercise(currentExercise, timerState.phase);
+        const needsRoundAnnouncement = timerState.round !== prevRoundRef.current && timerState.exerciseIndex === 0;
+
+        if (needsRoundAnnouncement) {
+          // New round starting
+          const bodyPart = getBodyPartTerm(currentExercise);
+          const sideText = getSideAnnouncement("right", bodyPart);
+          if (needsSideSwitch) {
+            speak(`Round ${timerState.round}! ${currentExerciseName}, ${sideText}`, true);
+          } else {
+            speak(`Round ${timerState.round}! ${currentExerciseName}`, true);
+          }
+        } else {
+          // Regular exercise change
+          if (needsSideSwitch) {
+            const bodyPart = getBodyPartTerm(currentExercise);
+            const sideText = getSideAnnouncement("right", bodyPart);
+            speak(`${currentExerciseName}, ${sideText}`, true);
+          } else {
+            speak(currentExerciseName, true);
+          }
+        }
+        prevExerciseNameRef.current = currentExerciseName;
+      }
+    }
+
+    // Update previous round
+    prevRoundRef.current = timerState.round;
+  }, [currentExercise, timerState.phase, timerState.intervalType, timerState.round, timerState.exerciseIndex, timerState.isPaused, voiceEnabled, transition, speak]);
+
+  // Voice announcement for work/rest transitions in main phase
+  useEffect(() => {
+    if (!voiceEnabled || transition || timerState.isPaused) return;
+    if (timerState.phase !== "main") return;
+
+    const currentIntervalType = timerState.intervalType;
+
+    // Announce "Rest" when transitioning to rest interval
+    if (currentIntervalType === "rest" && prevIntervalTypeRef.current === "work") {
+      speak("Rest", true);
+    }
+
+    // Update previous interval type
+    prevIntervalTypeRef.current = currentIntervalType;
+  }, [timerState.intervalType, timerState.phase, timerState.isPaused, voiceEnabled, transition, speak]);
+
+  // Voice announcement for round changes in main phase
+  useEffect(() => {
+    if (!voiceEnabled || transition || timerState.isPaused) return;
+    if (timerState.phase !== "main") return;
+    if (!currentExercise) return;
+
+    const currentRound = timerState.round;
+
+    // Announce new round when round changes and we're at the first exercise with work interval
+    if (currentRound !== prevRoundRef.current && timerState.exerciseIndex === 0 && timerState.intervalType === "work") {
+      speak(currentExercise.name, true);
+      prevRoundRef.current = currentRound;
+    }
+  }, [timerState.round, timerState.exerciseIndex, timerState.intervalType, timerState.phase, timerState.isPaused, voiceEnabled, transition, currentExercise, speak]);
 
   // Handle transition countdown
   useEffect(() => {
