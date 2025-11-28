@@ -168,9 +168,12 @@ const TabataTimer = () => {
   // Initialize workoutData from passed workout
   useEffect(() => {
     if (workout && !workoutData) {
+      console.log("=== TIMER RECEIVED WORKOUT ===");
+      console.log("First warmup exercise:", (workout as GeneratedWorkout).warmup[0]?.name);
+      console.log("Workout ID:", workoutId);
       setWorkoutData(workout as GeneratedWorkout);
     }
-  }, [workout, workoutData]);
+  }, [workout, workoutData, workoutId]);
 
   // Wake Lock API to prevent screen sleep
   useEffect(() => {
