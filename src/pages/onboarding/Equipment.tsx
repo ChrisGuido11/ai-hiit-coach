@@ -121,7 +121,7 @@ const Equipment = () => {
       className="min-h-screen bg-gradient-warm flex flex-col px-6 md:px-8"
       style={{
         paddingTop: 'calc(1.5rem + var(--safe-area-top))',
-        paddingBottom: 'calc(1.5rem + var(--safe-area-bottom))'
+        paddingBottom: 'calc(3rem + var(--safe-area-bottom))'
       }}
     >
       <div className="mb-8">
@@ -140,7 +140,7 @@ const Equipment = () => {
         <p className="text-muted-foreground text-sm italic">Select all that apply</p>
       </div>
 
-      <div className="flex-1 grid grid-cols-2 gap-3 max-w-2xl mx-auto w-full mt-6">
+      <div className="flex-1 grid grid-cols-2 gap-3 max-w-2xl mx-auto w-full mt-6 overflow-y-auto">
         {equipment.map((item) => {
           const Icon = item.icon;
           const isSelected = selectedEquipment.includes(item.id);
@@ -169,7 +169,7 @@ const Equipment = () => {
       <Button
         onClick={handleNext}
         disabled={selectedEquipment.length === 0 || loading}
-        className="mt-8 w-full max-w-2xl mx-auto"
+        className="mt-6 mb-2 w-full max-w-2xl mx-auto shrink-0"
         size="lg"
       >
         {loading ? "Saving..." : "Get Started"}
