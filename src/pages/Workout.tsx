@@ -410,7 +410,12 @@ const Workout = () => {
   return (
     <div className="min-h-screen bg-gradient-warm flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 pb-4">
+      <div
+        className="flex items-center justify-between px-6 pb-4"
+        style={{
+          paddingTop: 'calc(1.5rem + var(--safe-area-top))'
+        }}
+      >
         <Button
           variant="ghost"
           size="icon"

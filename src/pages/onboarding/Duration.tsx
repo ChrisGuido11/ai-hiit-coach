@@ -79,7 +79,13 @@ const Duration = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-warm flex flex-col p-6 md:p-8">
+    <div
+      className="min-h-screen bg-gradient-warm flex flex-col px-6 md:px-8"
+      style={{
+        paddingTop: 'calc(1.5rem + var(--safe-area-top))',
+        paddingBottom: 'calc(1.5rem + var(--safe-area-bottom))'
+      }}
+    >
       <div className="mb-8">
         <div className="flex gap-2 mb-8">
           {[1, 2, 3, 4].map((step) => (
