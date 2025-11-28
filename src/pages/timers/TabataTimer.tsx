@@ -228,9 +228,11 @@ const TabataTimer = () => {
       const match = firstExercise.duration.match(/(\d+)/);
       const duration = match ? parseInt(match[1], 10) : 45;
 
+      console.log('TabataTimer: Initializing warmup with first exercise:', firstExercise.name, 'at index 0');
+
       setTimerState({
         phase: "warmup",
-        exerciseIndex: 0,
+        exerciseIndex: 0, // ALWAYS start from first exercise (index 0)
         round: 1,
         intervalType: "exercise",
         timeRemaining: duration,
@@ -671,7 +673,7 @@ const TabataTimer = () => {
             setTimerState((ts) => ({
               ...ts,
               phase: prev.nextPhase!,
-              exerciseIndex: 0,
+              exerciseIndex: 0, // ALWAYS start from first exercise (index 0)
               round: 1,
               intervalType: prev.nextPhase === "main" ? "work" : "exercise",
               timeRemaining: duration,
@@ -1204,9 +1206,11 @@ const TabataTimer = () => {
     // Immediately start main workout - no countdown needed!
     const mainExercises = typedWorkout?.main || [];
     if (mainExercises.length > 0) {
+      console.log('TabataTimer: Skipping warmup, starting main workout at exercise index 0:', mainExercises[0].name);
+
       setTimerState({
         phase: "main",
-        exerciseIndex: 0,
+        exerciseIndex: 0, // ALWAYS start from first exercise (index 0)
         round: 1,
         intervalType: "work",
         timeRemaining: WORK_DURATION,
