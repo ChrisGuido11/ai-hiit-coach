@@ -346,17 +346,20 @@ const LadderTimer = () => {
     if (hasAnnouncedInitialRef.current) return;
     hasAnnouncedInitialRef.current = true;
 
-    const warmupExercises = typedWorkout.warmup || [];
-    if (warmupExercises.length > 0) {
-      const firstExercise = warmupExercises[0];
-      const needsSideSwitch = isSideSwitchingExercise(firstExercise, "warmup");
+    // Get the current exercise from timer state - this is what's actually displayed
+    // Using getCurrentExercises ensures voice matches the visual display
+    const exercises = typedWorkout[timerState.phase] || [];
+    const exerciseToAnnounce = exercises[timerState.exerciseIndex];
+
+    if (exerciseToAnnounce) {
+      const needsSideSwitch = isSideSwitchingExercise(exerciseToAnnounce, timerState.phase);
 
       if (needsSideSwitch) {
-        const bodyPart = getBodyPartTerm(firstExercise);
+        const bodyPart = getBodyPartTerm(exerciseToAnnounce);
         const sideText = getSideAnnouncement("right", bodyPart);
-        speak(`${firstExercise.name}, ${sideText}`, true);
+        speak(`${exerciseToAnnounce.name}, ${sideText}`, true);
       } else {
-        speak(firstExercise.name, true);
+        speak(exerciseToAnnounce.name, true);
       }
     } else {
       const ladderTypeText = ladderMeta?.ladderType === "ascending"
@@ -366,7 +369,7 @@ const LadderTimer = () => {
         : "Pyramid";
       speak(`${ladderTypeText} ladder starting`, true);
     }
-  }, [isInitialized, typedWorkout, ladderMeta, speak]);
+  }, [isInitialized, speak]);
 
   // Haptic feedback
   const vibrate = useCallback((pattern: number | number[]) => {
