@@ -413,7 +413,7 @@ const Workout = () => {
       <div
         className="flex items-center justify-between px-6 pb-4"
         style={{
-          paddingTop: 'calc(1.5rem + var(--safe-area-top))'
+          paddingTop: 'calc(2rem + var(--safe-area-top))'
         }}
       >
         <Button

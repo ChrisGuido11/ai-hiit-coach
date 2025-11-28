@@ -107,7 +107,7 @@ const LadderConfig = () => {
       {/* Header */}
       <div
         className="flex items-center justify-between px-6 pt-4"
-        style={{ paddingTop: 'calc(1rem + var(--safe-area-top))' }}
+        style={{ paddingTop: 'calc(1.5rem + var(--safe-area-top))' }}
       >
         <Button
           variant="ghost"

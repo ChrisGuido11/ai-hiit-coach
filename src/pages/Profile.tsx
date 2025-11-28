@@ -278,7 +278,7 @@ const Profile = () => {
       <div
         className="px-6 pt-4 pb-4 flex items-center justify-between"
         style={{
-          paddingTop: "calc(1rem + var(--safe-area-top))",
+          paddingTop: "calc(1.5rem + var(--safe-area-top))",
         }}
       >
         <button
