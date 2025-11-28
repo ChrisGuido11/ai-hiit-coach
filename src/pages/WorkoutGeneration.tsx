@@ -184,8 +184,9 @@ const WorkoutGeneration = () => {
         // Duration priority:
         // 1. User's explicit request (e.g., "15 minute abs workout")
         // 2. Calculated based on fitness level (beginner: 12min, intermediate: 18min, advanced: 25min)
+        // 3. Override to 4 minutes for Tabata (traditional protocol)
         // Note: The old fixed onboarding duration is no longer used for personalization
-        const workoutDuration = parsedRequest?.durationMinutes?.toString()
+        let workoutDuration = parsedRequest?.durationMinutes?.toString()
           || getDurationForFitnessLevel(preferences.fitness_level);
 
         console.log(`Workout duration: ${workoutDuration} min (fitness level: ${preferences.fitness_level})`);
@@ -198,6 +199,13 @@ const WorkoutGeneration = () => {
           // No explicit framework mentioned - choose based on duration
           selectedFramework = selectFrameworkForDuration(parseInt(workoutDuration));
           console.log(`Auto-selected framework: ${selectedFramework} for ${workoutDuration} min duration`);
+        }
+
+        // TABATA DURATION OVERRIDE: Tabata is a fixed 4-minute protocol (20s work / 10s rest × 8 rounds)
+        // Override the fitness-level-based duration for traditional Tabata
+        if (selectedFramework?.toLowerCase() === 'tabata') {
+          workoutDuration = "4";
+          console.log('Tabata selected: using fixed 4-minute duration (traditional protocol)');
         }
 
         // SAFETY CHECK: Forbid Tabata for text-generated workouts
