@@ -51,7 +51,7 @@ const Goal = () => {
     >
       <div className="mb-8">
         <div className="flex gap-2 mb-8">
-          {[1, 2, 3, 4].map((step) => (
+          {[1, 2, 3].map((step) => (
             <div
               key={step}
               className={`h-2 flex-1 rounded-full transition-colors ${

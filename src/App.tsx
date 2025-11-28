@@ -8,7 +8,6 @@ import Auth from "./pages/Auth";
 import Goal from "./pages/onboarding/Goal";
 import Level from "./pages/onboarding/Level";
 import Equipment from "./pages/onboarding/Equipment";
-import Duration from "./pages/onboarding/Duration";
 import Home from "./pages/Home";
 import Workout from "./pages/Workout";
 import WorkoutGeneration from "./pages/WorkoutGeneration";
@@ -44,7 +43,6 @@ const App = () => (
             <Route path="/onboarding/goal" element={<Goal />} />
             <Route path="/onboarding/level" element={<Level />} />
             <Route path="/onboarding/equipment" element={<Equipment />} />
-            <Route path="/onboarding/duration" element={<Duration />} />
             <Route path="/home" element={<Home />} />
             <Route path="/workout/generate" element={<WorkoutGeneration />} />
             <Route path="/saved-workouts" element={<SavedWorkouts />} />

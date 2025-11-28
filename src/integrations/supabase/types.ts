@@ -54,7 +54,7 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id: string
-          workout_duration: string
+          workout_duration?: string  // DEPRECATED: No longer used for personalization. Duration determined dynamically based on fitness level and goals.
         }
         Update: {
           available_equipment?: string[]
@@ -64,7 +64,7 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
-          workout_duration?: string
+          workout_duration?: string  // DEPRECATED: No longer used for personalization. Duration determined dynamically based on fitness level and goals.
         }
         Relationships: [
           {

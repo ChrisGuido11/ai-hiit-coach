@@ -42,7 +42,7 @@ interface UserPreferences {
   fitness_level: string;
   fitness_goal: string[];
   available_equipment: string[];
-  workout_duration: string;
+  workout_duration?: string; // DEPRECATED: No longer used or displayed. Duration determined dynamically based on fitness level.
 }
 
 interface WorkoutStats {

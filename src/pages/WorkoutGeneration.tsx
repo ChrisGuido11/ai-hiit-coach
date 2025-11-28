@@ -56,14 +56,37 @@ const validateLadderWorkout = (workout: GeneratedWorkout): {
 interface UserPreferences {
   fitness_level: string;
   available_equipment: string[];
-  workout_duration: string;
+  workout_duration?: string; // DEPRECATED: Optional for backward compatibility. Duration now determined dynamically.
 }
 
 const defaultPreferences: UserPreferences = {
   fitness_level: "intermediate",
   available_equipment: ["bodyweight"],
-  workout_duration: "20"
 };
+
+/**
+ * Calculate workout duration based on fitness level and goals.
+ * This replaces the old fixed onboarding duration preference.
+ *
+ * @param fitnessLevel - User's fitness level (beginner/intermediate/advanced)
+ * @returns Duration in minutes as a string
+ */
+function getDurationForFitnessLevel(fitnessLevel: string): string {
+  switch (fitnessLevel.toLowerCase()) {
+    case "beginner":
+      // Beginners: Shorter workouts (10-15 min) to avoid burnout and build consistency
+      return "12";
+    case "intermediate":
+      // Intermediate: Moderate workouts (15-20 min) to build endurance
+      return "18";
+    case "advanced":
+      // Advanced: Longer workouts (20-30 min) for maximum challenge
+      return "25";
+    default:
+      // Default to intermediate level
+      return "18";
+  }
+}
 
 /**
  * Intelligently select a framework based on workout duration
@@ -141,7 +164,7 @@ const WorkoutGeneration = () => {
         if (user) {
           const { data: prefData, error: prefError } = await supabase
             .from("user_preferences")
-            .select("fitness_level, available_equipment, workout_duration")
+            .select("fitness_level, available_equipment")
             .eq("user_id", user.id)
             .single();
 
@@ -151,7 +174,6 @@ const WorkoutGeneration = () => {
             preferences = {
               fitness_level: prefData.fitness_level || defaultPreferences.fitness_level,
               available_equipment: prefData.available_equipment || defaultPreferences.available_equipment,
-              workout_duration: prefData.workout_duration || defaultPreferences.workout_duration
             };
           }
         }
@@ -159,8 +181,14 @@ const WorkoutGeneration = () => {
         console.log("Using preferences:", preferences);
 
         // Step 3: Generate workout using AI
-        // Use parsed request duration if available, otherwise use user preferences
-        const workoutDuration = parsedRequest?.durationMinutes?.toString() || preferences.workout_duration;
+        // Duration priority:
+        // 1. User's explicit request (e.g., "15 minute abs workout")
+        // 2. Calculated based on fitness level (beginner: 12min, intermediate: 18min, advanced: 25min)
+        // Note: The old fixed onboarding duration is no longer used for personalization
+        const workoutDuration = parsedRequest?.durationMinutes?.toString()
+          || getDurationForFitnessLevel(preferences.fitness_level);
+
+        console.log(`Workout duration: ${workoutDuration} min (fitness level: ${preferences.fitness_level})`);
 
         // Intelligent framework selection for free-text input
         // Tabata is FORBIDDEN for text-generated workouts - only allowed for quick-start presets
