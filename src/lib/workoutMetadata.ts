@@ -18,7 +18,7 @@ export function extractWorkoutMetadata(
 
   switch (frameworkLower) {
     case "tabata":
-      return extractTabataMetadata(workout);
+      return extractTabataMetadata(workout, workoutDuration);
     case "emom":
       return extractEMOMMetadata(workout, workoutDuration);
     case "amrap":
@@ -36,31 +36,13 @@ export function extractWorkoutMetadata(
   }
 }
 
-function extractTabataMetadata(workout: GeneratedWorkout): WorkoutMetadata {
-  // Tabata: 20s work / 10s rest = 30s per round, 8 rounds per exercise
-  // Each exercise = 30s × 8 = 240s = 4 minutes per exercise
-  // Plus warmup and cooldown (approximate each as ~90s-120s)
-
-  const mainExerciseCount = workout.main.length;
-  const mainDuration = mainExerciseCount * 30 * 8; // 30s per round, 8 rounds per exercise
-
-  // Estimate warmup duration (sum of exercise durations)
-  let warmupDuration = 0;
-  for (const ex of workout.warmup) {
-    warmupDuration += estimateExerciseDuration(ex.duration);
-  }
-
-  // Estimate cooldown duration
-  let cooldownDuration = 0;
-  for (const ex of workout.cooldown) {
-    cooldownDuration += estimateExerciseDuration(ex.duration);
-  }
-
-  const totalSeconds = warmupDuration + mainDuration + cooldownDuration;
-  const totalMinutes = Math.round(totalSeconds / 60);
+function extractTabataMetadata(workout: GeneratedWorkout, workoutDuration?: string): WorkoutMetadata {
+  // Tabata: Traditional format is 20s work / 10s rest for 8 rounds = 4 minutes
+  // Use the provided duration or default to 4 minutes
+  const durationMinutes = workoutDuration ? parseInt(workoutDuration) : 4;
 
   return {
-    duration: `${totalMinutes} minutes`,
+    duration: `${durationMinutes} minutes`,
     rounds: "8 rounds • Tabata"
   };
 }
