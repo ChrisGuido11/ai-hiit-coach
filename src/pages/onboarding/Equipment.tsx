@@ -2,18 +2,19 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { 
-  ArrowRight, 
-  Dumbbell, 
-  User, 
-  Activity, 
-  Minus, 
+import {
+  ArrowRight,
+  Dumbbell,
+  User,
+  Activity,
+  Minus,
   Zap,
   Circle,
   Box,
   Link2,
   Square
 } from "lucide-react";
+import SuccessScreen from "@/components/SuccessScreen";
 
 const equipment = [
   { id: "bodyweight", label: "Bodyweight Only", icon: User },
@@ -33,6 +34,8 @@ const equipment = [
 const Equipment = () => {
   const navigate = useNavigate();
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -50,12 +53,53 @@ const Equipment = () => {
     );
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (selectedEquipment.length > 0) {
-      sessionStorage.setItem("onboarding_equipment", JSON.stringify(selectedEquipment));
-      navigate("/onboarding/duration");
+      setLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          navigate("/auth");
+          return;
+        }
+
+        // Get all onboarding data from sessionStorage
+        const goals = JSON.parse(sessionStorage.getItem("onboarding_goals") || "[]");
+        const level = sessionStorage.getItem("onboarding_level") || "";
+
+        // Save to database using upsert (workout_duration is now optional and not included)
+        const { error } = await supabase.from("user_preferences").upsert(
+          {
+            user_id: session.user.id,
+            fitness_goal: goals,
+            fitness_level: level,
+            available_equipment: selectedEquipment,
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: "user_id",
+          }
+        );
+
+        if (error) throw error;
+
+        // Clear sessionStorage
+        sessionStorage.removeItem("onboarding_goals");
+        sessionStorage.removeItem("onboarding_level");
+
+        // Show success screen
+        setShowSuccess(true);
+      } catch (error: any) {
+        console.error("Error saving preferences:", error);
+      } finally {
+        setLoading(false);
+      }
     }
   };
+
+  if (showSuccess) {
+    return <SuccessScreen onComplete={() => navigate("/home")} />;
+  }
 
   return (
     <div
@@ -67,12 +111,10 @@ const Equipment = () => {
     >
       <div className="mb-8">
         <div className="flex gap-2 mb-8">
-          {[1, 2, 3, 4].map((step) => (
+          {[1, 2, 3].map((step) => (
             <div
               key={step}
-              className={`h-2 flex-1 rounded-full transition-colors ${
-                step <= 3 ? "bg-gradient-primary" : "bg-white/50"
-              }`}
+              className="h-2 flex-1 rounded-full bg-gradient-primary transition-colors"
             />
           ))}
         </div>
@@ -111,11 +153,11 @@ const Equipment = () => {
 
       <Button
         onClick={handleNext}
-        disabled={selectedEquipment.length === 0}
+        disabled={selectedEquipment.length === 0 || loading}
         className="mt-8 w-full max-w-2xl mx-auto"
         size="lg"
       >
-        Continue
+        {loading ? "Saving..." : "Get Started"}
         <ArrowRight className="ml-2 w-5 h-5" />
       </Button>
     </div>
