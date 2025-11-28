@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, RefreshCw, Check, Loader2 } from "lucide-react";
@@ -160,6 +160,14 @@ const Workout = () => {
   const [workoutId, setWorkoutId] = useState<string | null>(locationState?.workoutId || null);
   const workoutDuration = locationState?.workoutDuration;
 
+  // Ref to always hold the latest workout state (prevents stale closure issues)
+  const currentWorkoutRef = useRef<GeneratedWorkout>(currentWorkout);
+
+  // Sync ref with state whenever workout changes
+  useEffect(() => {
+    currentWorkoutRef.current = currentWorkout;
+  }, [currentWorkout]);
+
   // Check if workout is already saved
   useEffect(() => {
     const checkIfSaved = async () => {
@@ -313,12 +321,21 @@ const Workout = () => {
     return loadingExerciseIndex?.category === category && loadingExerciseIndex?.index === index;
   };
 
-  const handleBeginWorkout = () => {
+  const handleBeginWorkout = useCallback(() => {
+    // Use ref to get the absolute latest workout state (prevents stale closure issues)
+    const workoutToPass = currentWorkoutRef.current;
+
+    // Debug logging to trace data flow
+    console.log("=== BEGIN WORKOUT DEBUG ===");
+    console.log("Framework:", frameworkKey);
+    console.log("First warmup exercise:", workoutToPass.warmup[0]?.name);
+    console.log("Workout ID:", workoutId);
+
     // Navigate to the appropriate timer based on framework
     if (frameworkKey === "tabata") {
       navigate("/workout/tabata/timer", {
         state: {
-          workout: currentWorkout,
+          workout: workoutToPass,
           workoutId,
           framework: frameworkKey,
           workoutDuration,
@@ -327,7 +344,7 @@ const Workout = () => {
     } else if (frameworkKey === "emom") {
       navigate("/workout/emom/timer", {
         state: {
-          workout: currentWorkout,
+          workout: workoutToPass,
           workoutId,
           framework: frameworkKey,
           workoutDuration,
@@ -336,7 +353,7 @@ const Workout = () => {
     } else if (frameworkKey === "amrap") {
       navigate("/workout/amrap/timer", {
         state: {
-          workout: currentWorkout,
+          workout: workoutToPass,
           workoutId,
           framework: frameworkKey,
           workoutDuration,
@@ -345,7 +362,7 @@ const Workout = () => {
     } else if (frameworkKey === "ladder") {
       navigate("/workout/ladder/timer", {
         state: {
-          workout: currentWorkout,
+          workout: workoutToPass,
           workoutId,
           framework: frameworkKey,
           workoutDuration,
@@ -355,7 +372,7 @@ const Workout = () => {
       // TODO: Add other framework timers
       console.log("Timer not yet implemented for:", frameworkKey);
     }
-  };
+  }, [frameworkKey, workoutId, workoutDuration, navigate]);
 
   const handleSaveWorkout = async () => {
     try {
