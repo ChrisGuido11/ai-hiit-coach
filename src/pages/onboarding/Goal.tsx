@@ -46,10 +46,10 @@ const Goal = () => {
       className="min-h-screen bg-gradient-warm flex flex-col px-6 md:px-8"
       style={{
         paddingTop: 'calc(1.5rem + var(--safe-area-top))',
-        paddingBottom: 'calc(1.5rem + var(--safe-area-bottom))'
+        paddingBottom: 'calc(2rem + var(--safe-area-bottom))'
       }}
     >
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex gap-2 mb-8">
           {[1, 2, 3].map((step) => (
             <div
@@ -66,7 +66,7 @@ const Goal = () => {
         <p className="text-muted-foreground">Select one or more goals</p>
       </div>
 
-      <div className="flex-1 flex flex-col gap-3 max-w-2xl mx-auto w-full">
+      <div className="flex-1 flex flex-col gap-2 max-w-2xl mx-auto w-full">
         {goals.map((goal) => {
           const Icon = goal.icon;
           const isSelected = selectedGoals.includes(goal.id);
@@ -75,7 +75,7 @@ const Goal = () => {
             <button
               key={goal.id}
               onClick={() => toggleGoal(goal.id)}
-              className={`p-6 rounded-3xl transition-all text-left flex items-center gap-4 ${
+              className={`p-4 rounded-3xl transition-all text-left flex items-center gap-4 ${
                 isSelected
                   ? "glass-card ring-2 ring-primary glow-primary"
                   : "glass-card hover:shadow-elevated"
@@ -95,7 +95,7 @@ const Goal = () => {
       <Button
         onClick={handleNext}
         disabled={selectedGoals.length === 0}
-        className="mt-8 w-full max-w-2xl mx-auto"
+        className="mt-auto pt-4 w-full max-w-2xl mx-auto shrink-0"
         size="lg"
       >
         Continue
