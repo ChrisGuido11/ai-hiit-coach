@@ -496,7 +496,8 @@ const AMRAPTimer = () => {
 
   // Check for timer completion
   useEffect(() => {
-    if (timerState.timeRemaining <= 0 && timerState.phase !== "complete" && transitionCountdown === null) {
+    // Only advance if initialized to prevent skipping first exercise on mount
+    if (isInitialized && timerState.timeRemaining <= 0 && timerState.phase !== "complete" && transitionCountdown === null) {
       if (timerState.phase === "main") {
         // AMRAP main phase complete - move to cooldown or complete
         const cooldownExercises = typedWorkout?.cooldown || [];
@@ -514,7 +515,7 @@ const AMRAPTimer = () => {
         advanceTimer();
       }
     }
-  }, [timerState.timeRemaining, timerState.phase, transitionCountdown, typedWorkout, advanceTimer, speak, vibrate, startPhaseTransition]);
+  }, [isInitialized, timerState.timeRemaining, timerState.phase, transitionCountdown, typedWorkout, advanceTimer, speak, vibrate, startPhaseTransition]);
 
   // Halfway side switch announcement for warmup/cooldown exercises
   useEffect(() => {
