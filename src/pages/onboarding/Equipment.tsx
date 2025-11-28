@@ -53,6 +53,17 @@ const Equipment = () => {
     );
   };
 
+  // Legacy field: Derive workout_duration to satisfy DB NOT NULL constraint
+  // AI personalization should NOT rely on this value - duration is determined dynamically
+  const deriveWorkoutDuration = (fitnessLevel: string): string => {
+    const durationMap: Record<string, string> = {
+      beginner: "20",      // 20 min - Balanced session
+      intermediate: "20",  // 20 min - Balanced session
+      advanced: "30",      // 30 min - Full workout
+    };
+    return durationMap[fitnessLevel] || "20"; // Default to 20 min if level unknown
+  };
+
   const handleNext = async () => {
     if (selectedEquipment.length > 0) {
       setLoading(true);
@@ -67,13 +78,17 @@ const Equipment = () => {
         const goals = JSON.parse(sessionStorage.getItem("onboarding_goals") || "[]");
         const level = sessionStorage.getItem("onboarding_level") || "";
 
-        // Save to database using upsert (workout_duration is now optional and not included)
+        // Derive workout_duration (legacy field) to satisfy DB constraint
+        const resolvedWorkoutDuration = deriveWorkoutDuration(level);
+
+        // Save to database using upsert
         const { error } = await supabase.from("user_preferences").upsert(
           {
             user_id: session.user.id,
             fitness_goal: goals,
             fitness_level: level,
             available_equipment: selectedEquipment,
+            workout_duration: resolvedWorkoutDuration, // Legacy field - auto-filled
             updated_at: new Date().toISOString(),
           },
           {
